@@ -6,6 +6,8 @@
 		<LangVersion>latest</LangVersion>
 		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
 		<NoWarn>CS8981</NoWarn>
+		<GenerateDocumentationFile>true</GenerateDocumentationFile>
+		<DocumentationFile>documentation.xml</DocumentationFile>
 	</PropertyGroup>
 
 	<ItemGroup>

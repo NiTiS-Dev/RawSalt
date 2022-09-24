@@ -10,13 +10,20 @@ public class Program
 		=> new Program(args);
 	public Program(params string[] args)
 	{
-		IWindow window = Window.Create(WindowOptions.Default);
+		IWindow window = Window.Create(new WindowOptions()
+		{
+			API = new GraphicsAPI()
+			{
+				API = ContextAPI.OpenGL,
+				Version = new APIVersion(3, 3),
+				Profile = ContextProfile.Core,
+				Flags = ContextFlags.Default,
+			},
+			Title = "Test1",
+		});
 
 		PlatformType type = new(Side.Server, Platform.Windows);
 
-		Console.WriteLine(type.Platform);
-		Console.WriteLine(type.Side);
-
-		//window.Run();
+		window.Run();
 	}
 }

@@ -1,15 +1,22 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
-  <PropertyGroup>
-    <TargetFramework>net7.0</TargetFramework>
-    <ImplicitUsings>enable</ImplicitUsings>
-    <Nullable>enable</Nullable>
-  </PropertyGroup>
+	<PropertyGroup>
+		<TargetFramework>net7.0</TargetFramework>
+		<Nullable>enable</Nullable>
+		<LangVersion>latest</LangVersion>
+		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+		<NoWarn>CS8981</NoWarn>
+	</PropertyGroup>
 
-  <ItemGroup>
-    <PackageReference Include="Silk.NET.Input" Version="2.16.0" />
-    <PackageReference Include="Silk.NET.OpenGL" Version="2.16.0" />
-    <PackageReference Include="Silk.NET.Windowing.Common" Version="2.16.0" />
-  </ItemGroup>
+	<ItemGroup>
+		<PackageReference Include="Silk.NET.Input" Version="2.16.0" />
+		<PackageReference Include="Silk.NET.OpenGL" Version="2.16.0" />
+		<PackageReference Include="Silk.NET.Windowing.Common" Version="2.16.0" />
+		<PackageReference Include="NiTiS.IO" Version="2.0.2" />
+	</ItemGroup>
+
+	<ItemGroup>
+	  <Folder Include="Core\Unsafe\" />
+	</ItemGroup>
 
 </Project>

@@ -1,2 +1,5 @@
-﻿namespace RawSalt;
+﻿global using ptr = System.UIntPtr;
 
+
+
+namespace RawSalt;

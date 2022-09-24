@@ -1,4 +1,4 @@
-﻿namespace RawSalt;
+﻿namespace RawSalt.Core;
 
 public class Application
 {

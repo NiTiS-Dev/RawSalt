@@ -3,11 +3,13 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.4.32916.344
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RawSalt", "RawSalt\RawSalt.csproj", "{3AFF4A3B-0C34-425D-8774-0C93D407ED1E}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RawSalt", "RawSalt\RawSalt.csproj", "{3AFF4A3B-0C34-425D-8774-0C93D407ED1E}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Root", "Root", "{46AB8E6B-D46E-4CFB-9E2A-1EE9431C55AC}"
 	ProjectSection(SolutionItems) = preProject
+		.gitattributes = .gitattributes
 		.gitignore = .gitignore
+		CODEOWNERS = CODEOWNERS
 	EndProjectSection
 EndProject
 Global

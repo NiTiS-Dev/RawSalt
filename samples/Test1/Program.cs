@@ -37,7 +37,7 @@ public unsafe class Program
 				Profile = ContextProfile.Core,
 				Version = new APIVersion(3, 3),
 			},
-			Samples = 8,
+			Samples = 16,
 		});
 
 		window.Initialize();
@@ -46,6 +46,11 @@ public unsafe class Program
 
 		foreach(IKeyboard keyboard in inputContext.Keyboards)
 		{
+			keyboard.KeyDown += (_, key, _) =>
+			{
+				if (key == Key.F11)
+					window.WindowState = WindowState.Normal != window.WindowState ? WindowState.Normal : WindowState.Fullscreen;
+			};
 		}
 
 		GL gl = window.CreateOpenGL();
@@ -61,13 +66,20 @@ public unsafe class Program
 
 		float[] vertexs = new float[]
 		{
-			1, 1, 0, 1, 1, 0,
-			0, 1, 0, 1, 0, 1,
-			1, 0, 0, 0, 1, 1,
+			0, 0, 0, 0, 0, 1,
+			1, 0, 0, 1, 0, 0,
+			1, 1, 0, 0, 0, 1,
+
+			0, 0, 0, 0, 1, 0,
+			1, 1, 0, 0, 0, 1,
+			0, 1, 0, 0, 1, 0,
 		};
 		buffer.Data(gl, vertexs);
 
 		gl.Enable(EnableCap.PolygonSmooth);
+		gl.Enable(EnableCap.CullFace);
+
+		gl.CullFace(CullFaceMode.Back);
 
 		Matrix4X4<float> identity = Matrix4X4<float>.Identity;
 		gl.ProgramUniformMatrix4(shader.Handle, gl.GetUniformLocation(shader.Handle, "uMat"), 1, false, (float*)&identity);
@@ -84,7 +96,7 @@ public unsafe class Program
 			gl.Clear(ClearBufferMask.ColorBufferBit);
 
 			gl.UseProgram(shader.Handle);
-			gl.DrawArrays(PrimitiveType.Triangles, 0, 3);
+			gl.DrawArrays(PrimitiveType.Triangles, 0, 6);
 		};
 
 		window.Run();

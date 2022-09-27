@@ -30,8 +30,6 @@ public readonly struct Shader
 		if (!String.IsNullOrWhiteSpace(infoLog))
 			throw new ShaderException(infoLog);
 
-		Console.WriteLine($"{type}:\n{code}");
-
 		return handle;
 	}
 	/// <summary>

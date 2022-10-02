@@ -1,5 +1,6 @@
 ﻿using Silk.NET.OpenGL;
 using System;
+using System.Diagnostics;
 
 namespace RawSalt.Graphics.Shaders;
 
@@ -31,6 +32,46 @@ public readonly struct Shader
 			throw new ShaderException(infoLog);
 
 		return handle;
+	}
+	[DebuggerStepThrough]
+	public void UniformInt32(GL gl, string name, int i)
+	{
+		int loc = gl.GetUniformLocation(Handle, name);
+
+		if (loc == -1)
+			throw new ShaderException($"Unknown uniform: {name}");
+
+		gl.Uniform1(loc, i);
+	}
+	[DebuggerStepThrough]
+	public void UniformSingle(GL gl, string name, float i)
+	{
+		int loc = gl.GetUniformLocation(Handle, name);
+
+		if (loc == -1)
+			throw new ShaderException($"Unknown uniform: {name}");
+
+		gl.Uniform1(loc, i);
+	}
+	[DebuggerStepThrough]
+	public unsafe void UniformVec4(GL gl, string name, vec4 vec)
+	{
+		int loc = gl.GetUniformLocation(Handle, name);
+
+		if (loc == -1)
+			throw new ShaderException($"Unknown uniform: {name}");
+
+		gl.Uniform4(loc, 1, (float*)&vec);
+	}
+	[DebuggerStepThrough]
+	public unsafe void UniformMat4(GL gl, string name, mat4 mat)
+	{
+		int loc = gl.GetUniformLocation(Handle, name);
+
+		if (loc == -1)
+			throw new ShaderException($"Unknown uniform: {name}");
+
+		gl.UniformMatrix4(loc, 1, false, (float*)&mat);
 	}
 	/// <summary>
 	/// Creates Shader program from vertex and fragment code

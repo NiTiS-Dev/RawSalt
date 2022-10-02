@@ -1,5 +1,6 @@
 ﻿using RawSalt.Core;
 using RawSalt.Core.Scenes;
+using RawSalt.Core.Scenes.Objects;
 using System.Collections.Generic;
 
 namespace RawSalt;

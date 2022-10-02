@@ -1,16 +1,15 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Numerics;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace RawSalt;
 
 public static class SaltMath
 {
-	public static double DegressToRadiant(double degress)
-		=> (Math.PI / 180) * degress;
-	public static float DegressToRadiant(float degress)
+	public static double DegreesToRadians(double degress)
+		=> Math.PI / 180 * degress;
+	public static float DegreesToRadians(float degress)
 		=> (float)(Math.PI / 180) * degress;
+	public static double RadiansToDegrees(double rad)
+		=> rad * 180 / Math.PI;
+	public static float RadiansToDegrees(float rad)
+		=> (float)(rad * 180 / Math.PI);
 }

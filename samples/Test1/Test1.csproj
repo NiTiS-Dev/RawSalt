@@ -1,25 +1,25 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
-  <PropertyGroup>
-    <OutputType Condition="'$(Configuration)' == 'Release' ">WinExe</OutputType>
-    <OutputType Condition="'$(Configuration)' != 'Release' ">Exe</OutputType>
-    <TargetFramework>net7.0</TargetFramework>
-    <ImplicitUsings>enable</ImplicitUsings>
-    <Nullable>enable</Nullable>
-	  <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-  </PropertyGroup>
+	<PropertyGroup>
+		<OutputType Condition="'$(Configuration)' == 'Release' ">WinExe</OutputType>
+		<OutputType Condition="'$(Configuration)' != 'Release' ">Exe</OutputType>
+		<TargetFramework>net7.0</TargetFramework>
+		<Nullable>enable</Nullable>
+		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+	</PropertyGroup>
 
-  <ItemGroup>
-    <ProjectReference Include="..\..\RawSalt\RawSalt.csproj" />
-  </ItemGroup>
+	<ItemGroup>
+		<ProjectReference Include="..\..\RawSalt\RawSalt.csproj" />
+	</ItemGroup>
 
-  <ItemGroup>
-    <None Update="shader.frag">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Update="shader.vert">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
+	<ItemGroup>
+		<None Update="*.frag">
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</None>
+		
+		<None Update="*.vert">
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</None>
   </ItemGroup>
 
 </Project>

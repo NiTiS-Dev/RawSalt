@@ -2,7 +2,6 @@
 using RawSalt;
 using RawSalt.Core;
 using RawSalt.Core.Desktop;
-using RawSalt.Core.Scenes.Objects;
 using RawSalt.Graphics.Textures;
 using Silk.NET.Input;
 using Silk.NET.Maths;
@@ -11,10 +10,7 @@ using Silk.NET.Windowing;
 using System;
 using System.Drawing;
 using System.Numerics;
-using Buffer = RawSalt.Graphics.Memory.Buffer;
-using Shader = RawSalt.Graphics.Shaders.Shader;
-using Texture = RawSalt.Graphics.Textures.Texture;
-using VertexArray = RawSalt.Graphics.Memory.VertexArray;
+using RawSalt.Graphics;
 
 namespace Test1;
 
@@ -24,7 +20,6 @@ public unsafe class GameApplication : DesktopApplication
 	private VertexArray array;
 	private Buffer buffer;
 	private Texture texture;
-	private Camera camera;
 	private IKeyboard keyboard;
 
 	private static readonly float[] Vertices =
@@ -81,7 +76,7 @@ public unsafe class GameApplication : DesktopApplication
 			Title = "Application",
 			IsVisible = true,
 			Position = new(50, 50),
-			UpdatesPerSecond = 10,
+			UpdatesPerSecond = 60,
 			FramesPerSecond = 99999,
 			VSync = false,
 			VideoMode = VideoMode.Default,
@@ -101,7 +96,6 @@ public unsafe class GameApplication : DesktopApplication
 	}
 	public GameApplication(WindowOptions options, params string[] args) : base(new PlatformType(Side.User, RawSalt.Core.Platform.Windows), options)
 	{
-		camera = new(Vector3D<float>.UnitZ * 6, -Vector3D<float>.UnitZ, Vector3D<float>.UnitY, (float)Window.Size.X / Window.Size.Y); 
 		IInputContext inputContext = Window.CreateInput();
 
 		foreach(IKeyboard keyboard in inputContext.Keyboards)
@@ -113,18 +107,11 @@ public unsafe class GameApplication : DesktopApplication
 			};
 			this.keyboard = keyboard;
 		}
-		foreach (IMouse mouse in inputContext.Mice)
-		{
-			mouse.Scroll += (mc, scrl) =>
-			{
-				camera.IncresseZoom(scrl.Y);
-			};
-		}
 
 		GL gl = GL;
 
 
-		texture = Texture.Create(gl, new(@"B:\User\Desktop\triangles.png"));
+		texture = Texture.Create(gl, new(@"A:\NiTiS\NiTiSCore\core\squared.png"));
 
 		Atlas.AddTexture(texture, "t");
 
@@ -156,28 +143,32 @@ public unsafe class GameApplication : DesktopApplication
 		texture.Bind(GL, 1);
 		GL.UseProgram(shader.Handle);
 
-		Vector4D<float> color = new(1f, 1f, 1f, 1);
-		Matrix4X4<float> model = Matrix4X4<float>.Identity;
-		model *= Matrix4X4.CreateScale(0.5f);
-		model *= Matrix4X4.CreateTranslation(new Vector3D<float>(1f, 1f, 2f));
-		model *= Matrix4X4.CreateRotationZ(SaltMath.DegreesToRadians(45f));
-		model *= Matrix4X4.CreateRotationX(SaltMath.DegreesToRadians(45f));
-		model *= Matrix4X4.CreateRotationY(SaltMath.DegreesToRadians(45f));
+		vec4 color = new(1f, 1f, 1f, 1);
+		mat4 model, view, proj;
+		model = Mat4.CreateScale(0.5f);
+		//model *= Mat4.CreateRotationZ(SaltMath.DegreesToRadians(45f));
+		model *= Mat4.CreateRotationX(SaltMath.DegreesToRadians(45f));
+		//model *= Mat4.CreateRotationY(SaltMath.DegreesToRadians(45f));
 
+		view = Mat4.CreateTranslation(new vec3(0, 0, -1f));
 
-		shader.UniformMat4(GL, "uMat", model * camera.GetView() * camera.GetProjection());
+		proj = Mat4.CreatePerspectiveFieldOfView(SaltMath.DegreesToRadians(70f), Window.Size.Y / (float)Window.Size.X, 0.1f, 1000f);
+
+		shader.UniformMat4(GL, "uMat", model * view * proj);
 		shader.UniformVec4(GL, "uColor", color);
 		shader.UniformInt32(GL, "uTex0", 1);
 
 		GL.DrawArrays(PrimitiveType.Triangles, 0, 36);
 
 		
-		shader.UniformMat4(GL, "uMat", Matrix4X4<float>.Identity);
-		GL.DrawArrays(PrimitiveType.Triangles, 0, 36);
+		shader.UniformMat4(GL, "uMat", mat4.Identity);
+		//GL.DrawArrays(PrimitiveType.Triangles, 0, 36);
 	}
 	public override void Update(double delta)
 	{
+		base.Update(delta);
 
+		
 	}
 	public override void Resize(Vector2D<int> newSize)
 	{

@@ -25,32 +25,8 @@ public class DesktopApplication : Application
 
 		Resize(window.Size);
 	}
-	protected void Launch()
+	protected override void Launch()
 	{
 		window.Run();
-	}
-	public virtual void FileDrop(string[] filePaths)
-	{
-
-	}
-	public virtual void Resize(vec2i newSize)
-	{
-
-	}
-	public virtual void Closing()
-	{
-
-	}
-	public virtual void Initialize()
-	{
-
-	}
-	public virtual void GraphicUpdate(double delta)
-	{
-
-	}
-	public virtual void Update(double delta)
-	{
-
 	}
 }

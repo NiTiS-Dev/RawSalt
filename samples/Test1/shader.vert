@@ -4,6 +4,9 @@ layout (location = 0) in vec3 vPos;
 layout (location = 1) in vec2 vUV;
 
 uniform mat4 uMat;
+uniform float uTime;
+uniform vec3 uCamPos;
+uniform ivec2 uWindowSize;
 
 out vec2 fUV;
 

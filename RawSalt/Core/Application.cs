@@ -1,5 +1,4 @@
 ﻿using RawSalt.Graphics.Textures;
-using RawSalt.Resources;
 using Silk.NET.OpenGL;
 using System.Collections.Generic;
 using System.Threading.Tasks;
@@ -12,7 +11,6 @@ public class Application
 	private readonly List<IApplicationListener> applicationListeners = new(4);
 	private protected GL gl;
 	private protected Atlas atlas;
-	public ResourceManager Resources = new();
 	public GL GL => gl;
 	public Atlas Atlas => atlas;
 	public Application(PlatformType platform)

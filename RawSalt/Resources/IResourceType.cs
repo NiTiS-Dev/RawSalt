@@ -5,6 +5,6 @@ public interface IResourceType
 	/// <summary>
 	/// Called when resource is unused
 	/// </summary>
-	void DisposeResoruce();
+	void DisposeResource();
 	static abstract string ResourceType { get; }
 }

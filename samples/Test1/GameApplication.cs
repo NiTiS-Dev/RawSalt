@@ -92,6 +92,7 @@ public unsafe class GameApplication : DesktopApplication
 			Samples = 8,
 		};
 
+
 		new GameApplication(options, args);
 	}
 	public GameApplication(WindowOptions options, params string[] args) : base(new PlatformType(Side.User, RawSalt.Core.Platform.Windows), options)
@@ -110,6 +111,9 @@ public unsafe class GameApplication : DesktopApplication
 
 		GL gl = GL;
 
+		Language ru = new("ru-RU", "Russian", false);
+		
+		ResourceManager.Register(ru);
 
 		texture = Texture.Create(gl, new(@"A:\NiTiS\NiTiSCore\core\squared.png"));
 

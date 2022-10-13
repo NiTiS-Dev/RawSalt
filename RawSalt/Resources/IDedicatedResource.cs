@@ -2,6 +2,7 @@
 
 public interface IDedicatedResource
 {
+	void DisposeResource();
 	object GetValue();
 }
 public interface IDedicatedResource<out T> : IDedicatedResource

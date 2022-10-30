@@ -10,15 +10,19 @@
 	</PropertyGroup>
 
 	<ItemGroup>
-		<PackageReference Include="Silk.NET.Input" Version="2.16.0" />
-		<PackageReference Include="Silk.NET.OpenGL" Version="2.16.0" />
-		<PackageReference Include="Silk.NET.Windowing.Common" Version="2.16.0" />
-		<PackageReference Include="NiTiS.IO" Version="2.0.2.1" />
-		<PackageReference Include="SixLabors.ImageSharp" Version="2.1.3" />
+	  <Compile Remove="Collections\**" />
+	  <Compile Remove="Math\**" />
+	  <EmbeddedResource Remove="Collections\**" />
+	  <EmbeddedResource Remove="Math\**" />
+	  <None Remove="Collections\**" />
+	  <None Remove="Math\**" />
 	</ItemGroup>
 
 	<ItemGroup>
-	  <Folder Include="Collections\" />
-	  <Folder Include="Math\Geometry\" />
+		<PackageReference Include="Silk.NET.Input" Version="2.16.0" />
+		<PackageReference Include="Silk.NET.OpenGL" Version="2.16.0" />
+		<PackageReference Include="Silk.NET.Windowing.Common" Version="2.16.0" />
+		<PackageReference Include="NiTiS.IO" Version="2.0.3" />
+		<PackageReference Include="SixLabors.ImageSharp" Version="2.1.3" />
 	</ItemGroup>
 </Project>

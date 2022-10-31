@@ -1,14 +1,23 @@
 ﻿using RawSalt.Resources;
+using RawSalt.Structs;
 using System;
+using System.Collections.Generic;
+using System.Diagnostics;
 
 namespace Test1;
 public class TestApplication
 {
 	private static void Main(string[] args)
 	{
-		object lockO = new();
-		Registry.RegisterRegistry<string, string>(lockO, new(4), RegistryOwnerRules.DisallowReplace);
+		BitMap bm = new();
 
+		bm[1] = true;
+		bm[4] = true;
+		bm[6] = true;
 
+		for (int i = 0; i < 8; i++)
+		{
+			Console.WriteLine($"{i} is: {bm[i]}");
+		}
 	}
 }

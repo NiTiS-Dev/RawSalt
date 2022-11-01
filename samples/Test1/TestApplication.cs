@@ -1,23 +1,34 @@
-﻿using RawSalt.Resources;
-using RawSalt.Structs;
-using System;
-using System.Collections.Generic;
-using System.Diagnostics;
+﻿using RawSalt.App.Desktop;
+using Silk.NET.Windowing;
 
 namespace Test1;
-public class TestApplication
+public class TestApplication : DesktopApplication
 {
+	public TestApplication(WindowOptions options) : base(options)
+	{
+	}
 	private static void Main(string[] args)
 	{
-		BitMap bm = new();
-
-		bm[1] = true;
-		bm[4] = true;
-		bm[6] = true;
-
-		for (int i = 0; i < 8; i++)
+		TestApplication? app = null;
+		try
 		{
-			Console.WriteLine($"{i} is: {bm[i]}");
+			app = new TestApplication(new WindowOptions()
+			{
+				API = new GraphicsAPI(ContextAPI.OpenGL, new APIVersion(3, 2)),
+				WindowBorder = WindowBorder.Resizable,
+				IsVisible = true,
+				FramesPerSecond = 60,
+				UpdatesPerSecond = 100,
+				Size = new(1020, 700),
+				Title = "TestApplication",
+				Position = new(200, 200),
+			});
+
+			app.mainWindow.Run();
+		}
+		finally
+		{
+			app?.Closing();
 		}
 	}
 }

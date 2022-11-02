@@ -1,4 +1,6 @@
 ﻿using NiTiS.IO;
+using Silk.NET.Core.Contexts;
+using Silk.NET.OpenGL;
 using System.Collections.Generic;
 
 namespace RawSalt.App;
@@ -20,7 +22,6 @@ public abstract class Application
 	}
 	public virtual void Initialize()
 	{
-
 	}
 	public virtual void Resize(vec2i size)
 	{

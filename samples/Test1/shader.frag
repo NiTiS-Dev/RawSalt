@@ -10,5 +10,12 @@ out vec4 FragColor;
 void main() {
 	vec4 tex = texture(uTex0, fUV);
 	tex = tex * uColor;
-	FragColor = tex;
+	if (tex == vec4(0))
+	{
+		FragColor = vec4(fUV, 1, 1);
+	}
+	else
+	{
+		FragColor = tex;
+	}
 }

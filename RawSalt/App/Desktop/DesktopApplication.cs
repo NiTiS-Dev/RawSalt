@@ -8,12 +8,11 @@ namespace RawSalt.App.Desktop;
 public unsafe class DesktopApplication : Application
 {
 	protected readonly IWindow mainWindow;
-	protected readonly GL gl;
 	public DesktopApplication(WindowOptions options)
 	{
 		mainWindow = Window.Create(options);
 
-		mainWindow.FileDrop += (strs) => { this.FileDropped(strs.Cast<File>().ToArray()); };
+		mainWindow.FileDrop += (strs) => FileDropped(strs.Cast<File>().ToArray());
 		mainWindow.Resize += Resize;
 		mainWindow.Update += Update;
 		mainWindow.Render += Draw;
@@ -21,7 +20,6 @@ public unsafe class DesktopApplication : Application
 		mainWindow.Load += Initialize;
 
 		mainWindow.Initialize();
-		gl = mainWindow.CreateOpenGL();
 
 		Resize(mainWindow.Size);
 	}

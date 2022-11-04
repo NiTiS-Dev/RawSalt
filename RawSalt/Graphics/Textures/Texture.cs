@@ -62,7 +62,7 @@ public readonly struct Texture
 		gl.TexImage2D(TextureTarget.Texture2D, 0, InternalFormat.Rgba8, (uint)img.Width, (uint)img.Height, 0, PixelFormat.Rgba, PixelType.UnsignedByte, null);
 
 		img.ProcessPixelRows(accessor =>
-		{
+		{ 
 			for (int y = 0; y < accessor.Height; y++)
 			{
 				fixed (void* data = accessor.GetRowSpan(y))

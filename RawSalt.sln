@@ -11,6 +11,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Root", "Root", "{46AB8E6B-D
 		.gitignore = .gitignore
 		CODEOWNERS = CODEOWNERS
 		README.md = README.md
+		TODO.md = TODO.md
 	EndProjectSection
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Test1", "samples\Test1\Test1.csproj", "{49A63FA9-CEE0-49DD-BCD7-44B05908C763}"

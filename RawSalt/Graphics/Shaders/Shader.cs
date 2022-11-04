@@ -1,6 +1,10 @@
 ﻿using Silk.NET.OpenGL;
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
+using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
+using System.Text;
 
 namespace RawSalt.Graphics.Shaders;
 
@@ -13,65 +17,78 @@ public readonly struct Shader
 	/// Shader handle
 	/// </summary>
 	public readonly uint Handle;
+	private readonly IReadOnlyDictionary<string, int> uniforms;
 	/// <summary>
 	/// Create Shader object
 	/// </summary>
 	/// <param name="handle">Shader name</param>
-	public Shader(uint handle)
+	/// <param name="uniforms">Uniform mapping dictionary</param>
+	public Shader(uint handle, IReadOnlyDictionary<string, int> uniforms)
 	{
-		Handle = handle;
+		this.Handle = handle;
+		this.uniforms = uniforms;
 	}
-	private readonly uint CreateShaderPart(GL gl, string code, ShaderType type)
+	public Shader(Shader original)
+	{
+		Handle = original.Handle;
+		uniforms = original.uniforms;
+	}
+	private static uint CreateShaderPart(GL gl, string code, ShaderType type)
 	{
 		uint handle = gl.CreateShader(type);
 
 		gl.ShaderSource(handle, code);
 		gl.CompileShader(handle);
 		string infoLog = gl.GetShaderInfoLog(handle);
-		if (!String.IsNullOrWhiteSpace(infoLog))
+		if (!string.IsNullOrWhiteSpace(infoLog))
 			throw new ShaderException(infoLog);
 
 		return handle;
 	}
-	[DebuggerStepThrough]
-	public void UniformInt32(GL gl, string name, int i)
+	public int UniformLocation(string name)
 	{
-		int loc = gl.GetUniformLocation(Handle, name);
+		int retusa = - 1;
+		
+		uniforms.TryGetValue(name, out retusa);
 
-		if (loc == -1)
-			throw new ShaderException($"Unknown uniform: {name}");
+		
+		return retusa;
+		/*
+		int _ = gl.GetUniformLocation(Handle, name);
 
-		gl.Uniform1(loc, i);
+		return _;
+		*/
+	}
+	public void UniformTex(GL gl, string name, TextureUnit texutre)
+	{
+		gl.Uniform1(UniformLocation(name), texutre - TextureUnit.Texture0);
+	}
+	[DebuggerStepThrough]
+	public void UniformInt(GL gl, string name, int i)
+	{
+		gl.Uniform1(UniformLocation(name), i);
 	}
 	[DebuggerStepThrough]
 	public void UniformSingle(GL gl, string name, float i)
 	{
-		int loc = gl.GetUniformLocation(Handle, name);
-
-		if (loc == -1)
-			throw new ShaderException($"Unknown uniform: {name}");
-
-		gl.Uniform1(loc, i);
+		gl.Uniform1(UniformLocation(name), i);
 	}
 	[DebuggerStepThrough]
-	public unsafe void UniformVec4(GL gl, string name, vec4 vec)
+	public unsafe void Uniform4(GL gl, string name, vec4 vec)
 	{
-		int loc = gl.GetUniformLocation(Handle, name);
-
-		if (loc == -1)
-			throw new ShaderException($"Unknown uniform: {name}");
-
-		gl.Uniform4(loc, 1, (float*)&vec);
+		gl.Uniform4(UniformLocation(name), 1, (float*)&vec);
+	}
+	[DebuggerStepThrough]
+	public unsafe void Uniform4(GL gl, string name, Color32 vec)
+	{
+		vec4 vec2 = (vec4)vec;
+		
+		gl.Uniform4(UniformLocation(name), 1, (float*)&vec2);
 	}
 	[DebuggerStepThrough]
 	public unsafe void UniformMat4(GL gl, string name, mat4 mat)
 	{
-		int loc = gl.GetUniformLocation(Handle, name);
 
-		if (loc == -1)
-			throw new ShaderException($"Unknown uniform: {name}");
-
-		gl.UniformMatrix4(loc, 1, false, (float*)&mat);
 	}
 	/// <summary>
 	/// Creates Shader program from vertex and fragment code
@@ -81,71 +98,55 @@ public readonly struct Shader
 	/// <param name="fragment">Fragment code</param>
 	/// <returns>Created shader program</returns>
 	/// <exception cref="ShaderException">Shader code is invalid</exception>
-	public static Shader Create(GL gl, string vertex, string fragment)
+	public static unsafe Shader Create(GL gl, string vertex, string fragment)
 	{
-		Shader shader;
+		uint shaderHandle;
 
-		shader = new(gl.CreateProgram());
+		shaderHandle = gl.CreateProgram();
+
+
 
 		uint vertHandle, fragHandle;
 
-		vertHandle = shader.CreateShaderPart(gl, vertex, ShaderType.VertexShader);
-		fragHandle = shader.CreateShaderPart(gl, fragment, ShaderType.FragmentShader);
+		vertHandle = CreateShaderPart(gl, vertex, ShaderType.VertexShader);
+		fragHandle = CreateShaderPart(gl, fragment, ShaderType.FragmentShader);
 
-		gl.AttachShader(shader.Handle, vertHandle);
-		gl.AttachShader(shader.Handle, fragHandle);
-		gl.LinkProgram(shader.Handle);
+		gl.AttachShader(shaderHandle, vertHandle);
+		gl.AttachShader(shaderHandle, fragHandle);
+		gl.LinkProgram(shaderHandle);
 
-		gl.GetProgram(shader.Handle, ProgramPropertyARB.LinkStatus, out int status);
-
-		if (status == 0)
-			throw new ShaderException(gl.GetProgramInfoLog(shader.Handle));
-
-		gl.DetachShader(shader.Handle, vertHandle);
-		gl.DetachShader(shader.Handle, fragHandle);
-		gl.DeleteShader(vertHandle);
-		gl.DeleteShader(fragHandle);
-
-		return shader;
-	}
-	/// <summary>
-	/// Creates Shader program from vertex, geometry and fragment code
-	/// </summary>
-	/// <param name="gl">OpenGL</param>
-	/// <param name="vertex">Vertex code</param>
-	/// <param name="geometry">Geometry code</param>
-	/// <param name="fragment">Fragment code</param>
-	/// <returns>Created shader program</returns>
-	/// <exception cref="ShaderException">Shader code is invalid</exception>
-	public static Shader Create(GL gl, string vertex, string geometry, string fragment)
-	{
-		Shader shader;
-
-		shader = new(gl.CreateProgram());
-
-		uint vertHandle, geomHandle, fragHandle;
-
-		vertHandle = shader.CreateShaderPart(gl, vertex, ShaderType.VertexShader);
-		geomHandle = shader.CreateShaderPart(gl, geometry, ShaderType.GeometryShader);
-		fragHandle = shader.CreateShaderPart(gl, fragment, ShaderType.FragmentShader);
-
-		gl.AttachShader(shader.Handle, vertHandle);
-		gl.AttachShader(shader.Handle, geomHandle);
-		gl.AttachShader(shader.Handle, fragHandle);
-		gl.LinkProgram(shader.Handle);
-
-		gl.GetProgram(shader.Handle, ProgramPropertyARB.LinkStatus, out int status);
+		gl.GetProgram(shaderHandle, ProgramPropertyARB.LinkStatus, out int status);
 
 		if (status == 0)
-			throw new ShaderException(gl.GetProgramInfoLog(shader.Handle));
+			throw new ShaderException(gl.GetProgramInfoLog(shaderHandle));
 
-		gl.DetachShader(shader.Handle, vertHandle);
-		gl.DetachShader(shader.Handle, geomHandle);
-		gl.DetachShader(shader.Handle, fragHandle);
+		gl.DetachShader(shaderHandle, vertHandle);
+		gl.DetachShader(shaderHandle, fragHandle);
 		gl.DeleteShader(vertHandle);
-		gl.DeleteShader(geomHandle);
 		gl.DeleteShader(fragHandle);
+		int uniformCount;
 
-		return shader;
+		gl.GetProgram(shaderHandle, ProgramPropertyARB.ActiveUniforms, &uniformCount);
+		
+		Dictionary<string, int> uniforms = new Dictionary<string, int>(uniformCount);
+
+		for (uint x=0; x<uniformCount; x++)
+		{
+			Span<byte> bytes = stackalloc byte[16];
+
+			UniformType type;
+			int size;
+			uint len;
+
+			gl.GetActiveUniform(shaderHandle, x, &len, &size, &type, bytes);
+			string uName;
+
+			uName = new(Encoding.UTF8.GetString(bytes.ToArray(), 0, (int)len));
+
+			uniforms[uName] = (int)x;
+		}
+
+
+		return new(shaderHandle, uniforms);
 	}
 }

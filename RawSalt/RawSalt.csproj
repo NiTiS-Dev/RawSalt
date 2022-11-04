@@ -27,6 +27,6 @@
 	</ItemGroup>
 
 	<ItemGroup>
-	  <Folder Include="Xa\" />
+	  <Folder Include="Graphics\Models\" />
 	</ItemGroup>
 </Project>

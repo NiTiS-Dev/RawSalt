@@ -2,8 +2,9 @@
 global using sptr = System.IntPtr;
 global using Buffer = RawSalt.Graphics.Memory.Buffer;
 global using Shader = RawSalt.Graphics.Shaders.Shader;
-//global using Texture = RawSalt.Graphics.Textures.Texture;
+global using Texture = RawSalt.Graphics.Textures.Texture;
 global using VertexArray = RawSalt.Graphics.Memory.VertexArray;
+global using Color32 = RawSalt.Structs.Color32;
 
 //Quaternion
 global using quat = Silk.NET.Maths.Quaternion<float>;

@@ -1,6 +1,7 @@
 ﻿using NiTiS.IO;
 using Silk.NET.OpenGL;
 using Silk.NET.Windowing;
+using System;
 using System.Linq;
 
 namespace RawSalt.App.Desktop;
@@ -8,6 +9,7 @@ namespace RawSalt.App.Desktop;
 public unsafe class DesktopApplication : Application
 {
 	protected readonly IWindow mainWindow;
+	protected GL gl;
 	public DesktopApplication(WindowOptions options)
 	{
 		mainWindow = Window.Create(options);
@@ -22,5 +24,20 @@ public unsafe class DesktopApplication : Application
 		mainWindow.Initialize();
 
 		Resize(mainWindow.Size);
+	}
+	public override void Initialize()
+	{
+		gl = GL.GetApi(mainWindow);
+	}
+	public override void Run()
+	{
+		if (mainWindow is null)
+			throw new NullReferenceException($"{nameof(DesktopApplication)}.{nameof(mainWindow)} is null");
+
+		mainWindow.Run();
+	}
+	public override void Closing()
+	{
+		base.Closing();
 	}
 }

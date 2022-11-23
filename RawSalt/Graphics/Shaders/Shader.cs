@@ -59,9 +59,17 @@ public readonly struct Shader
 		return _;
 		*/
 	}
+	public void Use(GL gl)
+	{
+		gl.UseProgram(Handle);
+	}
 	public void UniformTex(GL gl, string name, TextureUnit texutre)
 	{
 		gl.Uniform1(UniformLocation(name), texutre - TextureUnit.Texture0);
+	}
+	public void UniformTex(GL gl, string name, int texutre)
+	{
+		gl.Uniform1(UniformLocation(name), texutre);
 	}
 	[DebuggerStepThrough]
 	public void UniformInt(GL gl, string name, int i)
@@ -149,4 +157,6 @@ public readonly struct Shader
 
 		return new(shaderHandle, uniforms);
 	}
+	public void Dispose(GL gl)
+		=> gl.DeleteProgram(Handle);
 }

@@ -1,4 +1,5 @@
 ﻿using Silk.NET.OpenGL;
+using System;
 
 namespace RawSalt.Graphics.Memory;
 
@@ -26,6 +27,11 @@ public readonly unsafe struct Buffer
 	public Buffer(uint handle, BufferTargetARB target)
 	{
 		Handle = handle;
+		Target = target;
+	}
+	public Buffer(GL gl, BufferTargetARB target)
+	{
+		Handle = gl.CreateBuffer();
 		Target = target;
 	}
 	/// <summary>
@@ -119,4 +125,6 @@ public readonly unsafe struct Buffer
 	/// <inheritdoc/>
 	public override string ToString()
 		=> $"Buffer<{Target}>({Handle})";
+	public void Dispose(GL gl)
+		=> gl.DeleteBuffer(Handle);
 }

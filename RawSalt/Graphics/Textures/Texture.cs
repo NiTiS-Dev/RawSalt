@@ -75,4 +75,6 @@ public readonly struct Texture
 
 		return tex;
 	}
+	public void Dispose(GL gl)
+		=> gl.DeleteTexture(Handle);
 }

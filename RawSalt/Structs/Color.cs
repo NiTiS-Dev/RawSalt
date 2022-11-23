@@ -4,6 +4,7 @@ using System.Runtime.InteropServices;
 namespace RawSalt.Structs;
 
 [StructLayout(LayoutKind.Sequential)]
+// TODO?: Replace with Color<T> where T : IPixel
 public readonly unsafe struct Color32 : IResourceType
 {
 	/// <summary>

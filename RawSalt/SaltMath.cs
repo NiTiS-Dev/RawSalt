@@ -9,15 +9,24 @@ public static class SaltMath
 {
 	public const double PI = 3.1415926535897931;
 	private const float PIf= 3.1415926535897931f;
+
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public static double DegreesToRadians(double degress)
 		=> PI / 180 * degress;
+
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public static float DegreesToRadians(float degress)
 		=> PIf / 180 * degress;
+
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public static double RadiansToDegrees(double rad)
 		=> rad * 180 / PI;
+
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public static float RadiansToDegrees(float rad)
 		=> rad * 180 / PIf;
 
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public static (T Quotient, T Remainder) DivRem<T>(T left, T right)
 		where T : 
 			IDivisionOperators<T, T, T>,
@@ -27,8 +36,8 @@ public static class SaltMath
 		T quotient = left / right;
 		return (quotient, left - (quotient * right));
 	}
+
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	[CLSCompliant(false)]
 	public static T Clamp<T>(T value, T min, T max)
 		where T : IComparisonOperators<T, T, bool>
 	{

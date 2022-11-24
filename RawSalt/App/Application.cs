@@ -1,13 +1,15 @@
 ﻿using NiTiS.IO;
 using Silk.NET.Core.Contexts;
 using Silk.NET.OpenGL;
+using Silk.NET.Windowing;
 using System.Collections.Generic;
 
 namespace RawSalt.App;
 
 public abstract class Application
 {
-	private protected readonly List<IApplicationListener> applicationListeners;
+	protected List<IApplicationListener> applicationListeners;
+	protected IView mainView;
 	public Application()
 	{
 		applicationListeners = new(8);
@@ -62,7 +64,7 @@ public abstract class Application
 	/// Invoked when user drop file(s) into application window
 	/// </summary>
 	/// <param name="paths">Array of dropped files (or directories)</param>
-	public virtual void FileDropped(IOPath[] paths)
+	public virtual void FileDropped(IPath[] paths)
 	{
 
 	}

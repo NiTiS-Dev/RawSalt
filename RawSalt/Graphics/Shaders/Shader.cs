@@ -49,7 +49,12 @@ public readonly struct Shader
 	{
 		int retusa = - 1;
 		
-		uniforms.TryGetValue(name, out retusa);
+		if (!uniforms.TryGetValue(name, out retusa))
+		{
+#if DEBUG
+			Console.WriteLine("Uniform not founded: " + name);
+#endif
+		}
 
 		
 		return retusa;
@@ -96,7 +101,7 @@ public readonly struct Shader
 	[DebuggerStepThrough]
 	public unsafe void UniformMat4(GL gl, string name, mat4 mat)
 	{
-
+		gl.UniformMatrix4(UniformLocation(name), 1, false, (float*)&mat);
 	}
 	/// <summary>
 	/// Creates Shader program from vertex and fragment code

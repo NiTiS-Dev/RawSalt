@@ -20,6 +20,11 @@
 		<None Update="*.vert">
 			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
 		</None>
+
+		<None Update="*.png">
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</None>
+		
 		<Compile Include="..\..\RawSalt\usings.cs" />
   </ItemGroup>
 

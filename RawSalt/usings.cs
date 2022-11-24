@@ -7,7 +7,7 @@ global using VertexArray = RawSalt.Graphics.Memory.VertexArray;
 global using Color32 = RawSalt.Structs.Color32;
 
 //Quaternion
-global using quat = Silk.NET.Maths.Quaternion<float>;
+global using quat = System.Numerics.Quaternion;
 
 //Matrices
 global using mat4 = System.Numerics.Matrix4x4;

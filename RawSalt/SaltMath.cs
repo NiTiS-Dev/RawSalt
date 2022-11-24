@@ -7,8 +7,8 @@ namespace RawSalt;
 
 public static class SaltMath
 {
-	public const double PI = 3.1415926535897931;
-	private const float PIf= 3.1415926535897931f;
+	public static double PI => 3.1415926535897931;
+	private static float PIf => 3.1415926535897931f;
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public static double DegreesToRadians(double degress)

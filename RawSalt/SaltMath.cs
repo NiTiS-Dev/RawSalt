@@ -36,7 +36,15 @@ public static class SaltMath
 		T quotient = left / right;
 		return (quotient, left - (quotient * right));
 	}
-
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public static T Range<T>(T value, T min, T max)
+		where T :
+		IAdditionOperators<T, T, T>,
+		IMultiplyOperators<T, T, T>,
+		ISubtractionOperators<T, T, T>
+	{
+		return min + (value * (max - min));
+	}
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public static T Clamp<T>(T value, T min, T max)
 		where T : IComparisonOperators<T, T, bool>

@@ -15,7 +15,20 @@ public struct Transform3D
 	{
 		position = pos;
 	}
-	public mat4 CreateView()
+	public Transform3D(vec3 pos, vec3 scl)
+	{
+
+		position = pos;
+		scale = scl;
+	}
+	public Transform3D(vec3 pos, vec3 scl, quat rot)
+	{
+		position = pos;
+		scale = scl;
+		rotation = rot;
+	}
+	//
+	public mat4 CreateModelMatrix()
 		=> mat4.Identity
 		* mat4.CreateFromQuaternion(rotation)
 		* mat4.CreateScale(scale)

@@ -11,6 +11,8 @@ global using quat = System.Numerics.Quaternion;
 
 //Matrices
 global using mat4 = System.Numerics.Matrix4x4;
+global using mat3 = Silk.NET.Maths.Matrix3X3<float>;
+global using Mat3 = Silk.NET.Maths.Matrix3X3;
 
 //Vectors
 global using vec2 = System.Numerics.Vector2;

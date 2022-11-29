@@ -2,14 +2,14 @@
 layout (location = 0) in vec3 vPos;
 layout (location = 1) in vec2 vUV;
 
-uniform mat4 uMat; // matrix
-uniform float uTime; // time until app staring
-uniform vec3 uCamPos; // camera position
-uniform ivec2 uWindowSize; // window size
+uniform mat4 uModel;
+uniform mat4 uView;
+uniform mat4 uProjection;
+uniform mat4 uMVP;
 
 out vec2 fUV;
 
 void main() {
-	gl_Position = uMat * vec4(vPos, 1);
+	gl_Position = uMVP * vec4(vPos, 1.0);
 	fUV = vUV;
 }

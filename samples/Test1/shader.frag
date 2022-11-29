@@ -8,5 +8,7 @@ uniform vec4 uColor = vec4(1);
 out vec4 FragColor;
 
 void main() {
-	FragColor = uColor * texture(uTex0, fUV);
+	vec4 mixColor = texture(uTex0, fUV);
+	mixColor *= uColor;
+	FragColor = mixColor;
 }

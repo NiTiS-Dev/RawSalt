@@ -1,4 +1,7 @@
-﻿using NiTiS.IO;
+﻿using BenchmarkDotNet.Running;
+using NiTiS.Core;
+using NiTiS.IO;
+using NiTiS.Math;
 using RawSalt;
 using RawSalt.App.Desktop;
 using RawSalt.Engine;
@@ -10,6 +13,8 @@ using System;
 using System.Diagnostics;
 using System.Drawing;
 using System.Numerics;
+using System.Runtime.Serialization.Formatters.Binary;
+using Test1;
 
 namespace Tutorial;
 
@@ -21,7 +26,11 @@ public class TestApplication : DesktopApplication
 	private static Shader Shader;
 	private static Texture Texture;
 
-	private vec3 CameraPos = new(0, 0, 2);
+	private static Vector3 CameraPosition = new Vector3(0.0f, 0.0f, 3.0f);
+	private static Vector3 CameraFront = new Vector3(0.0f, 0.0f, -1.0f);
+	private static Vector3 CameraUp = Vector3.UnitY;
+	private static Vector3 CameraDirection = Vector3.Zero;
+
 
 	//Vertex data, uploaded to the VBO.
 	private static readonly float[] Vertices =
@@ -84,20 +93,22 @@ public class TestApplication : DesktopApplication
 	public TestApplication(WindowOptions options) : base(options) { }
 	private static void Main(string[] args)
 	{
-		WindowOptions options = new WindowOptions() with
-		{
-			Size = new(1200, 700),
-			API = new(ContextAPI.OpenGL, new(3, 3)),
-			FramesPerSecond = 144,
-			UpdatesPerSecond = 100,
-			ShouldSwapAutomatically = true,
-			Title = "Test 1",
-			IsVisible = true,
-		};
+		BenchmarkRunner.Run<BenchmarkTests>();
 
-		TestApplication apl = new TestApplication(options);
+		//WindowOptions options = new WindowOptions() with
+		//{
+		//	Size = new(1200, 700),
+		//	API = new(ContextAPI.OpenGL, new(3, 3)),
+		//	FramesPerSecond = 144,
+		//	UpdatesPerSecond = 100,
+		//	ShouldSwapAutomatically = true,
+		//	Title = "Test 1",
+		//	IsVisible = true,
+		//};
 
-		apl.Run();
+		//TestApplication apl = new TestApplication(options);
+
+		//apl.Run();
 	}
 	private static IKeyboard primaryKeyboard;
 	public override unsafe void Initialize()
@@ -152,42 +163,65 @@ public class TestApplication : DesktopApplication
 	};
 	public override unsafe void Draw(double delta)
 	{
-		fps = 1 / delta;
+		const float epsilon = 1e-4f;
 
-		//Clear the color channel.
-		gl.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
+		Console.WriteLine(Strings.FromArray(BitConverter.GetBytes(epsilon)));
 
-		//Bind the geometry and shader.
-		Vao.Bind(gl);
-		Shader.Use(gl);
-		Texture.Bind(gl, 1);
-		Shader.UniformTex(gl, "uTex0", 1);
+		//fps = 1 / delta;
 
-		mat4 result;
-		result = trans.CreateModelMatrix();
-		result *= mat4.CreateLookAt(CameraPos, default, vec3.UnitY);
-		result *= mat4.CreatePerspectiveFieldOfView(SaltMath.DegreesToRadians(75f), mainView.FramebufferSize.X / (float)mainView.FramebufferSize.Y, 0.1f, 10.0f);
+		////Clear the color channel.
+		//gl.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
 
+		////Bind the geometry and shader.
+		//Vao.Bind(gl);
+		//Shader.Use(gl);
+		//Texture.Bind(gl, 1);
+		//Shader.UniformTex(gl, "uTex0", 1);
 
-		Shader.UniformMat4(gl, "uMat", result);
+		//Mat4<float> model = trans.CreateModelMatrix();
+		//Mat4<float> view = Matrix4x4.CreateLookAt(CameraPosition, CameraPosition + CameraFront, CameraUp);
+		//Mat4<float> projection = Matrix4x4.CreatePerspectiveFieldOfView(SaltMath.DegreesToRadians(70f), (float)mainWindow.FramebufferSize.X / mainWindow.FramebufferSize.Y, 0.1f, 100.0f);
 
-		//Draw the geometry
-		gl.DrawElements(PrimitiveType.Triangles, (uint)Indices.Length, DrawElementsType.UnsignedInt, null);
+		//Shader.Uniform4(gl, "uColor", new Color32(0, 255, 122));
+		//Shader.UniformMat4(gl, "uMVP", model * view * projection);
 
-		result = trans2.CreateModelMatrix();
-		result *= mat4.CreateLookAt(CameraPos, default, vec3.UnitY);
-		result *= mat4.CreatePerspectiveFieldOfView(SaltMath.DegreesToRadians(75f), mainView.FramebufferSize.X / (float)mainView.FramebufferSize.Y, 0.1f, 100.0f);
+		//gl.DrawElements(PrimitiveType.Triangles, (uint)Indices.Length, DrawElementsType.UnsignedInt, null);
 
-		Shader.UniformMat4(gl, "uMat", result);
+		//model = (mat4)trans2.CreateModelMatrix();
+		//Shader.UniformMat4(gl, "uMVP", model * view * projection);
 
-		gl.DrawElements(PrimitiveType.Triangles, (uint)Indices.Length, DrawElementsType.UnsignedInt, null);
+		//gl.DrawElements(PrimitiveType.Triangles, (uint)Indices.Length, DrawElementsType.UnsignedInt, null);
 	}
 	public override void Update(double delta)
 	{
-		CameraPos = new(0, 0, MathF.Sin((float)mainWindow.Time) * 2);
+		//Camera.Position = new(0, 0, MathF.Sin((float)mainWindow.Time) * 5);
 
-		mainWindow.Title = $"CameraPos: {CameraPos}";
+		mainWindow.Title = $"CameraPos: {CameraPosition} CameraDir: {CameraDirection} CameraUp: {CameraUp} CameraFront: {CameraFront}";
+
+		float moveSpeed = 2.5f * (float)delta;
+
+		if (primaryKeyboard.IsKeyPressed(Key.W))
+		{
+			//Move forwards
+			CameraPosition += moveSpeed * CameraFront;
+		}
+		if (primaryKeyboard.IsKeyPressed(Key.S))
+		{
+			//Move backwards
+			CameraPosition -= moveSpeed * CameraFront;
+		}
+		if (primaryKeyboard.IsKeyPressed(Key.A))
+		{
+			//Move left
+			CameraPosition -= Vector3.Normalize(Vector3.Cross(CameraFront, CameraUp)) * moveSpeed;
+		}
+		if (primaryKeyboard.IsKeyPressed(Key.D))
+		{
+			//Move right
+			CameraPosition += Vector3.Normalize(Vector3.Cross(CameraFront, CameraUp)) * moveSpeed;
+		}
 	}
+
 	public override void Resize(vec2i size)
 	{
 		gl.Viewport(size);

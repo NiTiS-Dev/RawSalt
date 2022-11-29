@@ -1,4 +1,5 @@
 ﻿using Silk.NET.OpenGL;
+using NiTiS.Math;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -100,6 +101,11 @@ public readonly struct Shader
 	}
 	[DebuggerStepThrough]
 	public unsafe void UniformMat4(GL gl, string name, mat4 mat)
+	{
+		gl.UniformMatrix4(UniformLocation(name), 1, false, (float*)&mat);
+	}
+	[DebuggerStepThrough]
+	public unsafe void UniformMat4(GL gl, string name, NiTiS.Math.Mat4<float> mat)
 	{
 		gl.UniformMatrix4(UniformLocation(name), 1, false, (float*)&mat);
 	}

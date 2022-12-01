@@ -20,10 +20,11 @@
 	</ItemGroup>
 
 	<ItemGroup>
-	  <Folder Include="Graphics\Models\" />
+		<Folder Include="Graphics\Models\" />
 	</ItemGroup>
 
 	<ItemGroup>
 	  <ProjectReference Include="..\..\NiTiS.Math\NiTiS.Math\NiTiS.Math.csproj" />
+	  <ProjectReference Include="..\NiTiS.Native\NiTiS.Native.csproj" />
 	</ItemGroup>
 </Project>

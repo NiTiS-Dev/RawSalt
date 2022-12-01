@@ -1,4 +1,6 @@
 ﻿using NiTiS.Math;
+using System.Reflection;
+using System.Runtime.CompilerServices;
 
 namespace RawSalt.Engine;
 
@@ -29,10 +31,11 @@ public struct Transform3D
 		scale = scl;
 		rotation = rot;
 	}
-	//public Mat4<float> CreateModelMatrix()
-	//	=> (Mat4<float>)(mat4.Identity
-	//	* mat4.CreateFromQuaternion(rotation)
-	//	* mat4.CreateScale(scale)
-	//	* mat4.CreateTranslation(position)
-	//	);
+
+	//TODO: Optimize
+	public mat4 CreateModelMatrix()
+		=> mat4.Identity
+		* mat4.CreateFromQuaternion(rotation)
+		* mat4.CreateScale(scale)
+		* mat4.CreateTranslation(position);
 }

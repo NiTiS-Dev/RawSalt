@@ -1,24 +1,19 @@
-﻿using BenchmarkDotNet.Running;
-using NiTiS.Core;
+﻿using NiTiS.Core;
 using NiTiS.IO;
 using NiTiS.Math;
 using RawSalt;
 using RawSalt.App.Desktop;
 using RawSalt.Engine;
 using Silk.NET.Input;
-using Silk.NET.Maths;
 using Silk.NET.OpenGL;
 using Silk.NET.Windowing;
 using System;
-using System.Diagnostics;
 using System.Drawing;
 using System.Numerics;
-using System.Runtime.Serialization.Formatters.Binary;
-using Test1;
 
 namespace Tutorial;
 
-public class TestApplication : DesktopApplication
+public unsafe class TestApplication : DesktopApplication
 {
 	private static Buffer Vbo;
 	private static Buffer Ebo;
@@ -93,29 +88,27 @@ public class TestApplication : DesktopApplication
 	public TestApplication(WindowOptions options) : base(options) { }
 	private static void Main(string[] args)
 	{
-		BenchmarkRunner.Run<BenchmarkTests>();
+		WindowOptions options = new WindowOptions() with
+		{
+			Size = new(1200, 700),
+			API = new(ContextAPI.OpenGL, new(3, 3)),
+			FramesPerSecond = 144,
+			UpdatesPerSecond = 100,
+			ShouldSwapAutomatically = true,
+			Title = "Test 1",
+			IsVisible = true,
+		};
 
-		//WindowOptions options = new WindowOptions() with
-		//{
-		//	Size = new(1200, 700),
-		//	API = new(ContextAPI.OpenGL, new(3, 3)),
-		//	FramesPerSecond = 144,
-		//	UpdatesPerSecond = 100,
-		//	ShouldSwapAutomatically = true,
-		//	Title = "Test 1",
-		//	IsVisible = true,
-		//};
+		TestApplication apl = new TestApplication(options);
 
-		//TestApplication apl = new TestApplication(options);
-
-		//apl.Run();
+		apl.Run();
 	}
 	private static IKeyboard primaryKeyboard;
 	public override unsafe void Initialize()
 	{
 		base.Initialize();
-
 		gl.ClearColor(Color.White);
+		//sGL.glClearColor(0f, 255f, 0f, 255f);
 
 		gl.Enable(EnableCap.DepthTest);
 		//gl.Enable(EnableCap.CullFace);
@@ -163,34 +156,31 @@ public class TestApplication : DesktopApplication
 	};
 	public override unsafe void Draw(double delta)
 	{
-		const float epsilon = 1e-4f;
 
-		Console.WriteLine(Strings.FromArray(BitConverter.GetBytes(epsilon)));
+		fps = 1 / delta;
 
-		//fps = 1 / delta;
+		//Clear the color channel.
+		gl.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
 
-		////Clear the color channel.
-		//gl.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
+		//Bind the geometry and shader.
+		Vao.Bind(gl);
+		Shader.Use(gl);
+		Texture.Bind(gl, 1);
+		Shader.UniformTex(gl, "uTex0", 1);
 
-		////Bind the geometry and shader.
-		//Vao.Bind(gl);
-		//Shader.Use(gl);
-		//Texture.Bind(gl, 1);
-		//Shader.UniformTex(gl, "uTex0", 1);
+		mat4 model = trans.CreateModelMatrix();
+		mat4 view = Matrix4x4.CreateLookAt(CameraPosition, CameraPosition + CameraFront, CameraUp);
+		mat4 projection = Matrix4x4.CreatePerspectiveFieldOfView(SaltMath.DegreesToRadians(70f), (float)mainWindow.FramebufferSize.X / mainWindow.FramebufferSize.Y, 0.1f, 100.0f);
 
-		//Mat4<float> model = trans.CreateModelMatrix();
-		//Mat4<float> view = Matrix4x4.CreateLookAt(CameraPosition, CameraPosition + CameraFront, CameraUp);
-		//Mat4<float> projection = Matrix4x4.CreatePerspectiveFieldOfView(SaltMath.DegreesToRadians(70f), (float)mainWindow.FramebufferSize.X / mainWindow.FramebufferSize.Y, 0.1f, 100.0f);
+		Shader.Uniform4(gl, "uColor", new Color32(0, 255, 122));
+		Shader.UniformMat4(gl, "uMVP", model * view * projection);
 
-		//Shader.Uniform4(gl, "uColor", new Color32(0, 255, 122));
-		//Shader.UniformMat4(gl, "uMVP", model * view * projection);
+		gl.DrawElements(PrimitiveType.Triangles, (uint)Indices.Length, DrawElementsType.UnsignedInt, null);
 
-		//gl.DrawElements(PrimitiveType.Triangles, (uint)Indices.Length, DrawElementsType.UnsignedInt, null);
+		model = (mat4)trans2.CreateModelMatrix();
+		Shader.UniformMat4(gl, "uMVP", model * view * projection);
 
-		//model = (mat4)trans2.CreateModelMatrix();
-		//Shader.UniformMat4(gl, "uMVP", model * view * projection);
-
-		//gl.DrawElements(PrimitiveType.Triangles, (uint)Indices.Length, DrawElementsType.UnsignedInt, null);
+		gl.DrawElements(PrimitiveType.Triangles, (uint)Indices.Length, DrawElementsType.UnsignedInt, null);
 	}
 	public override void Update(double delta)
 	{

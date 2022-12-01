@@ -1,0 +1,14 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+	<PropertyGroup>
+		<TargetFramework>net7.0</TargetFramework>
+		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<ProjectReference Include="..\..\NiTiS.Math\NiTiS.Math\NiTiS.Math.csproj" />
+		<ProjectReference Include="..\NiTiS.Native\NiTiS.Native.csproj" />
+		<PackageReference Include="Ultz.Native.GLFW" Version="3.3.3.1" />
+	</ItemGroup>
+
+</Project>

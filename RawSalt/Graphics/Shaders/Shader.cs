@@ -1,10 +1,7 @@
 ﻿using Silk.NET.OpenGL;
-using NiTiS.Math;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
 using System.Text;
 
 namespace RawSalt.Graphics.Shaders;
@@ -14,6 +11,8 @@ namespace RawSalt.Graphics.Shaders;
 /// </summary>
 public readonly struct Shader
 {
+	private const int UniformNameMaxSize = 16;
+
 	/// <summary>
 	/// Shader handle
 	/// </summary>
@@ -149,10 +148,10 @@ public readonly struct Shader
 		
 		Dictionary<string, int> uniforms = new Dictionary<string, int>(uniformCount);
 
+		Span<byte> bytes = stackalloc byte[UniformNameMaxSize];
+
 		for (uint x=0; x<uniformCount; x++)
 		{
-			Span<byte> bytes = stackalloc byte[16];
-
 			UniformType type;
 			int size;
 			uint len;

@@ -1,8 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace NiTiS.Native;
 
@@ -10,4 +6,6 @@ namespace NiTiS.Native;
 public sealed class NativeAPIAttribute : Attribute
 {
 	public string MethodPrefix { get; init; }
+	public Type ContainerType { get; init; }
+	public APIType APIType { get; init; }
 }

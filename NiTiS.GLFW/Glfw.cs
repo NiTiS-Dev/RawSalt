@@ -1,19 +1,21 @@
-﻿using NiTiS.Native;
+﻿using NiTiS.GLFW.Enums;
+using NiTiS.Native;
 
 namespace NiTiS.GLFW;
 
 [NativeAPI(MethodPrefix = "glfw")]
-[LibraryContainer(Container = typeof(GlfwContainer))]
 public static unsafe partial class Glfw
 {
+	public const int DontCare = -1;
+
 	public static readonly delegate* unmanaged[Cdecl]<GlfwBool> Init;
 	public static readonly delegate* unmanaged[Cdecl]<void> Terminate;
 	public static readonly delegate* unmanaged[Cdecl]<GlfwInitHint, int, void> InitHint;
 	public static readonly delegate* unmanaged[Cdecl]<int*, int*, int*, void> GetVersion;
-	public static readonly delegate* unmanaged[Cdecl]<char*> GetVersionString;
-	public static readonly delegate* unmanaged[Cdecl]<char**, GlfwError> GetError;
+	public static readonly delegate* unmanaged[Cdecl]<CString> GetVersionString;
+	public static readonly delegate* unmanaged[Cdecl]<CString*, GlfwError> GetError;
 	
-	public static readonly delegate* unmanaged[Cdecl]<delegate* unmanaged[Cdecl]<GlfwError, char*, void>, delegate* unmanaged[Cdecl]<GlfwError, char*, void>> SetErrorCallback;
+	public static readonly delegate* unmanaged[Cdecl]<delegate* unmanaged[Cdecl]<GlfwError, CString, void>, delegate* unmanaged[Cdecl]<GlfwError, CString, void>> SetErrorCallback;
 
 	public static readonly delegate* unmanaged[Cdecl]<int*, GlfwMonitor**> GetMonitors;
 	public static readonly delegate* unmanaged[Cdecl]<GlfwMonitor*> GetPrimaryMonitor;
@@ -21,7 +23,7 @@ public static unsafe partial class Glfw
 	public static readonly delegate* unmanaged[Cdecl]<GlfwMonitor*, int*, int*, int*, int*, void> GetMonitorWorkarea;
 	public static readonly delegate* unmanaged[Cdecl]<GlfwMonitor*, int*, int*, void> GetMonitorPhysicalSize;
 	public static readonly delegate* unmanaged[Cdecl]<GlfwMonitor*, float*, float*, void> GetMonitorContentScale;
-	public static readonly delegate* unmanaged[Cdecl]<GlfwMonitor*, char*> GetMonitorName;
+	public static readonly delegate* unmanaged[Cdecl]<GlfwMonitor*, CString> GetMonitorName;
 	public static readonly delegate* unmanaged[Cdecl]<GlfwMonitor*, void*, void> SetMonitorUserPointer;
 	public static readonly delegate* unmanaged[Cdecl]<GlfwMonitor*, void*> GetMonitorUserPointer;
 
@@ -35,10 +37,60 @@ public static unsafe partial class Glfw
 
 
 	public static readonly delegate* unmanaged[Cdecl]<void> DefaultWindowHints;
-	public static readonly delegate* unmanaged[Cdecl]<int, int, void> WindowHint; //TODO: Ints hint, value : void https://www.glfw.org/docs/3.3/window_guide.html#window_hints
-	public static readonly delegate* unmanaged[Cdecl]<int, char*, void> WindowHintString; //TODO: Ints hint, value : void https://www.glfw.org/docs/3.3/window_guide.html#window_hints
-	public static readonly delegate* unmanaged[Cdecl]<int, int, char*, GlfwMonitor*, GlfwWindow*, GlfwWindow*> CreateWindow;
+	public static readonly delegate* unmanaged[Cdecl]<int, int, void> WindowHint;
+	public static readonly delegate* unmanaged[Cdecl]<WindowStringAttirubte, CString, void> WindowHintString;
+	public static readonly delegate* unmanaged[Cdecl]<int, int, CString, GlfwMonitor*, GlfwWindow*, GlfwWindow*> CreateWindow;
 	public static readonly delegate* unmanaged[Cdecl]<GlfwWindow*, void> DestroyWindow;
+	public static readonly delegate* unmanaged[Cdecl]<GlfwWindow*, int> WindowShouldClose;
+	public static readonly delegate* unmanaged[Cdecl]<GlfwWindow*, int, void> SetWindowShouldClose;
+	public static readonly delegate* unmanaged[Cdecl]<GlfwWindow*, CString, void> SetWindowTitle;
+	public static readonly delegate* unmanaged[Cdecl]<GlfwWindow*, int, GlfwImage*, void> SetWindowIcon;
+	public static readonly delegate* unmanaged[Cdecl]<GlfwWindow*, int*, int*, void> GetWindowPos;
+	public static readonly delegate* unmanaged[Cdecl]<GlfwWindow*, int, int, void> SetWindowPos;
+	public static readonly delegate* unmanaged[Cdecl]<GlfwWindow*, int*, int*, void> GetWindowSize;
+	public static readonly delegate* unmanaged[Cdecl]<GlfwWindow*, int, int, void> SetWindowSize;
+	public static readonly delegate* unmanaged[Cdecl]<GlfwWindow*, int, int, int, int, void> SetWindowSizeLimits;
+	public static readonly delegate* unmanaged[Cdecl]<GlfwWindow*, int, int, void> SetWindowAspectRatio;
+	public static readonly delegate* unmanaged[Cdecl]<GlfwWindow*, int*, int*, void> GetFramebufferSize;
+	public static readonly delegate* unmanaged[Cdecl]<GlfwWindow*, int*, int*, int*, int*, void> GetWindowFrameSize;
+	public static readonly delegate* unmanaged[Cdecl]<GlfwWindow*, float*, float*, void> GetWindowContentScale;
+	public static readonly delegate* unmanaged[Cdecl]<GlfwWindow*, float> GetWindowOpacity;
+	public static readonly delegate* unmanaged[Cdecl]<GlfwWindow*, float, void> SetWindowOpacity;
+	public static readonly delegate* unmanaged[Cdecl]<GlfwWindow*, void> IconifyWindow;
+	public static readonly delegate* unmanaged[Cdecl]<GlfwWindow*, void> RestoreWindow;
+	public static readonly delegate* unmanaged[Cdecl]<GlfwWindow*, void> MaximizeWindow;
+	public static readonly delegate* unmanaged[Cdecl]<GlfwWindow*, void> ShowWindow;
+	public static readonly delegate* unmanaged[Cdecl]<GlfwWindow*, void> HideWindow;
+	public static readonly delegate* unmanaged[Cdecl]<GlfwWindow*, void> FocusWindow;
+	public static readonly delegate* unmanaged[Cdecl]<GlfwWindow*, void> RequestWindowAttention;
+	public static readonly delegate* unmanaged[Cdecl]<GlfwWindow*, GlfwMonitor*> GetWindowMonitor;
+	public static readonly delegate* unmanaged[Cdecl]<GlfwWindow*, GlfwMonitor*, int, int, int, int, int, void> SetWindowMonitor;
+
+	public static readonly delegate* unmanaged[Cdecl]<GlfwWindow*, WindowAttributeGetter, GlfwBool> GetWindowAttrib;
+	public static readonly delegate* unmanaged[Cdecl]<GlfwWindow*, WindowAttributeSetter, GlfwBool, void> SetWindowAttrib;
+
+	public static readonly delegate* unmanaged[Cdecl]<GlfwWindow*, void*> GetWindowUserPointer;
+	public static readonly delegate* unmanaged[Cdecl]<GlfwWindow*, void*, void> SetWindowUserPointer;
+
+	public static readonly delegate* unmanaged[Cdecl]<GlfwWindow*, delegate* unmanaged[Cdecl]<GlfwWindow*, int, int, void>, delegate* unmanaged[Cdecl]<GlfwWindow*, int, int, void>> SetWindowPosCallback;
+	public static readonly delegate* unmanaged[Cdecl]<GlfwWindow*, delegate* unmanaged[Cdecl]<GlfwWindow*, int, int, void>, delegate* unmanaged[Cdecl]<GlfwWindow*, int, int, void>> SetWindowSizeCallback;
+	public static readonly delegate* unmanaged[Cdecl]<GlfwWindow*, delegate* unmanaged[Cdecl]<GlfwWindow*, void>, delegate* unmanaged[Cdecl]<GlfwWindow*, void>> SetWindowCloseCallback;
+	public static readonly delegate* unmanaged[Cdecl]<GlfwWindow*, delegate* unmanaged[Cdecl]<GlfwWindow*, void>, delegate* unmanaged[Cdecl]<GlfwWindow*, void>> SetWindowRefreshCallback;
+	public static readonly delegate* unmanaged[Cdecl]<GlfwWindow*, delegate* unmanaged[Cdecl]<GlfwWindow*, int, void>, delegate* unmanaged[Cdecl]<GlfwWindow*, int, void>> SetWindowFocusCallback;
+	public static readonly delegate* unmanaged[Cdecl]<GlfwWindow*, delegate* unmanaged[Cdecl]<GlfwWindow*, int, void>, delegate* unmanaged[Cdecl]<GlfwWindow*, int, void>> SetWindowIconifyCallback;
+	public static readonly delegate* unmanaged[Cdecl]<GlfwWindow*, delegate* unmanaged[Cdecl]<GlfwWindow*, int, void>, delegate* unmanaged[Cdecl]<GlfwWindow*, int, void>> SetWindowMaximizeCallback;
+	public static readonly delegate* unmanaged[Cdecl]<GlfwWindow*, delegate* unmanaged[Cdecl]<GlfwWindow*, int, int, void>, delegate* unmanaged[Cdecl]<GlfwWindow*, int, int, void>> SetFramebufferSizeCallback;
+	public static readonly delegate* unmanaged[Cdecl]<GlfwWindow*, delegate* unmanaged[Cdecl]<GlfwWindow*, float, float, void>, delegate* unmanaged[Cdecl]<GlfwWindow*, float, float, void>> SetWindowContentScaleCallback;
+	public static readonly delegate* unmanaged[Cdecl]<void> PollEvents;
+	public static readonly delegate* unmanaged[Cdecl]<void> WaitEvents;
+	public static readonly delegate* unmanaged[Cdecl]<double, void> WaitEventsTimeout;
+	public static readonly delegate* unmanaged[Cdecl]<double, void> PostEmptyEvent;
+	public static readonly delegate* unmanaged[Cdecl]<GlfwWindow*, void> SwapBuffers;
+	public static readonly delegate* unmanaged[Cdecl]<int, void> SwapInterval;
+
+	public static readonly delegate* unmanaged[Cdecl]<GlfwWindow*, void> MakeContextCurrent;
+	public static readonly delegate* unmanaged[Cdecl]<CString, void*> GetProcAddress;
+
 
 
 
@@ -49,7 +101,7 @@ public static unsafe partial class Glfw
 		NativeAPI.Initialize(typeof(Glfw));
 	}
 
-	private class GlfwContainer : INativeLibraryContainer
+	private class __import : INativeLibraryContainer
 	{
 		public string WindowsX86 => "glfw3.dll";
 		public string WindowsX64
@@ -60,5 +112,8 @@ public static unsafe partial class Glfw
 		public string MacOS => "libglfw.3.dylib";
 		public string IOS
 			=> MacOS;
+
+		public LibFileSearchPath SearchType
+			=> LibFileSearchPath.NearByExeFile;
 	}
 }

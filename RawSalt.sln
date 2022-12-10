@@ -18,11 +18,15 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Test1", "samples\Test1\Test
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NiTiS.Math", "..\NiTiS.Math\NiTiS.Math\NiTiS.Math.csproj", "{51EA5800-DF87-4CA1-9CB0-BAC36AF97043}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NiTiS.Native", "NiTiS.Native\NiTiS.Native.csproj", "{2CCC303D-6F22-431E-81F2-1D0FB4FE5C64}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NiTiS.Native", "NiTiS.Native\NiTiS.Native.csproj", "{2CCC303D-6F22-431E-81F2-1D0FB4FE5C64}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NiTiS.GLFW", "NiTiS.GLFW\NiTiS.GLFW.csproj", "{BC46120E-9142-45D7-A337-A318E25F339A}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NiTiS.GLFW", "NiTiS.GLFW\NiTiS.GLFW.csproj", "{BC46120E-9142-45D7-A337-A318E25F339A}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Test2", "samples\Test2\Test2.csproj", "{36E09BB0-A2CD-4360-882A-E141D8A22EF3}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Test2", "samples\Test2\Test2.csproj", "{36E09BB0-A2CD-4360-882A-E141D8A22EF3}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NiTiS.GLFW.OpenGL", "NiTiS.GLFW.OpenGL\NiTiS.GLFW.OpenGL.csproj", "{8FD858F0-F7B8-467E-A3F5-4A8078877E0A}"
+EndProject
+Project("{D954291E-2A0B-460D-934E-DC6B0785DB48}") = "NiTiS.OpenGL", "NiTiS.OpenGL\NiTiS.OpenGL.shproj", "{D23DA50F-6AB1-4864-9C05-5DE08E95CC08}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -54,11 +58,19 @@ Global
 		{36E09BB0-A2CD-4360-882A-E141D8A22EF3}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{36E09BB0-A2CD-4360-882A-E141D8A22EF3}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{36E09BB0-A2CD-4360-882A-E141D8A22EF3}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8FD858F0-F7B8-467E-A3F5-4A8078877E0A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8FD858F0-F7B8-467E-A3F5-4A8078877E0A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8FD858F0-F7B8-467E-A3F5-4A8078877E0A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8FD858F0-F7B8-467E-A3F5-4A8078877E0A}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {DD677B4C-644C-4BA7-A5A9-285245748AE2}
+	EndGlobalSection
+	GlobalSection(SharedMSBuildProjectFiles) = preSolution
+		NiTiS.OpenGL\NiTiS.OpenGL.projitems*{8fd858f0-f7b8-467e-a3f5-4a8078877e0a}*SharedItemsImports = 5
+		NiTiS.OpenGL\NiTiS.OpenGL.projitems*{d23da50f-6ab1-4864-9c05-5de08e95cc08}*SharedItemsImports = 13
 	EndGlobalSection
 EndGlobal

@@ -1,0 +1,18 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+	<PropertyGroup>
+		<TargetFramework>net7.0</TargetFramework>
+		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+		<NoWarn>IDE1006</NoWarn>
+		<DefineConstants>GLFW</DefineConstants>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<ProjectReference Include="..\..\NiTiS.Math\NiTiS.Math\NiTiS.Math.csproj" />
+		<ProjectReference Include="..\NiTiS.GLFW\NiTiS.GLFW.csproj" />
+		<ProjectReference Include="..\NiTiS.Native\NiTiS.Native.csproj" />
+	</ItemGroup>
+
+	<Import Project="..\NiTiS.OpenGL\NiTiS.OpenGL.projitems" Label="Shared" />
+
+</Project>

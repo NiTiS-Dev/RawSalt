@@ -1,9 +1,11 @@
 ﻿using NiTiS.Core;
 using NiTiS.IO;
 using NiTiS.Math;
+using NiTiS.Native;
 using RawSalt;
 using RawSalt.App.Desktop;
 using RawSalt.Engine;
+using Silk.NET.GLFW;
 using Silk.NET.Input;
 using Silk.NET.OpenGL;
 using Silk.NET.Windowing;
@@ -98,7 +100,6 @@ public unsafe class TestApplication : DesktopApplication
 			Title = "Test 1",
 			IsVisible = true,
 		};
-
 		TestApplication apl = new TestApplication(options);
 
 		apl.Run();
@@ -106,9 +107,11 @@ public unsafe class TestApplication : DesktopApplication
 	private static IKeyboard primaryKeyboard;
 	public override unsafe void Initialize()
 	{
+		NativeAPI.Initialize(typeof(NiTiS.OpenGL.GL));
+
 		base.Initialize();
-		gl.ClearColor(Color.White);
-		//sGL.glClearColor(0f, 255f, 0f, 255f);
+		//gl.ClearColor(Color.White);
+		NiTiS.OpenGL.GL.ClearColor(0f, 255f, 0f, 255f);
 
 		gl.Enable(EnableCap.DepthTest);
 		//gl.Enable(EnableCap.CullFace);
@@ -125,14 +128,14 @@ public unsafe class TestApplication : DesktopApplication
 		Vao.Bind(gl);
 
 		//Initializing a vertex buffer that holds the vertex data.
-		Vbo = new(gl, BufferTargetARB.ArrayBuffer);
-		Vbo.Bind(gl);
-		Vbo.Data(gl, Vertices);
+		Vbo = new(NiTiS.OpenGL.BufferType.ArrayBuffer);
+		Vbo.Bind();
+		Vbo.Data(Vertices);
 
 		//Initializing a element buffer that holds the index data.
-		Ebo = new(gl, BufferTargetARB.ElementArrayBuffer);
-		Ebo.Bind(gl);
-		Ebo.Data(gl, Indices);
+		Ebo = new(NiTiS.OpenGL.BufferType.ElementArrayBuffer);
+		Ebo.Bind();
+		Ebo.Data(Indices);
 
 		Shader = Shader.Create(gl, new File("shader.vert").ReadAllText(), new File("shader.frag").ReadAllText());
 
@@ -220,8 +223,8 @@ public unsafe class TestApplication : DesktopApplication
 	{
 		base.Closing();
 
-		Vbo.Dispose(gl);
-		Ebo.Dispose(gl);
+		Vbo.Dispose();
+		Ebo.Dispose();
 		Vao.Dispose(gl);
 		Shader.Dispose(gl);
 		Texture.Dispose(gl);

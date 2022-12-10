@@ -9,6 +9,7 @@
 	</PropertyGroup>
 
 	<ItemGroup>
+		<ProjectReference Include="..\..\NiTiS.GLFW.OpenGL\NiTiS.GLFW.OpenGL.csproj" />
 		<ProjectReference Include="..\..\RawSalt\RawSalt.csproj" />
 		<!-- PackageReference Include="BenchmarkDotNet" Version="0.13.2" /-->
 	</ItemGroup>

@@ -2,49 +2,101 @@
 using System;
 using System.IO;
 using System.Reflection;
+using System.Text;
 
 namespace NiTiS.Native;
 
 public static unsafe class NativeAPI
 {
-	public static void Initialize(Type sType)
+	public static void Initialize(Type tAPI, delegate* unmanaged[Cdecl]<CString, void*> context = null)
 	{
-		NativeLibraryLoader loader = NativeLibraryLoader.GetPlatformDefaultLoader();
+		NativeAPIAttribute api = tAPI.GetCustomAttribute<NativeAPIAttribute>();
 
-		string methodPrefix = sType.GetCustomAttribute<NativeAPIAttribute>()?.MethodPrefix;
+		if (api is null)
+			throw new APIException($"Type {tAPI.FullName} has no one {typeof(NativeAPIAttribute).FullName} attribute");
 
-		Type containerType = sType.GetCustomAttribute<LibraryContainerAttribute>().Container;
-
-		if (containerType.IsAssignableTo(typeof(INativeLibraryContainer)))
+		// Init via context
+		if (api.APIType is APIType.Contextual)
 		{
-			INativeLibraryContainer container = (INativeLibraryContainer)Activator.CreateInstance(containerType);
+			if (context is null)
+				throw new APIException("Contextual API has no context");
 
-			string libName = container.Machine();
+			const int BufferSize = 48;
 
-			LibraryHandle* handle = loader.LoadLibrary(libName);
-
-			if (handle is null)
+			Span<byte> nameBuffer = stackalloc byte[BufferSize];
+			fixed (byte* pNameBuffer = nameBuffer)
 			{
-				string newName = Path.Combine(loader.AlternatePath, libName);
-
-				handle = loader.LoadLibrary(newName);
-
-				if (handle != null)
+				foreach (FieldInfo fi in tAPI.GetRuntimeFields())
 				{
-					foreach (FieldInfo fi in sType.GetRuntimeFields())
-					{
-						string entryPoint = fi.GetCustomAttribute<NativeNameAttribute>()?.EntryPoint ?? methodPrefix + fi.Name;
+					Console.WriteLine(fi);
+					if (fi.IsLiteral)
+						continue;
 
-						fi.SetValue(null, (nint)loader.GetMethodAddress(handle, entryPoint));
-					}
+					string methodName = fi.GetCustomAttribute<NativeNameAttribute>()?.EntryPoint ?? api.MethodPrefix + fi.Name;
 
-					return;
+					byte[] buffer = Encoding.UTF8.GetBytes(methodName);
+
+					if (buffer.Length >= BufferSize)
+						throw new APIException($"Method {methodName} has too long name");
+
+					MemoryExtensions.CopyTo(buffer, nameBuffer);
+
+					nameBuffer[buffer.Length] = 0; // aka '\0'
+
+					nint procaddress;
+
+					procaddress = (nint)context(pNameBuffer);
+
+					if (procaddress is 0)
+						throw new APIException($"Context has no one method called {methodName}");
+
+					// Boxing );
+					fi.SetValue(null, procaddress, BindingFlags.ExactBinding, null, null);
 				}
 			}
-			
-			throw new Exception("Unable to load: " + libName);
 		}
+		// Init via lib
 		else
-			throw new Exception($"API has no {nameof(INativeLibraryContainer)}");
+		{
+			NativeLibraryLoader loader = NativeLibraryLoader.GetPlatformDefaultLoader();
+
+			Type tImport = api.ContainerType ?? tAPI.GetNestedType("__import", BindingFlags.Instance | BindingFlags.Static | BindingFlags.NonPublic);
+
+			LibraryHandle* handle;
+
+			if (tImport.IsAssignableTo(typeof(INativeLibraryContainer)))
+			{
+				INativeLibraryContainer container = Activator.CreateInstance(tImport) as INativeLibraryContainer;
+
+				string libFileName = container.Machine();
+
+				if (container.SearchType is LibFileSearchPath.ByPathVariable)
+				{
+					libFileName = new FileInfo(libFileName).FullName;
+					
+					handle = loader.LoadLibrary(libFileName);
+				}
+				else
+				{
+					handle = loader.LoadLibrary(libFileName);
+
+					if (handle is null)
+					{
+						libFileName = Path.Combine(loader.AlternatePath, libFileName);
+						handle = loader.LoadLibrary(libFileName);
+					}
+				}
+
+				foreach (FieldInfo fi in tAPI.GetRuntimeFields())
+				{
+					if (fi.IsLiteral)
+						continue;
+
+					nint procaddress = (nint)loader.GetMethodAddress(handle, fi.GetCustomAttribute<NativeNameAttribute>()?.EntryPoint ?? api.MethodPrefix + fi.Name);
+
+					fi.SetValue(null, procaddress, BindingFlags.DeclaredOnly, null, null);
+				}
+			}
+		}
 	}
 }

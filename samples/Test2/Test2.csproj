@@ -7,7 +7,7 @@
 	</PropertyGroup>
 
 	<ItemGroup>
-		<ProjectReference Include="..\..\NiTiS.GLFW\NiTiS.GLFW.csproj" />
+	  <ProjectReference Include="..\..\NiTiS.GLFW.OpenGL\NiTiS.GLFW.OpenGL.csproj" />
 	</ItemGroup>
 
 </Project>

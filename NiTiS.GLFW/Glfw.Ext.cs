@@ -3,7 +3,7 @@
 namespace NiTiS.GLFW;
 public unsafe partial class Glfw
 {
-	public static string VersionString => Marshal.PtrToStringUTF8((nint)GetVersionString());
+	public static string VersionString => GetVersionString().ToString();
 	public static (int major, int minor, int rev) Version
 	{
 		get

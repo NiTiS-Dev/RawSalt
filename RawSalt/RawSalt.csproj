@@ -9,6 +9,7 @@
 	</PropertyGroup>
 
 	<ItemGroup>
+		<!-- Probably i cancel to use Silk.NET in future... -->
 		<PackageReference Include="Silk.NET.Input" Version="2.16.0" />
 		<PackageReference Include="Silk.NET.OpenGL" Version="2.16.0" />
 		<PackageReference Include="Silk.NET.Windowing.Common" Version="2.16.0" />
@@ -24,7 +25,8 @@
 	</ItemGroup>
 
 	<ItemGroup>
-	  <ProjectReference Include="..\..\NiTiS.Math\NiTiS.Math\NiTiS.Math.csproj" />
+	  <ProjectReference Condition="$(NITIS_LIB_LOCAL)!=''" Include="..\..\NiTiS.Math\NiTiS.Math\NiTiS.Math.csproj" />
+	  <ProjectReference Include="..\NiTiS.GLFW.OpenGL\NiTiS.GLFW.OpenGL.csproj" />
 	  <ProjectReference Include="..\NiTiS.Native\NiTiS.Native.csproj" />
 	</ItemGroup>
 </Project>

@@ -1,4 +1,4 @@
-﻿namespace NiTiS.GLFW.Enums;
+﻿namespace NiTiS.GLFW;
 
 public enum ClientAPI
 {

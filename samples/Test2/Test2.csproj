@@ -8,6 +8,7 @@
 
 	<ItemGroup>
 	  <ProjectReference Include="..\..\NiTiS.OpenGL\NiTiS.OpenGL.csproj" />
+	  <ProjectReference Include="..\..\NiTiS.Windowing.GLFW\NiTiS.Windowing.GLFW.csproj" />
 	</ItemGroup>
 
 </Project>

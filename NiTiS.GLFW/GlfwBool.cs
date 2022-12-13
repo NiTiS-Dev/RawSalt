@@ -3,5 +3,5 @@
 public enum GlfwBool : int
 {
 	True  =  1,
-	False = -1
+	False = 0
 }

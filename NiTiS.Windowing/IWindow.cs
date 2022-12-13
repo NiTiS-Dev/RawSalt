@@ -16,8 +16,3 @@ public interface IWindow
 
 	string? WindowClassName { get; }
 }
-
-public interface IWindowHost
-{
-	IWindow CreateWindow();
-}

@@ -2,8 +2,8 @@
 using NiTiS.GLFW.Enums;
 using NiTiS.Native;
 using NiTiS.OpenGL;
+using NiTiS.Windowing.GLFW;
 using System;
-using System.Runtime.InteropServices;
 
 internal unsafe class Program
 {
@@ -13,11 +13,13 @@ internal unsafe class Program
 		{
 			if (GlfwBool.True == Glfw.Init())
 			{
-				GlfwWindow* window;
+				GlfwWindow window = new();
+
+				GlfwWindowHandle* pWindow;
 
 				ReadOnlySpan<byte> text = "Hello World"u8;
 
-				Span<byte> text2 = new(GC.AllocateUninitializedArray<byte>(text.Length, true));
+				Span<byte> text2 = stackalloc byte[text.Length];
 
 				text.CopyTo(text2);
 
@@ -40,7 +42,9 @@ internal unsafe class Program
 
 				Glfw.SwapInterval(1);
 
-				GL.ClearColor(1f, 1f, 1f, 1f);
+				Glfw.PrepareForOpenGL();
+
+				GL.ClearColor(1f, 0f, 1f, 1f);
 				while (0 == Glfw.WindowShouldClose(window))
 				{
 					GL.Clear(ClearBufferMask.ColorBufferBit);

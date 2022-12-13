@@ -7,6 +7,7 @@
 
 	<ItemGroup>
 		<ProjectReference Include="..\..\NiTiS.Math\NiTiS.Math\NiTiS.Math.csproj" />
+		<ProjectReference Include="..\NiTiS.Internal.ContextualAPI\NiTiS.Internal.ContextualAPI.csproj" />
 		<ProjectReference Include="..\NiTiS.Native\NiTiS.Native.csproj" />
 		<PackageReference Include="Ultz.Native.GLFW" Version="3.3.3.1" />
 	</ItemGroup>

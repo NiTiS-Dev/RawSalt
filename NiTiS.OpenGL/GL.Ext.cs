@@ -7,9 +7,10 @@ public static unsafe partial class GL
 {
 	static GL()
 	{
-#if GLFW
-		NativeAPI.Initialize(typeof(GL), GLFW.Glfw.GetProcAddress);
-#endif
+		if (NiTiS.Internal.ContextualAPI.ContextualStorage.openGL is null)
+			throw new Exception("OpenGL has no context");
+
+		NativeAPI.Initialize(typeof(GL), NiTiS.Internal.ContextualAPI.ContextualStorage.openGL);
 	}
 	public static uint CreateBuffer()
 	{

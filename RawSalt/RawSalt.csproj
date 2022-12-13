@@ -26,7 +26,6 @@
 
 	<ItemGroup>
 	  <ProjectReference Condition="$(NITIS_LIB_LOCAL)!=''" Include="..\..\NiTiS.Math\NiTiS.Math\NiTiS.Math.csproj" />
-	  <ProjectReference Include="..\NiTiS.GLFW.OpenGL\NiTiS.GLFW.OpenGL.csproj" />
 	  <ProjectReference Include="..\NiTiS.Native\NiTiS.Native.csproj" />
 	</ItemGroup>
 </Project>

@@ -6,15 +6,15 @@ namespace NiTiS.OpenGL;
 public static unsafe partial class GL
 {
 	#region Clear
-	public static readonly delegate* unmanaged[Cdecl]<float, float, float, float, void> ClearColor;
-	public static readonly delegate* unmanaged[Cdecl]<ClearBufferMask, void> Clear;
+	public static delegate* unmanaged[Cdecl]<float, float, float, float, void> ClearColor;
+	public static delegate* unmanaged[Cdecl]<ClearBufferMask, void> Clear;
 	#endregion
 	#region Buffers
-	public static readonly delegate* unmanaged[Cdecl]<uint, uint*, void> CreateBuffers;
-	public static readonly delegate* unmanaged[Cdecl]<BufferType, uint, void> BindBuffer;
-	public static readonly delegate* unmanaged[Cdecl]<BufferType, nuint, void*, BufferUsage, void> BufferData;
-	public static readonly delegate* unmanaged[Cdecl]<BufferType, nint, nuint, void*, void> BufferSubData;
-	public static readonly delegate* unmanaged[Cdecl]<uint, uint*, void> DeleteBuffers;
+	public static delegate* unmanaged[Cdecl]<uint, uint*, void> CreateBuffers;
+	public static delegate* unmanaged[Cdecl]<BufferType, uint, void> BindBuffer;
+	public static delegate* unmanaged[Cdecl]<BufferType, nuint, void*, BufferUsage, void> BufferData;
+	public static delegate* unmanaged[Cdecl]<BufferType, nint, nuint, void*, void> BufferSubData;
+	public static delegate* unmanaged[Cdecl]<uint, uint*, void> DeleteBuffers;
 	#endregion
 
 

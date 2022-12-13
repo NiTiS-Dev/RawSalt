@@ -1,6 +1,4 @@
-﻿using System.Runtime.InteropServices;
-
-namespace NiTiS.GLFW;
+﻿namespace NiTiS.GLFW;
 public unsafe partial class Glfw
 {
 	public static string VersionString => GetVersionString().ToString();
@@ -14,5 +12,12 @@ public unsafe partial class Glfw
 
 			return (vers[0], vers[1], vers[2]);
 		}
+	}
+	/// <summary>
+	/// Prepare GLFW for OpenGL calls
+	/// </summary>
+	public static void PrepareForOpenGL()
+	{
+		NiTiS.Internal.ContextualAPI.ContextualStorage.openGL = GetProcAddress;
 	}
 }

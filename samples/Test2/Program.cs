@@ -21,14 +21,17 @@ internal unsafe class Program
 						Profile = ContextAPIProfile.Core,
 						Version = new(3, 3)
 					},
-					Border = WindowBorder.FixedSize,
+					Border = WindowBorder.Hidden,
+					TransparentFramebuffer = true,
+					PreferredBitDepth = new(8, 8, 8, 8),
 				});
 
 				window.Initialize();
 
 				Glfw.PrepareForOpenGL();
 
-				GL.ClearColor(1f, 0f, 1f, 1f);
+				GL.ClearColor(1f, 0f, 1f, 0f);
+
 				while (true)
 				{
 					GL.Clear(ClearBufferMask.ColorBufferBit);
@@ -42,7 +45,6 @@ internal unsafe class Program
 					if (error != GlfwError.NoError)
 						Console.WriteLine("Glfw error: " + error);
 
-					
 				}
 			}
 		}

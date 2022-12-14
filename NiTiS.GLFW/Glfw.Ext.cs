@@ -34,7 +34,7 @@ public unsafe partial class Glfw
 	}
 	public static void SetWindowHint(WindowHintInt attr, int value)
 	{
-		Glfw.WindowHint((int)attr, (int)value);
+		Glfw.WindowHint((int)attr, value);
 	}
 	public static void SetWindowHint(WindowHintOpenGLProfile attr, OpenGLProfile value)
 	{

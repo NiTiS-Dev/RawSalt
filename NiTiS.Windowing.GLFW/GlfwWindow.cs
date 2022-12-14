@@ -18,21 +18,22 @@ public unsafe class GlfwWindow : Window
 		if (options.Title?.Length <= 0)
 			throw new ArgumentException("The window name must be set and non empty");
 
-		// Title
-		int bufferSize = Encoding.UTF8.GetByteCount(options.Title) + 1;
-		Span<byte> chars = stackalloc byte[bufferSize];
-
-		Encoding.UTF8.GetBytes(options.Title, chars);
-
-		chars[bufferSize -1] = 0;
-
-		// Handle
-		fixed (byte* pTitle = chars)
+		//Border
+		switch (options.Border)
 		{
-			handle = Glfw.CreateWindow(options.Size.X, options.Size.Y, pTitle, null, null);
+			case WindowBorder.Resizable:
+				Glfw.SetWindowHint(WindowHintBool.Resizable, true);
+				Glfw.SetWindowHint(WindowHintBool.Decorated, true);
+				break;
+			case WindowBorder.Hidden:
+				Glfw.SetWindowHint(WindowHintBool.Resizable, false);
+				Glfw.SetWindowHint(WindowHintBool.Decorated, false);
+				break;
+			case WindowBorder.FixedSize:
+				Glfw.SetWindowHint(WindowHintBool.Resizable, false);
+				Glfw.SetWindowHint(WindowHintBool.Decorated, true);
+				break;
 		}
-
-		Glfw.MakeContextCurrent(handle);
 
 		// API
 		Glfw.SetWindowHint(WindowHintContextAPI.ContextCreationApi, ContextAPI.NativeContext);
@@ -47,16 +48,43 @@ public unsafe class GlfwWindow : Window
 			ContextAPIProfile.Compatability => OpenGLProfile.Compatibility,
 			_ => OpenGLProfile.Any,
 		});
-		Glfw.SetWindowAttrib(handle, WindowHintSetter.Decorated, options.HasBorder.ToGlfw());
-		Glfw.SetWindowHint(WindowHintBool.Focused, true);
+
+		if (options.IsVisible)
+			Glfw.SetWindowHint(WindowHintBool.Focused, true);
 
 		Glfw.SetWindowHint(WindowHintInt.ContextVersionMajor, options.Graphics.Version.Major);
 		Glfw.SetWindowHint(WindowHintInt.ContextVersionMinor, options.Graphics.Version.Minor);
 
-		Glfw.PrepareForOpenGL();
+		Glfw.SetWindowHint(WindowHintString.X11ClassName, options.ClassName);
 
-		// Window props
-		Glfw.SetWindowAttrib(handle, WindowHintSetter.Floating, options.AlwaysOnTop.ToGlfw());
+		// Video mode
+		Glfw.SetWindowHint(WindowHintInt.RefreshRate, options.RefreshRate ?? Glfw.DontCare);
+		Glfw.SetWindowHint(WindowHintInt.DepthBits,   options.PreferredDepthBufferBits ?? Glfw.DontCare);
+		Glfw.SetWindowHint(WindowHintInt.StencilBits, options.PreferredStencilBufferBits ?? Glfw.DontCare);
+
+		Glfw.SetWindowHint(WindowHintInt.RedBits,   options.PreferredBitDepth?.X ?? Glfw.DontCare);
+		Glfw.SetWindowHint(WindowHintInt.GreenBits, options.PreferredBitDepth?.Y ?? Glfw.DontCare);
+		Glfw.SetWindowHint(WindowHintInt.BlueBits,  options.PreferredBitDepth?.Z ?? Glfw.DontCare);
+		Glfw.SetWindowHint(WindowHintInt.AlphaBits, options.PreferredBitDepth?.W ?? Glfw.DontCare);
+
+		Glfw.SetWindowHint(WindowHintBool.TransparentFramebuffer, options.TransparentFramebuffer);
+
+		Glfw.SetWindowHint(WindowHintInt.Samples, options.Samples ?? Glfw.DontCare);
+
+
+		// Title
+		int bufferSize = Encoding.UTF8.GetByteCount(options.Title) + 1;
+		Span<byte> chars = stackalloc byte[bufferSize];
+
+		Encoding.UTF8.GetBytes(options.Title, chars);
+
+		chars[bufferSize - 1] = 0;
+
+		// Handle
+		fixed (byte* pTitle = chars)
+		{
+			handle = Glfw.CreateWindow(options.Size.X, options.Size.Y, pTitle, null, null);
+		}
 
 		switch (options.Border)
 		{
@@ -66,10 +94,28 @@ public unsafe class GlfwWindow : Window
 			case WindowBorder.FixedSize:
 				Glfw.SetWindowAttrib(handle, WindowHintSetter.Resizable, GlfwBool.False);
 				break;
-				
+
 		}
 
-		Glfw.SetWindowHint(WindowHintString.X11ClassName, options.ClassName);
+
+		//Show|Hide window
+		if (options.IsVisible)
+			Glfw.ShowWindow(handle);
+		else
+			Glfw.HideWindow(handle);
+
+		if (options.Graphics.API is ContextAPIType.OpenGL)
+		{
+			Glfw.MakeContextCurrent(handle);
+			Glfw.PrepareForOpenGL();
+		}
+
+
+		GlfwError error = Glfw.GetError(null);
+		if (error != GlfwError.NoError)
+		{
+			throw new Exception($"Glfw error: " + error);
+		}
 
 		base.Initialize();
 	}
@@ -148,7 +194,22 @@ public unsafe class GlfwWindow : Window
 			: Glfw.GetWindowAttrib(handle, WindowHintGetter.Floating) == GlfwBool.True
 			;
 	}
-	public override bool TransperentFramebuffer { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+	public override bool TransperentFramebuffer
+	{
+		set
+		{
+			options.TransparentFramebuffer = value;
+
+			if (!isInitialized)
+				return;
+
+			Glfw.SetWindowHint(WindowHintBool.TransparentFramebuffer, value);
+		}
+		get => !isInitialized
+			? options.TransparentFramebuffer
+			: Glfw.GetWindowAttrib(handle, WindowHintGetter.TransparentFramebuffer) == GlfwBool.True
+			;
+	}
 	public override Vector2D<int> Position { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
 	public override Vector2D<int> Size { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
 	public override WindowState State { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }

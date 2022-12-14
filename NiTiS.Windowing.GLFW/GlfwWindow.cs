@@ -35,41 +35,41 @@ public unsafe class GlfwWindow : Window
 		Glfw.MakeContextCurrent(handle);
 
 		// API
-		Glfw.SetWindowHint(WindowContextAPIAttribute.ContextCreationApi, ContextAPI.NativeContext);
-		Glfw.SetWindowHint(WindowClientAPIAttribute.ClientApi, options.Graphics.API switch
+		Glfw.SetWindowHint(WindowHintContextAPI.ContextCreationApi, ContextAPI.NativeContext);
+		Glfw.SetWindowHint(WindowHintClientAPI.ClientApi, options.Graphics.API switch
 		{
 			ContextAPIType.OpenGL => ClientAPI.OpenGL,
 			_ => ClientAPI.NoAPI,
 		});
-		Glfw.SetWindowHint(WindowOpenGLProfileAttribute.OpenGlProfile, options.Graphics.Profile switch
+		Glfw.SetWindowHint(WindowHintOpenGLProfile.OpenGlProfile, options.Graphics.Profile switch
 		{
 			ContextAPIProfile.Core => OpenGLProfile.Core,
 			ContextAPIProfile.Compatability => OpenGLProfile.Compatibility,
 			_ => OpenGLProfile.Any,
 		});
-		Glfw.SetWindowAttrib(handle, WindowAttributeSetter.Decorated, options.HasBorder.ToGlfw());
-		Glfw.SetWindowHint(WindowBoolAttribute.Focused, true);
+		Glfw.SetWindowAttrib(handle, WindowHintSetter.Decorated, options.HasBorder.ToGlfw());
+		Glfw.SetWindowHint(WindowHintBool.Focused, true);
 
-		Glfw.SetWindowHint(WindowIntAttribute.ContextVersionMajor, options.Graphics.Version.Major);
-		Glfw.SetWindowHint(WindowIntAttribute.ContextVersionMinor, options.Graphics.Version.Minor);
+		Glfw.SetWindowHint(WindowHintInt.ContextVersionMajor, options.Graphics.Version.Major);
+		Glfw.SetWindowHint(WindowHintInt.ContextVersionMinor, options.Graphics.Version.Minor);
 
 		Glfw.PrepareForOpenGL();
 
 		// Window props
-		Glfw.SetWindowAttrib(handle, WindowAttributeSetter.Floating, options.AlwaysOnTop.ToGlfw());
+		Glfw.SetWindowAttrib(handle, WindowHintSetter.Floating, options.AlwaysOnTop.ToGlfw());
 
 		switch (options.Border)
 		{
 			case WindowBorder.Resizable:
-				Glfw.SetWindowAttrib(handle, WindowAttributeSetter.Resizable, GlfwBool.True);
+				Glfw.SetWindowAttrib(handle, WindowHintSetter.Resizable, GlfwBool.True);
 				break;
 			case WindowBorder.FixedSize:
-				Glfw.SetWindowAttrib(handle, WindowAttributeSetter.Resizable, GlfwBool.False);
+				Glfw.SetWindowAttrib(handle, WindowHintSetter.Resizable, GlfwBool.False);
 				break;
 				
 		}
 
-		Glfw.SetWindowHint(WindowStringAttirubte.X11ClassName, options.ClassName);
+		Glfw.SetWindowHint(WindowHintString.X11ClassName, options.ClassName);
 
 		base.Initialize();
 	}
@@ -124,12 +124,12 @@ public unsafe class GlfwWindow : Window
 			if (!isInitialized)
 				return;
 
-			Glfw.WindowHint((int)WindowBoolAttribute.Visible, (int)(value ? GlfwBool.True : GlfwBool.False));
+			Glfw.WindowHint((int)WindowHintBool.Visible, (int)(value ? GlfwBool.True : GlfwBool.False));
 		}
 		get
 			=> !isInitialized
 			? options.IsVisible
-			: Glfw.GetWindowAttrib(handle, WindowAttributeGetter.Visible) == GlfwBool.True
+			: Glfw.GetWindowAttrib(handle, WindowHintGetter.Visible) == GlfwBool.True
 			;
 	}
 	public override bool AlwaysOnTop
@@ -141,11 +141,11 @@ public unsafe class GlfwWindow : Window
 			if (!isInitialized)
 				return;
 
-			Glfw.SetWindowAttrib(handle, WindowAttributeSetter.Floating, value ? GlfwBool.True : GlfwBool.False);
+			Glfw.SetWindowAttrib(handle, WindowHintSetter.Floating, value ? GlfwBool.True : GlfwBool.False);
 		}
 		get => !isInitialized
 			? options.AlwaysOnTop
-			: Glfw.GetWindowAttrib(handle, WindowAttributeGetter.Floating) == GlfwBool.True
+			: Glfw.GetWindowAttrib(handle, WindowHintGetter.Floating) == GlfwBool.True
 			;
 	}
 	public override bool TransperentFramebuffer { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }

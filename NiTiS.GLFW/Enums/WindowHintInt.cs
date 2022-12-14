@@ -1,6 +1,6 @@
 ﻿namespace NiTiS.GLFW.Enums;
 
-public enum WindowIntAttribute
+public enum WindowHintInt
 {
 	ContextVersionMajor = 0x00022002,
 	ContextVersionMinor = 0x00022003,

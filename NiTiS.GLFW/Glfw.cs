@@ -38,7 +38,7 @@ public static unsafe partial class Glfw
 
 	public static readonly delegate* unmanaged[Cdecl]<void> DefaultWindowHints;
 	public static readonly delegate* unmanaged[Cdecl]<int, int, void> WindowHint;
-	public static readonly delegate* unmanaged[Cdecl]<WindowStringAttirubte, CString, void> WindowHintString;
+	public static readonly delegate* unmanaged[Cdecl]<WindowHintString, CString, void> WindowHintString;
 	public static readonly delegate* unmanaged[Cdecl]<int, int, CString, GlfwMonitor*, GlfwWindowHandle*, GlfwWindowHandle*> CreateWindow;
 	public static readonly delegate* unmanaged[Cdecl]<GlfwWindowHandle*, void> DestroyWindow;
 	public static readonly delegate* unmanaged[Cdecl]<GlfwWindowHandle*, int> WindowShouldClose;
@@ -67,8 +67,8 @@ public static unsafe partial class Glfw
 	public static readonly delegate* unmanaged[Cdecl]<GlfwWindowHandle*, GlfwMonitor*> GetWindowMonitor;
 	public static readonly delegate* unmanaged[Cdecl]<GlfwWindowHandle*, GlfwMonitor*, int, int, int, int, int, void> SetWindowMonitor;
 
-	public static readonly delegate* unmanaged[Cdecl]<GlfwWindowHandle*, WindowAttributeGetter, GlfwBool> GetWindowAttrib;
-	public static readonly delegate* unmanaged[Cdecl]<GlfwWindowHandle*, WindowAttributeSetter, GlfwBool, void> SetWindowAttrib;
+	public static readonly delegate* unmanaged[Cdecl]<GlfwWindowHandle*, WindowHintGetter, GlfwBool> GetWindowAttrib;
+	public static readonly delegate* unmanaged[Cdecl]<GlfwWindowHandle*, WindowHintSetter, GlfwBool, void> SetWindowAttrib;
 
 	public static readonly delegate* unmanaged[Cdecl]<GlfwWindowHandle*, void*> GetWindowUserPointer;
 	public static readonly delegate* unmanaged[Cdecl]<GlfwWindowHandle*, void*, void> SetWindowUserPointer;

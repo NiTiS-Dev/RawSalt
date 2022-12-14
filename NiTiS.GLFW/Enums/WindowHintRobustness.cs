@@ -1,6 +1,6 @@
 ﻿namespace NiTiS.GLFW.Enums;
 
-public enum WindowRobustnessAttribute
+public enum WindowHintRobustness
 {
 	ContextRobustness = 0x00022005
 }

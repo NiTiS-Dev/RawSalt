@@ -18,37 +18,37 @@ public unsafe partial class Glfw
 			return (vers[0], vers[1], vers[2]);
 		}
 	}
-	public static void SetWindowHint(WindowBoolAttribute attr, bool value)
+	public static void SetWindowHint(WindowHintBool attr, bool value)
 		=> SetWindowHint(attr, value ? GlfwBool.True : GlfwBool.False);
-	public static void SetWindowHint(WindowBoolAttribute attr, GlfwBool value)
+	public static void SetWindowHint(WindowHintBool attr, GlfwBool value)
 	{
 		Glfw.WindowHint((int)attr, (int)value);
 	}
-	public static void SetWindowHint(WindowClientAPIAttribute attr, ClientAPI value)
+	public static void SetWindowHint(WindowHintClientAPI attr, ClientAPI value)
 	{
 		Glfw.WindowHint((int)attr, (int)value);
 	}
-	public static void SetWindowHint(WindowContextAPIAttribute attr, ContextAPI value)
+	public static void SetWindowHint(WindowHintContextAPI attr, ContextAPI value)
 	{
 		Glfw.WindowHint((int)attr, (int)value);
 	}
-	public static void SetWindowHint(WindowIntAttribute attr, int value)
+	public static void SetWindowHint(WindowHintInt attr, int value)
 	{
 		Glfw.WindowHint((int)attr, (int)value);
 	}
-	public static void SetWindowHint(WindowOpenGLProfileAttribute attr, OpenGLProfile value)
+	public static void SetWindowHint(WindowHintOpenGLProfile attr, OpenGLProfile value)
 	{
 		Glfw.WindowHint((int)attr, (int)value);
 	}
-	public static void SetWindowHint(WindowReleaseBehaviorAttribute attr, ReleaseBehavior value)
+	public static void SetWindowHint(WindowHintReleaseBehavior attr, ReleaseBehavior value)
 	{
 		Glfw.WindowHint((int)attr, (int)value);
 	}
-	public static void SetWindowHint(WindowRobustnessAttribute attr, Robustness value)
+	public static void SetWindowHint(WindowHintRobustness attr, Robustness value)
 	{
 		Glfw.WindowHint((int)attr, (int)value);
 	}
-	public static void SetWindowHint(WindowStringAttirubte attr, string value)
+	public static void SetWindowHint(WindowHintString attr, string value)
 	{
 		int bufferSize = Encoding.UTF8.GetByteCount(value) + 1;
 		Span<byte> chars = stackalloc byte[bufferSize];
@@ -63,7 +63,7 @@ public unsafe partial class Glfw
 			Glfw.WindowHintString(attr, pChars);
 		}
 	}
-	public static void SetWindowHint(WindowStringAttirubte attr, CString value)
+	public static void SetWindowHint(WindowHintString attr, CString value)
 	{
 		Glfw.WindowHintString(attr, value);
 	}

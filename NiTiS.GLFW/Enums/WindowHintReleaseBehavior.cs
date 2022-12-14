@@ -1,6 +1,6 @@
 ﻿namespace NiTiS.GLFW.Enums;
 
-public enum WindowReleaseBehaviorAttribute
+public enum WindowHintReleaseBehavior
 {
 	ContextReleaseBehavior = 0x00022009
 }

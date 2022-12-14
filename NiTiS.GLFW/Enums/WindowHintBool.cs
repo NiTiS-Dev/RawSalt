@@ -1,12 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿namespace NiTiS.GLFW;
 
-namespace NiTiS.GLFW.Enums;
-
-public enum WindowBoolAttribute
+public enum WindowHintBool
 {
 	Focused = 0x00020001,
 	Iconified = 0x00020002,

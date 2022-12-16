@@ -1,4 +1,6 @@
 ﻿using NiTiS.GLFW;
+using NiTiS.IO;
+using NiTiS.Math;
 using NiTiS.OpenGL;
 using NiTiS.Windowing;
 using NiTiS.Windowing.GLFW;
@@ -21,24 +23,38 @@ internal unsafe class Program
 						Profile = ContextAPIProfile.Core,
 						Version = new(3, 3)
 					},
-					Border = WindowBorder.Hidden,
-					TransparentFramebuffer = true,
-					PreferredBitDepth = new(8, 8, 8, 8),
+					State = WindowState.Fullscreen,
+					RefreshRate = 120,
+					VSync = true,
 				});
 
 				window.Initialize();
 
-				Glfw.PrepareForOpenGL();
+				window.Move += (pos) => {
+					Console.WriteLine(pos.ToString());
+				};
 
-				GL.ClearColor(1f, 0f, 1f, 0f);
+				MemorySize heapSize = new(GC.GetAllocatedBytesForCurrentThread());
+
+				Console.WriteLine($"Boot heap size: {heapSize:MiB!0.00 MiB}");
+
+				Glfw.SwapInterval(1);
 
 				while (true)
 				{
+					if (0 != Glfw.WindowShouldClose((GlfwWindowHandle*)window))
+						break;
+
+					float idt = Math.Abs(MathF.Cos(DateTime.Now.Millisecond / 200f));
+					GL.ClearColor(idt, idt, idt, 1f);
+
 					GL.Clear(ClearBufferMask.ColorBufferBit);
 
-					Glfw.PollEvents();
+					
 
 					window.SwapBuffers();
+
+					Glfw.PollEvents();
 
 					GlfwError error = Glfw.GetError(null);
 

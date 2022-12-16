@@ -2,6 +2,7 @@
 using NiTiS.GLFW.Enums;
 using NiTiS.Math;
 using System;
+using System.Runtime.InteropServices;
 using System.Text;
 
 namespace NiTiS.Windowing.GLFW;
@@ -9,6 +10,23 @@ namespace NiTiS.Windowing.GLFW;
 public unsafe class GlfwWindow : Window
 {
 	private GlfwWindowHandle* handle;
+	private GCHandle gcHandle;
+
+	#region Callbacks
+	private GlfwCallbacks.WindowPos onMove;
+	private GlfwCallbacks.WindowSize onResize;
+	private GlfwCallbacks.FramebufferSize onFramebufferResize;
+	private GlfwCallbacks.Drop onFileDrop;
+	private GlfwCallbacks.WindowClose onClosing;
+	private GlfwCallbacks.WindowFocus onFocusChanged;
+	private GlfwCallbacks.WindowIconify onMinimized;
+	private GlfwCallbacks.WindowMaximize onMaximized;
+	private GlfwCallbacks.WindowRefresh onRefresh;
+	#endregion
+
+	public event Action Refresh;
+	public event Action<Vector2D<int>> Move;
+
 	public GlfwWindow(WindowOptions options) : base(options)
 	{
 
@@ -17,6 +35,8 @@ public unsafe class GlfwWindow : Window
 	{
 		if (options.Title?.Length <= 0)
 			throw new ArgumentException("The window name must be set and non empty");
+
+		gcHandle = GCHandle.Alloc(this);
 
 		//Border
 		switch (options.Border)
@@ -71,6 +91,8 @@ public unsafe class GlfwWindow : Window
 
 		Glfw.SetWindowHint(WindowHintInt.Samples, options.Samples ?? Glfw.DontCare);
 
+		Glfw.SetWindowHint(WindowHintBool.Visible, options.IsVisible);
+
 
 		// Title
 		int bufferSize = Encoding.UTF8.GetByteCount(options.Title) + 1;
@@ -86,24 +108,6 @@ public unsafe class GlfwWindow : Window
 			handle = Glfw.CreateWindow(options.Size.X, options.Size.Y, pTitle, null, null);
 		}
 
-		switch (options.Border)
-		{
-			case WindowBorder.Resizable:
-				Glfw.SetWindowAttrib(handle, WindowHintSetter.Resizable, GlfwBool.True);
-				break;
-			case WindowBorder.FixedSize:
-				Glfw.SetWindowAttrib(handle, WindowHintSetter.Resizable, GlfwBool.False);
-				break;
-
-		}
-
-
-		//Show|Hide window
-		if (options.IsVisible)
-			Glfw.ShowWindow(handle);
-		else
-			Glfw.HideWindow(handle);
-
 		if (options.Graphics.API is ContextAPIType.OpenGL)
 		{
 			Glfw.MakeContextCurrent(handle);
@@ -117,8 +121,36 @@ public unsafe class GlfwWindow : Window
 			throw new Exception($"Glfw error: " + error);
 		}
 
+		InitializeCallbacks();
+
 		base.Initialize();
 	}
+	private void InitializeCallbacks()
+	{
+		onRefresh = window =>
+		{
+			Refresh();
+		};
+		onMove = (window, x, y) =>
+		{
+			Move(new(x, y));
+		};
+
+		Refresh = new(() => { });
+		Move = new((_) => { });
+
+		delegate* unmanaged[Stdcall]<GlfwWindowHandle*, void>
+			pOnRefresh = (delegate* unmanaged[Stdcall]<GlfwWindowHandle*, void>)
+		Marshal.GetFunctionPointerForDelegate(onRefresh);
+
+		delegate* unmanaged[Stdcall]<GlfwWindowHandle*, int, int, void>
+			pOnMove = (delegate* unmanaged[Stdcall]<GlfwWindowHandle*, int, int, void>)
+		Marshal.GetFunctionPointerForDelegate(onMove);
+
+		Glfw.SetWindowRefreshCallback(handle, pOnRefresh);
+		Glfw.SetWindowPosCallback(handle, pOnMove);
+	}
+
 	public override IWindow CreateWindow(WindowOptions options)
 	{
 		return new GlfwWindow(options);
@@ -127,6 +159,9 @@ public unsafe class GlfwWindow : Window
 	{
 		if (!isInitialized)
 			return;
+
+		gcHandle.Free();
+		gcHandle = default;
 
 		Glfw.DestroyWindow(handle);
 	}

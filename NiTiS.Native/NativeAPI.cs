@@ -8,7 +8,13 @@ namespace NiTiS.Native;
 
 public static unsafe class NativeAPI
 {
-	public static void Initialize(Type tAPI, delegate* unmanaged[Cdecl]<CString, void*> context = null)
+	/// <summary>
+	/// Initialize static API types
+	/// </summary>
+	/// <param name="tAPI">Type to initialize</param>
+	/// <param name="context">[Optional] API context</param>
+	/// <exception cref="APIException"></exception>
+	public static void Initialize(Type tAPI, delegate* unmanaged[Stdcall]<CString, void*> context = null)
 	{
 		NativeAPIAttribute api = tAPI.GetCustomAttribute<NativeAPIAttribute>();
 

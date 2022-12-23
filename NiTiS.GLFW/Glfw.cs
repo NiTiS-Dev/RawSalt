@@ -17,29 +17,29 @@ public static unsafe partial class Glfw
 
 	public static readonly delegate* unmanaged[Stdcall]<delegate* unmanaged[Cdecl]<GlfwError, CString, void>, delegate* unmanaged[Cdecl]<GlfwError, CString, void>> SetErrorCallback;
 
-	public static readonly delegate* unmanaged[Stdcall]<int*, GlfwMonitor**> GetMonitors;
-	public static readonly delegate* unmanaged[Stdcall]<GlfwMonitor*> GetPrimaryMonitor;
-	public static readonly delegate* unmanaged[Stdcall]<GlfwMonitor*, int*, int*, void> GetMonitorPos;
-	public static readonly delegate* unmanaged[Stdcall]<GlfwMonitor*, int*, int*, int*, int*, void> GetMonitorWorkarea;
-	public static readonly delegate* unmanaged[Stdcall]<GlfwMonitor*, int*, int*, void> GetMonitorPhysicalSize;
-	public static readonly delegate* unmanaged[Stdcall]<GlfwMonitor*, float*, float*, void> GetMonitorContentScale;
-	public static readonly delegate* unmanaged[Stdcall]<GlfwMonitor*, CString> GetMonitorName;
-	public static readonly delegate* unmanaged[Stdcall]<GlfwMonitor*, void*, void> SetMonitorUserPointer;
-	public static readonly delegate* unmanaged[Stdcall]<GlfwMonitor*, void*> GetMonitorUserPointer;
+	public static readonly delegate* unmanaged[Stdcall]<int*, GlfwMonitorHandle**> GetMonitors;
+	public static readonly delegate* unmanaged[Stdcall]<GlfwMonitorHandle*> GetPrimaryMonitor;
+	public static readonly delegate* unmanaged[Stdcall]<GlfwMonitorHandle*, int*, int*, void> GetMonitorPos;
+	public static readonly delegate* unmanaged[Stdcall]<GlfwMonitorHandle*, int*, int*, int*, int*, void> GetMonitorWorkarea;
+	public static readonly delegate* unmanaged[Stdcall]<GlfwMonitorHandle*, int*, int*, void> GetMonitorPhysicalSize;
+	public static readonly delegate* unmanaged[Stdcall]<GlfwMonitorHandle*, float*, float*, void> GetMonitorContentScale;
+	public static readonly delegate* unmanaged[Stdcall]<GlfwMonitorHandle*, CString> GetMonitorName;
+	public static readonly delegate* unmanaged[Stdcall]<GlfwMonitorHandle*, void*, void> SetMonitorUserPointer;
+	public static readonly delegate* unmanaged[Stdcall]<GlfwMonitorHandle*, void*> GetMonitorUserPointer;
 
-	public static readonly delegate* unmanaged[Stdcall]<delegate* unmanaged[Cdecl]<GlfwMonitor*, GlfwEvent, void>, delegate* unmanaged[Cdecl]<GlfwMonitor*, GlfwEvent, void>> SetMonitorCallback;
+	public static readonly delegate* unmanaged[Stdcall]<delegate* unmanaged[Cdecl]<GlfwMonitorHandle*, GlfwEvent, void>, delegate* unmanaged[Cdecl]<GlfwMonitorHandle*, GlfwEvent, void>> SetMonitorCallback;
 
-	public static readonly delegate* unmanaged[Stdcall]<GlfwMonitor*, int*, GlfwVideoMode*> GetVideoModes;
-	public static readonly delegate* unmanaged[Stdcall]<GlfwMonitor*, GlfwVideoMode*> GetVideoMode;
-	public static readonly delegate* unmanaged[Stdcall]<GlfwMonitor*, float, void> SetGamma;
-	public static readonly delegate* unmanaged[Stdcall]<GlfwMonitor*, GlfwGammaRamp*> GetGammaRamp;
-	public static readonly delegate* unmanaged[Stdcall]<GlfwMonitor*, GlfwGammaRamp*, void> SetGammaRamp;
+	public static readonly delegate* unmanaged[Stdcall]<GlfwMonitorHandle*, int*, GlfwVideoMode*> GetVideoModes;
+	public static readonly delegate* unmanaged[Stdcall]<GlfwMonitorHandle*, GlfwVideoMode*> GetVideoMode;
+	public static readonly delegate* unmanaged[Stdcall]<GlfwMonitorHandle*, float, void> SetGamma;
+	public static readonly delegate* unmanaged[Stdcall]<GlfwMonitorHandle*, GlfwGammaRamp*> GetGammaRamp;
+	public static readonly delegate* unmanaged[Stdcall]<GlfwMonitorHandle*, GlfwGammaRamp*, void> SetGammaRamp;
 
 
 	public static readonly delegate* unmanaged[Stdcall]<void> DefaultWindowHints;
 	public static readonly delegate* unmanaged[Stdcall]<int, int, void> WindowHint;
 	public static readonly delegate* unmanaged[Stdcall]<WindowHintString, CString, void> WindowHintString;
-	public static readonly delegate* unmanaged[Stdcall]<int, int, CString, GlfwMonitor*, GlfwWindowHandle*, GlfwWindowHandle*> CreateWindow;
+	public static readonly delegate* unmanaged[Stdcall]<int, int, CString, GlfwMonitorHandle*, GlfwWindowHandle*, GlfwWindowHandle*> CreateWindow;
 	public static readonly delegate* unmanaged[Stdcall]<GlfwWindowHandle*, void> DestroyWindow;
 	public static readonly delegate* unmanaged[Stdcall]<GlfwWindowHandle*, int> WindowShouldClose;
 	public static readonly delegate* unmanaged[Stdcall]<GlfwWindowHandle*, int, void> SetWindowShouldClose;
@@ -64,8 +64,8 @@ public static unsafe partial class Glfw
 	public static readonly delegate* unmanaged[Stdcall]<GlfwWindowHandle*, void> HideWindow;
 	public static readonly delegate* unmanaged[Stdcall]<GlfwWindowHandle*, void> FocusWindow;
 	public static readonly delegate* unmanaged[Stdcall]<GlfwWindowHandle*, void> RequestWindowAttention;
-	public static readonly delegate* unmanaged[Stdcall]<GlfwWindowHandle*, GlfwMonitor*> GetWindowMonitor;
-	public static readonly delegate* unmanaged[Stdcall]<GlfwWindowHandle*, GlfwMonitor*, int, int, int, int, int, void> SetWindowMonitor;
+	public static readonly delegate* unmanaged[Stdcall]<GlfwWindowHandle*, GlfwMonitorHandle*> GetWindowMonitor;
+	public static readonly delegate* unmanaged[Stdcall]<GlfwWindowHandle*, GlfwMonitorHandle*, int, int, int, int, int, void> SetWindowMonitor;
 
 	public static readonly delegate* unmanaged[Stdcall]<GlfwWindowHandle*, WindowHintGetter, GlfwBool> GetWindowAttrib;
 	public static readonly delegate* unmanaged[Stdcall]<GlfwWindowHandle*, WindowHintSetter, GlfwBool, void> SetWindowAttrib;
@@ -77,11 +77,12 @@ public static unsafe partial class Glfw
 	public static readonly delegate* unmanaged[Stdcall]<GlfwWindowHandle*, delegate* unmanaged[Stdcall]<GlfwWindowHandle*, int, int, void>, delegate* unmanaged[Stdcall]<GlfwWindowHandle*, int, int, void>> SetWindowSizeCallback;
 	public static readonly delegate* unmanaged[Stdcall]<GlfwWindowHandle*, delegate* unmanaged[Stdcall]<GlfwWindowHandle*, void>, delegate* unmanaged[Stdcall]<GlfwWindowHandle*, void>> SetWindowCloseCallback;
 	public static readonly delegate* unmanaged[Stdcall]<GlfwWindowHandle*, delegate* unmanaged[Stdcall]<GlfwWindowHandle*, void>, delegate* unmanaged[Stdcall]<GlfwWindowHandle*, void>> SetWindowRefreshCallback;
-	public static readonly delegate* unmanaged[Stdcall]<GlfwWindowHandle*, delegate* unmanaged[Stdcall]<GlfwWindowHandle*, int, void>, delegate* unmanaged[Stdcall]<GlfwWindowHandle*, int, void>> SetWindowFocusCallback;
-	public static readonly delegate* unmanaged[Stdcall]<GlfwWindowHandle*, delegate* unmanaged[Stdcall]<GlfwWindowHandle*, int, void>, delegate* unmanaged[Stdcall]<GlfwWindowHandle*, int, void>> SetWindowIconifyCallback;
-	public static readonly delegate* unmanaged[Stdcall]<GlfwWindowHandle*, delegate* unmanaged[Stdcall]<GlfwWindowHandle*, int, void>, delegate* unmanaged[Stdcall]<GlfwWindowHandle*, int, void>> SetWindowMaximizeCallback;
+	public static readonly delegate* unmanaged[Stdcall]<GlfwWindowHandle*, delegate* unmanaged[Stdcall]<GlfwWindowHandle*, GlfwBool, void>, delegate* unmanaged[Stdcall]<GlfwWindowHandle*, GlfwBool, void>> SetWindowFocusCallback;
+	public static readonly delegate* unmanaged[Stdcall]<GlfwWindowHandle*, delegate* unmanaged[Stdcall]<GlfwWindowHandle*, GlfwBool, void>, delegate* unmanaged[Stdcall]<GlfwWindowHandle*, GlfwBool, void>> SetWindowIconifyCallback;
+	public static readonly delegate* unmanaged[Stdcall]<GlfwWindowHandle*, delegate* unmanaged[Stdcall]<GlfwWindowHandle*, GlfwBool, void>, delegate* unmanaged[Stdcall]<GlfwWindowHandle*, GlfwBool, void>> SetWindowMaximizeCallback;
 	public static readonly delegate* unmanaged[Stdcall]<GlfwWindowHandle*, delegate* unmanaged[Stdcall]<GlfwWindowHandle*, int, int, void>, delegate* unmanaged[Stdcall]<GlfwWindowHandle*, int, int, void>> SetFramebufferSizeCallback;
 	public static readonly delegate* unmanaged[Stdcall]<GlfwWindowHandle*, delegate* unmanaged[Stdcall]<GlfwWindowHandle*, float, float, void>, delegate* unmanaged[Stdcall]<GlfwWindowHandle*, float, float, void>> SetWindowContentScaleCallback;
+	public static readonly delegate* unmanaged[Stdcall]<GlfwWindowHandle*, delegate* unmanaged[Stdcall]<GlfwWindowHandle*, int, CString*>, delegate* unmanaged[Stdcall]<GlfwWindowHandle*, int, CString*>> SetDropCallback;
 	public static readonly delegate* unmanaged[Stdcall]<void> PollEvents;
 	public static readonly delegate* unmanaged[Stdcall]<void> WaitEvents;
 	public static readonly delegate* unmanaged[Stdcall]<double, void> WaitEventsTimeout;

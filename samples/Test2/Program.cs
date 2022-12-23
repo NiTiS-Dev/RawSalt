@@ -1,6 +1,5 @@
 ﻿using NiTiS.GLFW;
 using NiTiS.IO;
-using NiTiS.Math;
 using NiTiS.OpenGL;
 using NiTiS.Windowing;
 using NiTiS.Windowing.GLFW;
@@ -29,10 +28,6 @@ internal unsafe class Program
 				});
 
 				window.Initialize();
-
-				window.Move += (pos) => {
-					Console.WriteLine(pos.ToString());
-				};
 
 				MemorySize heapSize = new(GC.GetAllocatedBytesForCurrentThread());
 

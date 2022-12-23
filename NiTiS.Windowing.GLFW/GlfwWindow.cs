@@ -1,6 +1,7 @@
 ﻿using NiTiS.GLFW;
 using NiTiS.GLFW.Enums;
 using NiTiS.Math;
+using NiTiS.Native;
 using System;
 using System.Runtime.InteropServices;
 using System.Text;
@@ -10,6 +11,7 @@ namespace NiTiS.Windowing.GLFW;
 public unsafe class GlfwWindow : Window
 {
 	private GlfwWindowHandle* handle;
+	private GlfwMonitor monitor;
 	private GCHandle gcHandle;
 
 	#region Callbacks
@@ -24,12 +26,19 @@ public unsafe class GlfwWindow : Window
 	private GlfwCallbacks.WindowRefresh onRefresh;
 	#endregion
 
-	public event Action Refresh;
 	public event Action<Vector2D<int>> Move;
+	public event Action<Vector2D<int>> Resize;
+	public event Action<Vector2D<int>> FramebufferResize;
+	public event Action<string[]> FileDrop;
+	public event Action Closing;
+	public event Action<bool> FocusChanged;
+	public event Action Minimized;
+	public event Action Maximized;
+	public event Action Refresh;
 
-	public GlfwWindow(WindowOptions options) : base(options)
+	public GlfwWindow(WindowOptions options, GlfwMonitor monitor = null) : base(options)
 	{
-
+		this.monitor = monitor;
 	}
 	public override void Initialize()
 	{
@@ -108,6 +117,21 @@ public unsafe class GlfwWindow : Window
 			handle = Glfw.CreateWindow(options.Size.X, options.Size.Y, pTitle, null, null);
 		}
 
+		switch (options.State)
+		{
+			case WindowState.Default:
+				break;
+			case WindowState.Minimazed:
+				Glfw.IconifyWindow(handle);
+				break;
+			case WindowState.Maximazed:
+				Glfw.MaximizeWindow(handle);
+				break;
+			case WindowState.Fullscreen:
+				
+				break;
+		}
+
 		if (options.Graphics.API is ContextAPIType.OpenGL)
 		{
 			Glfw.MakeContextCurrent(handle);
@@ -129,15 +153,49 @@ public unsafe class GlfwWindow : Window
 	{
 		onRefresh = window =>
 		{
-			Refresh();
+			Refresh?.Invoke();
 		};
 		onMove = (window, x, y) =>
 		{
-			Move(new(x, y));
+			Move?.Invoke(new(x, y));
 		};
+		onClosing = window =>
+		{
+			Closing?.Invoke();
+		};
+		onResize = (window, newx, newy) =>
+		{
+			Resize(new(newx, newy));
+		};
+		onFramebufferResize = (window, newx, newy) =>
+		{
+			Resize(new(newx, newy));
+		};
+		onFileDrop = (window, count, paths) =>
+		{
+			string[] filePaths = new string[count];
 
-		Refresh = new(() => { });
-		Move = new((_) => { });
+			for (int i = 0; i < count; i++)
+			{
+				filePaths[i] = paths[i].ToString();
+			}
+
+			FileDrop?.Invoke(filePaths);
+		};
+		onFocusChanged = (window, focused) =>
+		{
+			FocusChanged?.Invoke(focused.ToSystem());
+		};
+		onMaximized = (window, maxim) =>
+		{
+			if (maxim == GlfwBool.True)
+				Maximized?.Invoke();
+		};
+		onMinimized = (window, maxim) =>
+		{
+			if (maxim == GlfwBool.True)
+				Minimized?.Invoke();
+		};
 
 		delegate* unmanaged[Stdcall]<GlfwWindowHandle*, void>
 			pOnRefresh = (delegate* unmanaged[Stdcall]<GlfwWindowHandle*, void>)
@@ -147,8 +205,43 @@ public unsafe class GlfwWindow : Window
 			pOnMove = (delegate* unmanaged[Stdcall]<GlfwWindowHandle*, int, int, void>)
 		Marshal.GetFunctionPointerForDelegate(onMove);
 
-		Glfw.SetWindowRefreshCallback(handle, pOnRefresh);
+		delegate* unmanaged[Stdcall]<GlfwWindowHandle*, int, int, void>
+			pOnResize = (delegate* unmanaged[Stdcall]<GlfwWindowHandle*, int, int, void>)
+		Marshal.GetFunctionPointerForDelegate(onResize);
+
+		delegate* unmanaged[Stdcall]<GlfwWindowHandle*, int, int, void>
+			pOnFramebufferResize = (delegate* unmanaged[Stdcall]<GlfwWindowHandle*, int, int, void>)
+		Marshal.GetFunctionPointerForDelegate(onFramebufferResize);
+
+		delegate* unmanaged[Stdcall]<GlfwWindowHandle*, void>
+			pOnClosing = (delegate* unmanaged[Stdcall]<GlfwWindowHandle*, void>)
+		Marshal.GetFunctionPointerForDelegate(onClosing);
+
+		delegate* unmanaged[Stdcall]<GlfwWindowHandle*, GlfwBool, void>
+			pOnFocusChanged = (delegate* unmanaged[Stdcall]<GlfwWindowHandle*, GlfwBool, void>)
+		Marshal.GetFunctionPointerForDelegate(onFocusChanged);
+
+		delegate* unmanaged[Stdcall]<GlfwWindowHandle*, GlfwBool, void>
+			pOnMinimized = (delegate* unmanaged[Stdcall]<GlfwWindowHandle*, GlfwBool, void>)
+		Marshal.GetFunctionPointerForDelegate(onMinimized);
+
+		delegate* unmanaged[Stdcall]<GlfwWindowHandle*, GlfwBool, void>
+			pOnMaximized = (delegate* unmanaged[Stdcall]<GlfwWindowHandle*, GlfwBool, void>)
+		Marshal.GetFunctionPointerForDelegate(onMaximized);
+
+		delegate* unmanaged[Stdcall]<GlfwWindowHandle*, int, CString*>
+			pOnFileDrop = (delegate* unmanaged[Stdcall]<GlfwWindowHandle*, int, CString*>)
+		Marshal.GetFunctionPointerForDelegate(onFileDrop);
+
 		Glfw.SetWindowPosCallback(handle, pOnMove);
+		Glfw.SetWindowSizeCallback(handle, pOnResize);
+		Glfw.SetFramebufferSizeCallback(handle, pOnFramebufferResize);
+		Glfw.SetWindowCloseCallback(handle, pOnClosing);
+		Glfw.SetWindowFocusCallback(handle, pOnFocusChanged);
+		Glfw.SetWindowIconifyCallback(handle, pOnMinimized);
+		Glfw.SetWindowMaximizeCallback(handle, pOnMaximized);
+		Glfw.SetDropCallback(handle, pOnFileDrop);
+		Glfw.SetWindowRefreshCallback(handle, pOnRefresh);
 	}
 
 	public override IWindow CreateWindow(WindowOptions options)

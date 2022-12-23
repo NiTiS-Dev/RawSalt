@@ -9,10 +9,6 @@
 	</PropertyGroup>
 
 	<ItemGroup>
-		<!-- Probably i cancel to use Silk.NET in future... -->
-		<PackageReference Include="Silk.NET.Input" Version="2.16.0" />
-		<PackageReference Include="Silk.NET.OpenGL" Version="2.16.0" />
-		<PackageReference Include="Silk.NET.Windowing.Common" Version="2.16.0" />
 		<PackageReference Condition="$(NITIS_LIB_LOCAL)==''" Include="NiTiS.Math" Version="2.1.1" />
 		<PackageReference Include="NiTiS.IO" Version="3.0.2" />
 		

@@ -8,7 +8,7 @@ public struct Transform3D
 {
 	public vec3 position;
 	public vec3 scale;
-	public quat rotation;
+	public SysQuat rotation;
 	public Transform3D()
 	{
 		position = default;
@@ -25,7 +25,7 @@ public struct Transform3D
 		position = pos;
 		scale = scl;
 	}
-	public Transform3D(vec3 pos, vec3 scl, quat rot)
+	public Transform3D(vec3 pos, vec3 scl, SysQuat rot)
 	{
 		position = pos;
 		scale = scl;
@@ -33,9 +33,9 @@ public struct Transform3D
 	}
 
 	//TODO: Optimize
-	public mat4 CreateModelMatrix()
-		=> mat4.Identity
-		* mat4.CreateFromQuaternion(rotation)
-		* mat4.CreateScale(scale)
-		* mat4.CreateTranslation(position);
+	public SysMat4x4 CreateModelMatrix()
+		=> SysMat4x4.Identity
+		* SysMat4x4.CreateFromQuaternion(rotation)
+		* SysMat4x4.CreateScale(scale)
+		* SysMat4x4.CreateTranslation(position);
 }

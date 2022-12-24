@@ -26,11 +26,13 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Test2", "samples\Test2\Test
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NiTiS.OpenGL", "NiTiS.OpenGL\NiTiS.OpenGL.csproj", "{A9D29195-3ED1-44D9-8AE0-5C338287EBBC}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NiTiS.Internal.ContextualAPI", "NiTiS.Internal.ContextualAPI\NiTiS.Internal.ContextualAPI.csproj", "{29BB6819-B6BF-4E5A-9C27-1C048E2098E0}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NiTiS.Internal.ContextualAPI", "NiTiS.Internal.ContextualAPI\NiTiS.Internal.ContextualAPI.csproj", "{29BB6819-B6BF-4E5A-9C27-1C048E2098E0}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NiTiS.Windowing", "NiTiS.Windowing\NiTiS.Windowing.csproj", "{CD37B133-55FE-419F-A68A-4C9611D0CEBB}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NiTiS.Windowing", "NiTiS.Windowing\NiTiS.Windowing.csproj", "{CD37B133-55FE-419F-A68A-4C9611D0CEBB}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NiTiS.Windowing.GLFW", "NiTiS.Windowing.GLFW\NiTiS.Windowing.GLFW.csproj", "{18ED0E39-AA35-40BE-9BAA-12422B79FF99}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NiTiS.Windowing.GLFW", "NiTiS.Windowing.GLFW\NiTiS.Windowing.GLFW.csproj", "{18ED0E39-AA35-40BE-9BAA-12422B79FF99}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Test3", "samples\Test3\Test3.csproj", "{3D1C2159-8A53-482D-A016-56234F749ACA}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -78,6 +80,10 @@ Global
 		{18ED0E39-AA35-40BE-9BAA-12422B79FF99}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{18ED0E39-AA35-40BE-9BAA-12422B79FF99}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{18ED0E39-AA35-40BE-9BAA-12422B79FF99}.Release|Any CPU.Build.0 = Release|Any CPU
+		{3D1C2159-8A53-482D-A016-56234F749ACA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3D1C2159-8A53-482D-A016-56234F749ACA}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3D1C2159-8A53-482D-A016-56234F749ACA}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3D1C2159-8A53-482D-A016-56234F749ACA}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

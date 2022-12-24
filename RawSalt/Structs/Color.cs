@@ -5,7 +5,7 @@ namespace RawSalt.Structs;
 
 [StructLayout(LayoutKind.Sequential)]
 // TODO?: Replace with Color<T> where T : IPixel
-public readonly unsafe struct Color32 : IResourceType
+public readonly unsafe struct Color32
 {
 	/// <summary>
 	/// Color element <see cref="R"/>ed <see cref="G"/>reen <see cref="B"/>lue
@@ -42,7 +42,6 @@ public readonly unsafe struct Color32 : IResourceType
 		B = b;
 		A = a;
 	}
-	public static string ResourceType => "color";
 
 	public static explicit operator vec4(Color32 color)
 		=> new(

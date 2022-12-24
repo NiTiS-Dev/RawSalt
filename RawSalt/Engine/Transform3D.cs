@@ -1,4 +1,5 @@
 ﻿using NiTiS.Math;
+using RawSalt.Extensions;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 
@@ -36,6 +37,6 @@ public struct Transform3D
 	public SysMat4x4 CreateModelMatrix()
 		=> SysMat4x4.Identity
 		* SysMat4x4.CreateFromQuaternion(rotation)
-		* SysMat4x4.CreateScale(scale)
-		* SysMat4x4.CreateTranslation(position);
+		* SysMat4x4.CreateScale(scale.ToSystem())
+		* SysMat4x4.CreateTranslation(position.ToSystem());
 }

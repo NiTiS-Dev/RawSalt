@@ -34,4 +34,9 @@ public struct BitMap8
 	}
 	public static BitMap8 operator ~(BitMap8 value)
 		=> new((byte)~value.map);
+
+	public static implicit operator byte(BitMap8 value)
+		=> value.map;
+	public static implicit operator BitMap8(byte value)
+		=> new(value);
 }

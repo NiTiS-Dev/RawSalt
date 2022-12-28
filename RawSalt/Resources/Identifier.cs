@@ -1,62 +1,127 @@
-﻿using RawSalt.Structs;
-using System;
-using System.Collections;
+﻿using System;
+using System.Diagnostics.CodeAnalysis;
 
 namespace RawSalt.Resources;
 
-public readonly struct Identifier : IEquatable<Identifier>, IStructuralEquatable
+/// <summary>
+/// NiTiS identifier type
+/// </summary>
+public readonly struct Identifier : IEquatable<Identifier>, IParsable<Identifier>
 {
-	public static readonly char Separator = ':';
-	private readonly string idSpace;
-	private readonly string idName;
-	public readonly string Space => idSpace;
-	public readonly string Name => idName;
-	internal Identifier(string idSpace, string idName, ZeroArgument _)
+	private readonly string source;
+	private readonly string name;
+
+	private Identifier(string source, string name)
 	{
-		this.idSpace = idSpace;
-		this.idName = idName;
+		this.name = name;
+		this.source = source;
 	}
-	public Identifier(string idSpace, string idName)
-		: this(
-			  Verify(idSpace) ? idSpace : throw new ArgumentException("Invalid idSpace format"),
-			  Verify(idName) ? idName : throw new ArgumentException("Invalid idName format"),
-			  default
-			  )
-	{ }
-	public readonly bool Equals(Identifier other)
-		=> this.idName  == other.idName
-		&& this.idSpace == other.idSpace;
-	public override readonly bool Equals(object? obj)
-		=> obj is Identifier identifier && Equals(identifier);
-	public readonly bool Equals(object? other, IEqualityComparer comparer)
-		=> comparer.Equals(this, other);
-	public readonly int GetHashCode(IEqualityComparer comparer)
-		=> comparer.GetHashCode(this);
-	public override readonly int GetHashCode()
-		=> HashCode.Combine(idSpace, idName);
-
-	public override readonly string ToString()
-		=> $"{idSpace}{Separator}{idName}";
-
-	public static bool Verify(string nameOrSpace)
+	private static bool ValidateString(string str)
 	{
-		static bool IsValidChar(char c) => c switch
-		{
-			_ when c is >= '0' and <= '9' => true,
-			_ when c is >= 'A' and <= 'Z' => true,
-			_ when c is >= 'a' and <= 'z' => true,
-			'_' or '-' or '.' => true,
-			_ => false
-		};
+		if (str is null)
+			return false;
 
-		for (int i = 0; i < nameOrSpace.Length; i++)
+		static bool ValidateChar(char a)
+			=> a switch
+			{
+				_ when a is >= 'A' and <= 'Z' => true,
+				_ when a is >= 'a' and <= 'z' => true,
+				_ when a is >= '0' and <= '9' => true,
+				'-' or '_' => true,
+				_ => false
+			};
+
+		for (int i = 0; i < str.Length; i++)
 		{
-			if (!IsValidChar(nameOrSpace[i]))
+			if (!ValidateChar(str[i]))
 				return false;
 		}
 
 		return true;
 	}
+	public static Identifier Parse(string s, IFormatProvider? provider)
+	{
+		if (TryParse(s, provider, out Identifier a))
+		{
+			return a;
+		}
+
+		throw new ArgumentException("Unable to parse identifier");
+	}
+	public static bool TryParse([NotNullWhen(true)] string? s, IFormatProvider? provider, [MaybeNullWhen(false)] out Identifier result)
+	{
+		if (s is null)
+		{
+			result = default;
+			return false;
+		}
+
+		int spliterator = s.IndexOf(':');
+
+		if (spliterator is -1)
+		{
+			result = default;
+			return false;
+		}
+
+		if (s.LastIndexOf(':') != spliterator)
+		{
+			result = default;
+			return false;
+		}
+
+		string source = s.Substring(0, spliterator);
+
+		string name = s.Substring(spliterator);
+
+		return TryCreate(source, name, out result);
+	}
+	public static Identifier Create(string source, string name)
+	{
+		if (TryCreate(source, name, out Identifier result))
+		{
+			return result;
+		}
+
+		throw new ArgumentException("Invalid source or name");
+	}
+	public static bool TryCreate(string source, string name, [NotNullWhen(true)]out Identifier result)
+	{
+		if (!ValidateString(source) || !ValidateString(name))
+		{
+			result = default;
+
+			return false;
+		}
+
+		result = new(source, name);
+		return true;
+	}
+
+	public override readonly string ToString()
+	{
+		if (source is null || name is null)
+			return string.Empty;
+
+		int lenSource = source.Length;
+		int lenName = name.Length;
+		Span<char> abas = stackalloc char[lenName + lenSource + 1];
+
+
+		source.CopyTo(abas);
+		name.CopyTo(abas.Slice(lenSource + 1));
+
+		abas[lenSource] = ':';
+
+		return new(abas);
+	}
+	public readonly bool Equals(Identifier other)
+		=> other.source == this.source
+		&& other.name == this.name;
+	public override bool Equals(object? obj)
+		=> obj is Identifier id && Equals(id);
+	public override int GetHashCode()
+		=> HashCode.Combine(source, name);
 
 	public static bool operator ==(Identifier left, Identifier right)
 		=> left.Equals(right);

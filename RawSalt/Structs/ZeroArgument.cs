@@ -1,5 +1,8 @@
-﻿namespace RawSalt.Structs;
+﻿using System.Runtime.InteropServices;
 
-public struct ZeroArgument
+namespace RawSalt.Structs;
+
+[StructLayout(LayoutKind.Auto, Size = 0, Pack = 0)]
+public readonly struct ZeroArgument
 {
 }

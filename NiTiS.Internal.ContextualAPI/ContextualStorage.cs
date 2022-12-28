@@ -12,7 +12,7 @@ namespace NiTiS.Internal.ContextualAPI;
 /// </summary>
 internal static unsafe class ContextualStorage
 {
-	internal static delegate* unmanaged[Stdcall]<CString, void*> openGL;
-	internal static delegate* unmanaged[Stdcall]<CString, void*> vulkan;
-	internal static delegate* unmanaged[Stdcall]<CString, void*> directX;
+	public static delegate* unmanaged[Stdcall]<CString, void*> openGL;
+	public static delegate* unmanaged[Stdcall]<CString, void*> vulkan;
+	public static delegate* unmanaged[Stdcall]<CString, void*> directX;
 }

@@ -1,0 +1,4 @@
+# Visual studio & related-projects
+.vs/
+bin/
+obj/

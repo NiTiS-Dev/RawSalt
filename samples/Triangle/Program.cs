@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Runtime.CompilerServices;
-using RawSalt.Maths;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.Drawing;
 using SixLabors.ImageSharp.Drawing.Processing;
@@ -26,8 +25,10 @@ internal class Program
 				var span = rows.GetRowSpan(y);
 				for (int x = 0; x < W; x++)
 				{
-					int castInt = rnd.Next();
-					Rgba32 colour = Unsafe.As<int, Rgba32>(ref castInt);
+					Rgba32 colour = default;
+					colour.R = 144;
+					colour.G = 144;
+					colour.B = 144;
 					colour.A = 255;
 					span[x] = colour;
 				}

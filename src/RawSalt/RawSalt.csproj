@@ -1,0 +1,11 @@
+<Project Sdk="Microsoft.NET.Sdk">
+	<Import Project="../../build/RawSalt.props" />
+
+	<PropertyGroup>
+		<NoWarn></NoWarn>
+	</PropertyGroup>
+
+	<ItemGroup>
+	  <Folder Include="Mathematics\Geometry\" />
+	</ItemGroup>
+</Project>

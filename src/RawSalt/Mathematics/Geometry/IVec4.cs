@@ -1,0 +1,203 @@
+/// Generated with src/RawSalt.Generator/templates/vector.cs.liquid; please not edit this file
+
+using System;
+using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
+using System.Numerics;
+
+namespace RawSalt.Maths;
+
+
+[StructLayout(LayoutKind.Sequential)]
+public struct IVec4 :
+	IAdditionOperators<IVec4, IVec4, IVec4>,
+	ISubtractionOperators<IVec4, IVec4, IVec4>,
+	IMultiplyOperators<IVec4, IVec4, IVec4>,
+	IDivisionOperators<IVec4, IVec4, IVec4>,
+	IModulusOperators<IVec4, IVec4, IVec4>,
+	IEquatable<IVec4>
+{
+	/// <summary>
+	/// The X component of the vector.
+	/// </summary>
+	public int x;
+	/// <summary>
+	/// The Y component of the vector.
+	/// </summary>
+	public int y;
+	/// <summary>
+	/// The Z component of the vector.
+	/// </summary>
+	public int z;
+	/// <summary>
+	/// The W component of the vector.
+	/// </summary>
+	public int w;
+
+
+	public const int Count = 4;
+
+	/// <summary>
+	/// Creates a vector with default values.
+	/// </summary>
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public IVec4()
+		=> this = default;
+
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public IVec4(int x, int y, int z, int w)
+		=> (this.x, this.y, this.z, this.w) = (x, y, z, w);
+
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public IVec4(int all)
+		=> (this.x, this.y, this.z, this.w) = (all, all, all, all);
+
+	public IVec4(ReadOnlySpan<int> data)
+	{
+		if (data.Length < Count)
+			throw new ArgumentOutOfRangeException(nameof(data));
+
+		this = Unsafe.ReadUnaligned<IVec4>(ref Unsafe.As<int, byte>( ref MemoryMarshal.GetReference(data)));
+	}
+	
+	public IVec4(ReadOnlySpan<byte> data)
+	{
+		if (data.Length < sizeof(int) * Count)
+			throw new ArgumentOutOfRangeException(nameof(data));
+
+		this = Unsafe.ReadUnaligned<IVec4>(ref MemoryMarshal.GetReference(data));
+	}
+
+
+	public static IVec4 One
+		=> new(
+			1,
+			1,
+			1,
+			1
+			);
+
+	public static IVec4 Zero
+		=> new(
+			0,
+			0,
+			0,
+			0
+			);
+
+	/// <inheritdoc/>
+	public readonly bool Equals(IVec4 other)
+		=> this == other;
+	
+	/// <inheritdoc/>
+	public override readonly bool Equals(object? other)
+		=> other is IVec4 otherVector && this == otherVector;
+	
+	/// <inheritdoc/>
+	public override readonly int GetHashCode()
+		=> HashCode.Combine(this.x, this.y, this.z, this.w);
+		
+	/// <inheritdoc/>
+	public override readonly string ToString()
+		=> $"<{x}, {y}, {z}, {w}>";
+
+
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public static bool operator ==(IVec4 lhs, IVec4 rhs)
+	{
+		return
+			lhs.x == rhs.x &&
+			lhs.y == rhs.y &&
+			lhs.z == rhs.z &&
+			lhs.w == rhs.w 
+			;
+	}
+
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public static bool operator !=(IVec4 lhs, IVec4 rhs)
+	{
+		return
+			lhs.x != rhs.x ||
+			lhs.y != rhs.y ||
+			lhs.z != rhs.z ||
+			lhs.w != rhs.w
+			;
+	}
+
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public static IVec4 operator +(IVec4 lhs, IVec4 rhs)
+	{
+		return new(
+			lhs.x + rhs.x,
+			lhs.y + rhs.y,
+			lhs.z + rhs.z,
+			lhs.w + rhs.w
+			);
+	}
+
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public static IVec4 operator -(IVec4 lhs, IVec4 rhs)
+	{
+		return new(
+			lhs.x - rhs.x,
+			lhs.y - rhs.y,
+			lhs.z - rhs.z,
+			lhs.w - rhs.w
+			);
+	}
+
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public static IVec4 operator *(IVec4 lhs, IVec4 rhs)
+	{
+		return new(
+			lhs.x * rhs.x,
+			lhs.y * rhs.y,
+			lhs.z * rhs.z,
+			lhs.w * rhs.w
+			);
+	}
+
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public static IVec4 operator /(IVec4 lhs, IVec4 rhs)
+	{
+		return new(
+			lhs.x / rhs.x,
+			lhs.y / rhs.y,
+			lhs.z / rhs.z,
+			lhs.w / rhs.w
+			);
+	}
+
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public static IVec4 operator %(IVec4 lhs, IVec4 rhs)
+	{
+		return new(
+			lhs.x % rhs.x,
+			lhs.y % rhs.y,
+			lhs.z % rhs.z,
+			lhs.w % rhs.w
+			);
+	}
+
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public static IVec4 operator +(IVec4 self)
+	{
+		return new(
+			+self.x,
+			+self.y,
+			+self.z,
+			+self.w
+			);
+	}
+
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public static IVec4 operator -(IVec4 self)
+	{
+		return new(
+			-self.x,
+			-self.y,
+			-self.z,
+			-self.w
+			);
+	}
+}

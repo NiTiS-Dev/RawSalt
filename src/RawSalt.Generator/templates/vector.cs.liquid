@@ -1,0 +1,278 @@
+/// Generated with src/RawSalt.Generator/templates/{{ GenerationFile }}; please not edit this file
+
+{%- assign one = 1 -%}
+{%- assign zero = 0 -%}
+{%- assign last_index = Count | minus: 1 -%}
+{%- if Type == "bool" -%}
+	{%- assign is_numeric = false -%}
+	{%- assign type_t = "BVec" | append: Count -%}
+	{%- assign element_size = 1 -%}
+	{%- assign one = true -%}
+	{%- assign zero = false -%}
+{%- else -%}
+	{%- assign is_numeric = true -%}
+	{%- if Type == "int" -%}
+		{%- assign type_t = "IVec" | append: Count -%}
+		{%- assign element_size = 4 -%}
+	{%- elsif Type == "uint" -%}
+		{%- assign type_t = "UVec" | append: Count -%}
+		{%- assign element_size = 4 -%}
+	{%- elsif Type == "float" -%}
+		{%- assign is_float = true -%}
+		{%- assign type_t = "Vec" | append: Count -%}
+		{%- assign element_size = 4 -%}
+		{%- assign one = "1f" -%}
+		{%- assign zero = "0f" -%}
+	{%- elsif Type == "double" -%}
+		{%- assign is_float = true -%}
+		{%- assign type_t = "DVec" | append: Count -%}
+		{%- assign element_size = 8 -%}
+	{%- endif -%}
+{%- endif -%}
+{%- assign type_size = element_size | times: Count -%}
+using System;
+using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
+using System.Numerics;
+{%- assign inline = "[MethodImpl(MethodImplOptions.AggressiveInlining)]" -%}
+
+namespace RawSalt.Maths;
+
+
+[StructLayout(LayoutKind.Sequential)]
+public struct {{ type_t }} :
+	{%- if is_numeric -%}
+	IAdditionOperators<{{ type_t }}, {{ type_t }}, {{ type_t }}>,
+	ISubtractionOperators<{{ type_t }}, {{ type_t }}, {{ type_t }}>,
+	IMultiplyOperators<{{ type_t }}, {{ type_t }}, {{ type_t }}>,
+	IDivisionOperators<{{ type_t }}, {{ type_t }}, {{ type_t }}>,
+	IModulusOperators<{{ type_t }}, {{ type_t }}, {{ type_t }}>,
+	{%- else -%}
+	// Looks like for bool operators none interfaces
+	{%- endif -%}
+	IEquatable<{{ type_t }}>
+{
+	{%- for element in arguments -%}
+	/// <summary>
+	/// The {{ element | capitalize }} component of the vector.
+	/// </summary>
+	public {{ Type }} {{ element }};
+	{%- endfor %}
+
+	public const int Count = {{ Count }};
+
+	/// <summary>
+	/// Creates a vector with default values.
+	/// </summary>
+	{{ inline }}
+	public {{ type_t }}()
+		=> this = default;
+
+	{{ inline }}
+	public {{ type_t }}({{ typed_arguments | join: ", " }})
+		=> ({{ this_arguments | join: ", " }}) = ({{ arguments | join: ", " }});
+
+	{{ inline }}
+	public {{ type_t }}({{ Type }} all)
+		=> ({{ this_arguments | join: ", " }}) = ({{ all_arguments | join: ", " }});
+
+	public {{ type_t }}(ReadOnlySpan<{{ Type }}> data)
+	{
+		if (data.Length < Count)
+			throw new ArgumentOutOfRangeException(nameof(data));
+
+		this = Unsafe.ReadUnaligned<{{ type_t }}>(ref Unsafe.As<{{ Type }}, byte>( ref MemoryMarshal.GetReference(data)));
+	}
+	
+	public {{ type_t }}(ReadOnlySpan<byte> data)
+	{
+		if (data.Length < sizeof({{ Type }}) * Count)
+			throw new ArgumentOutOfRangeException(nameof(data));
+
+		this = Unsafe.ReadUnaligned<{{ type_t }}>(ref MemoryMarshal.GetReference(data));
+	}
+
+	{%- if is_numeric -%}
+
+	public static {{ type_t }} One
+		=> new(
+		{%- for i in (0..3) | limit: Count -%}
+			{{ one }}{% if i != last_index %},{% endif %}
+ 		{%- endfor -%}
+			);
+
+	public static {{ type_t }} Zero
+		=> new(
+		{%- for i in (0..3) | limit: Count -%}
+			{{ zero }}{% if i != last_index %},{% endif %}
+ 		{%- endfor -%}
+			);
+	{%- else -%}
+
+	public static {{ type_t }} True
+		=> new(
+		{%- for i in (0..3) | limit: Count -%}
+			{{ one }}{% if i != last_index %},{% endif %}
+ 		{%- endfor -%}
+			);
+
+	public static {{ type_t }} False
+		=> new(
+		{%- for i in (0..3) | limit: Count -%}
+			{{ zero }}{% if i != last_index %},{% endif %}
+ 		{%- endfor -%}
+			);
+	{%- endif -%}
+
+	/// <inheritdoc/>
+	public readonly bool Equals({{ type_t }} other)
+		=> this == other;
+	
+	/// <inheritdoc/>
+	public override readonly bool Equals(object? other)
+		=> other is {{ type_t }} otherVector && this == otherVector;
+	
+	/// <inheritdoc/>
+	public override readonly int GetHashCode()
+		=> HashCode.Combine({{ this_arguments | join: ", " }});
+		
+	/// <inheritdoc/>
+	public override readonly string ToString()
+		=> $"<{% for i in (0..3) | limit: Count %}{%raw%}{{%endraw%}{{ arguments[i]}}{%raw%}}{%endraw%}{% if i != last_index%}, {% endif %}{% endfor %}>";
+
+
+	{{ inline }}
+	public static bool operator ==({{ type_t }} lhs, {{ type_t }} rhs)
+	{
+		return
+		{%- for i in (0..3) | limit: Count -%}
+			lhs.{{ arguments[i] }} == rhs.{{ arguments[i] }} {% if i != last_index %}&&{% endif %}
+ 		{%- endfor -%}
+			;
+	}
+
+	{{ inline }}
+	public static bool operator !=({{ type_t }} lhs, {{ type_t }} rhs)
+	{
+		return
+		{%- for i in (0..3) | limit: Count -%}
+			lhs.{{ arguments[i] }} != rhs.{{ arguments[i] }}{% if i != last_index %} ||{% endif %}
+ 		{%- endfor -%}
+			;
+	}
+	{%- if is_numeric -%}
+
+	{{ inline }}
+	public static {{ type_t }} operator +({{ type_t }} lhs, {{ type_t }} rhs)
+	{
+		return new(
+		{%- for i in (0..3) | limit: Count -%}
+			lhs.{{ arguments[i] }} + rhs.{{ arguments[i] }}{% if i != last_index %},{% endif %}
+ 		{%- endfor -%}
+			);
+	}
+
+	{{ inline }}
+	public static {{ type_t }} operator -({{ type_t }} lhs, {{ type_t }} rhs)
+	{
+		return new(
+		{%- for i in (0..3) | limit: Count -%}
+			lhs.{{ arguments[i] }} - rhs.{{ arguments[i] }}{% if i != last_index %},{% endif %}
+ 		{%- endfor -%}
+			);
+	}
+
+	{{ inline }}
+	public static {{ type_t }} operator *({{ type_t }} lhs, {{ type_t }} rhs)
+	{
+		return new(
+		{%- for i in (0..3) | limit: Count -%}
+			lhs.{{ arguments[i] }} * rhs.{{ arguments[i] }}{% if i != last_index %},{% endif %}
+ 		{%- endfor -%}
+			);
+	}
+
+	{{ inline }}
+	public static {{ type_t }} operator /({{ type_t }} lhs, {{ type_t }} rhs)
+	{
+		return new(
+		{%- for i in (0..3) | limit: Count -%}
+			lhs.{{ arguments[i] }} / rhs.{{ arguments[i] }}{% if i != last_index %},{% endif %}
+ 		{%- endfor -%}
+			);
+	}
+
+	{{ inline }}
+	public static {{ type_t }} operator %({{ type_t }} lhs, {{ type_t }} rhs)
+	{
+		return new(
+		{%- for i in (0..3) | limit: Count -%}
+			lhs.{{ arguments[i] }} % rhs.{{ arguments[i] }}{% if i != last_index %},{% endif %}
+ 		{%- endfor -%}
+			);
+	}
+
+	{{ inline }}
+	public static {{ type_t }} operator +({{ type_t }} self)
+	{
+		return new(
+		{%- for i in (0..3) | limit: Count -%}
+			+self.{{ arguments[i] }}{% if i != last_index %},{% endif %}
+ 		{%- endfor -%}
+			);
+	}
+
+	{%- if Type != "uint" -%}
+	{{ inline }}
+	public static {{ type_t }} operator -({{ type_t }} self)
+	{
+		return new(
+		{%- for i in (0..3) | limit: Count -%}
+			-self.{{ arguments[i] }}{% if i != last_index %},{% endif %}
+ 		{%- endfor -%}
+			);
+	}
+	{%- endif -%}
+	{%- else -%}
+
+	{{ inline }}
+	public static {{ type_t }} operator &({{ type_t }} lhs, {{ type_t }} rhs)
+	{
+		return new(
+		{%- for i in (0..3) | limit: Count -%}
+			lhs.{{ arguments[i] }} & rhs.{{ arguments[i] }}{% if i != last_index %},{% endif %}
+ 		{%- endfor -%}
+			);
+	}
+
+	{{ inline }}
+	public static {{ type_t }} operator |({{ type_t }} lhs, {{ type_t }} rhs)
+	{
+		return new(
+		{%- for i in (0..3) | limit: Count -%}
+			lhs.{{ arguments[i] }} | rhs.{{ arguments[i] }}{% if i != last_index %},{% endif %}
+ 		{%- endfor -%}
+			);
+	}
+
+	{{ inline }}
+	public static {{ type_t }} operator ^({{ type_t }} lhs, {{ type_t }} rhs)
+	{
+		return new(
+		{%- for i in (0..3) | limit: Count -%}
+			lhs.{{ arguments[i] }} ^ rhs.{{ arguments[i] }}{% if i != last_index %},{% endif %}
+ 		{%- endfor -%}
+			);
+	}
+
+	{{ inline }}
+	public static {{ type_t }} operator !({{ type_t }} self)
+	{
+		return new(
+		{%- for i in (0..3) | limit: Count -%}
+			!self.{{ arguments[i] }}{% if i != last_index %},{% endif %}
+ 		{%- endfor -%}
+			);
+	}
+	{%- endif -%}
+}

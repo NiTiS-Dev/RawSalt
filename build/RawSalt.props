@@ -1,0 +1,16 @@
+<Project InitialTargets="RawSaltGetGitHash">
+	<Target Name="RawSaltGetGitHash">
+		<Exec ConsoleToMSBuild="True"
+				Command="git rev-parse HEAD"
+				WorkingDirectory="$(SolutionDir)">
+			<Output TaskParameter="ConsoleOutput" PropertyName="_RawSaltGitHash" />
+		</Exec>
+	</Target>
+
+	<PropertyGroup>
+		<TargetFrameworks>net7.0</TargetFrameworks>
+		<Nullable>enable</Nullable>
+		<LangVersion>latest</LangVersion>
+		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+	</PropertyGroup>
+</Project>

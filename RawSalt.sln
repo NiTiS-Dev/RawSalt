@@ -17,10 +17,13 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Triangle", "samples\Triangl
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".etc", ".etc", "{73C41B1A-49B4-420F-BA72-54E64FFAD489}"
 	ProjectSection(SolutionItems) = preProject
+		build\RawSalt.props = build\RawSalt.props
 		TODOs.md = TODOs.md
 	EndProjectSection
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RawSalt", "src\RawSalt\RawSalt.csproj", "{315D60B9-468C-46D9-9985-42AB096AA2FB}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NiTiS.Annotations", "src\NiTiS.Annotations\NiTiS.Annotations.csproj", "{E280EE62-77A6-4DCC-A95E-42501CD96825}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -44,6 +47,10 @@ Global
 		{315D60B9-468C-46D9-9985-42AB096AA2FB}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{315D60B9-468C-46D9-9985-42AB096AA2FB}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{315D60B9-468C-46D9-9985-42AB096AA2FB}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E280EE62-77A6-4DCC-A95E-42501CD96825}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E280EE62-77A6-4DCC-A95E-42501CD96825}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E280EE62-77A6-4DCC-A95E-42501CD96825}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E280EE62-77A6-4DCC-A95E-42501CD96825}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -53,6 +60,7 @@ Global
 		{A9F99EC8-6B87-4521-883D-7695523F4D4C} = {2E3397A8-739F-492B-B149-D16254B831E9}
 		{47BE8F68-B254-492D-9A15-C9E396CB9BE1} = {829354B2-6FB9-4FF6-9899-BE56AE719028}
 		{315D60B9-468C-46D9-9985-42AB096AA2FB} = {2E3397A8-739F-492B-B149-D16254B831E9}
+		{E280EE62-77A6-4DCC-A95E-42501CD96825} = {2E3397A8-739F-492B-B149-D16254B831E9}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {FF5DA4B0-5F16-4C41-8FD5-48C2AB184997}

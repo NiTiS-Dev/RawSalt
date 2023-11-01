@@ -5,27 +5,42 @@
 {%- assign last_index = Count | minus: 1 -%}
 {%- if Type == "bool" -%}
 	{%- assign is_numeric = false -%}
-	{%- assign type_t = "BVec" | append: Count -%}
+	{%- assign type_t =  "BVec" | append: Count -%}
+	{%- assign type2_t = "BVec" | append: "2" -%}
+	{%- assign type3_t = "BVec" | append: "3" -%}
+	{%- assign type4_t = "BVec" | append: "4" -%}
 	{%- assign element_size = 1 -%}
 	{%- assign one = true -%}
 	{%- assign zero = false -%}
 {%- else -%}
 	{%- assign is_numeric = true -%}
 	{%- if Type == "int" -%}
-		{%- assign type_t = "IVec" | append: Count -%}
+		{%- assign type_t =  "IVec" | append: Count -%}
+		{%- assign type2_t = "IVec" | append: "2" -%}
+		{%- assign type3_t = "IVec" | append: "3" -%}
+		{%- assign type4_t = "IVec" | append: "4" -%}
 		{%- assign element_size = 4 -%}
 	{%- elsif Type == "uint" -%}
-		{%- assign type_t = "UVec" | append: Count -%}
+		{%- assign type_t =  "UVec" | append: Count -%}
+		{%- assign type2_t = "UVec" | append: "2" -%}
+		{%- assign type3_t = "UVec" | append: "3" -%}
+		{%- assign type4_t = "UVec" | append: "4" -%}
 		{%- assign element_size = 4 -%}
 	{%- elsif Type == "float" -%}
 		{%- assign is_float = true -%}
-		{%- assign type_t = "Vec" | append: Count -%}
+		{%- assign type_t =	 "Vec" | append: Count -%}
+		{%- assign type2_t = "Vec" | append: "2" -%}
+		{%- assign type3_t = "Vec" | append: "3" -%}
+		{%- assign type4_t = "Vec" | append: "4" -%}
 		{%- assign element_size = 4 -%}
 		{%- assign one = "1f" -%}
 		{%- assign zero = "0f" -%}
 	{%- elsif Type == "double" -%}
 		{%- assign is_float = true -%}
-		{%- assign type_t = "DVec" | append: Count -%}
+		{%- assign type_t =  "DVec" | append: Count -%}
+		{%- assign type2_t = "DVec" | append: "2" -%}
+		{%- assign type3_t = "DVec" | append: "3" -%}
+		{%- assign type4_t = "DVec" | append: "4" -%}
 		{%- assign element_size = 8 -%}
 	{%- endif -%}
 {%- endif -%}
@@ -36,7 +51,7 @@ using System.Runtime.InteropServices;
 using System.Numerics;
 {%- assign inline = "[MethodImpl(MethodImplOptions.AggressiveInlining)]" -%}
 
-namespace RawSalt.Maths;
+namespace RawSalt.Mathematics.Geometry;
 
 
 [StructLayout(LayoutKind.Sequential)]
@@ -83,6 +98,27 @@ public struct {{ type_t }} :
 
 		this = Unsafe.ReadUnaligned<{{ type_t }}>(ref Unsafe.As<{{ Type }}, byte>( ref MemoryMarshal.GetReference(data)));
 	}
+	{%- if Count == 3 -%}
+	/// <summary>
+	/// Constructs vector by extending the <paramref name="xy"/> vector
+	/// </summary>
+	public {{ type_t }}({{ type2_t }} xy, {{ Type }} z)
+		=> (this.x, this.y, this.z) = (xy.x, xy.y, z);
+
+	{%- elsif Count == 4 -%}
+	/// <summary>
+	/// Constructs vector by extending the <paramref name="xy"/> vector
+	/// </summary>
+	public {{ type_t }}({{ type2_t }} xy, {{ Type }} z, {{ Type }} w)
+		=> (this.x, this.y, this.z, this.w) = (xy.x, xy.y, z, w);
+
+	/// <summary>
+	/// Constructs vector by extending the <paramref name="xyz"/> vector
+	/// </summary>
+	public {{ type_t }}({{ type3_t }} xyz, {{ Type }} w)
+		=> (this.x, this.y, this.z, this.w) = (xyz.x, xyz.y, xyz.z, w);
+
+	{%- endif -%}
 	
 	public {{ type_t }}(ReadOnlySpan<byte> data)
 	{
@@ -95,33 +131,17 @@ public struct {{ type_t }} :
 	{%- if is_numeric -%}
 
 	public static {{ type_t }} One
-		=> new(
-		{%- for i in (0..3) | limit: Count -%}
-			{{ one }}{% if i != last_index %},{% endif %}
- 		{%- endfor -%}
-			);
+		=> new({%- for i in (0..3) | limit: Count -%}{{ one }}{% if i != last_index %},{% endif %}{%- endfor -%});
 
 	public static {{ type_t }} Zero
-		=> new(
-		{%- for i in (0..3) | limit: Count -%}
-			{{ zero }}{% if i != last_index %},{% endif %}
- 		{%- endfor -%}
-			);
+		=> new({%- for i in (0..3) | limit: Count -%}{{ zero }}{% if i != last_index %},{% endif %}{%- endfor -%});
 	{%- else -%}
 
 	public static {{ type_t }} True
-		=> new(
-		{%- for i in (0..3) | limit: Count -%}
-			{{ one }}{% if i != last_index %},{% endif %}
- 		{%- endfor -%}
-			);
+		=> new({%- for i in (0..3) | limit: Count -%}{{ one }}{% if i != last_index %},{% endif %}{%- endfor -%});
 
 	public static {{ type_t }} False
-		=> new(
-		{%- for i in (0..3) | limit: Count -%}
-			{{ zero }}{% if i != last_index %},{% endif %}
- 		{%- endfor -%}
-			);
+		=> new({%- for i in (0..3) | limit: Count -%}{{ zero }}{% if i != last_index %},{% endif %}{%- endfor -%});
 	{%- endif -%}
 
 	/// <inheritdoc/>
@@ -136,10 +156,85 @@ public struct {{ type_t }} :
 	public override readonly int GetHashCode()
 		=> HashCode.Combine({{ this_arguments | join: ", " }});
 		
-	/// <inheritdoc/>
+	/// <summary>
+	/// Returns string representation of vector.
+	/// </summary>
 	public override readonly string ToString()
 		=> $"<{% for i in (0..3) | limit: Count %}{%raw%}{{%endraw%}{{ arguments[i]}}{%raw%}}{%endraw%}{% if i != last_index%}, {% endif %}{% endfor %}>";
 
+	{%- if is_numeric -%}
+	#region Vector operations
+
+	/// <summary>
+	/// Restricts vector by <paramref name="max"/> and <paramref name="max"/> values.
+	/// </summary>
+	{{ inline }}
+	public static {{ type_t }} Clamp({{ type_t }} value, {{ type_t }} min, {{ type_t }} max)
+		=> Min(Max(value, min), max);
+
+	{%- if is_float -%}
+	/// <summary>
+	/// Computes distance between two points.
+	/// </summary>
+	{{ inline }}
+	public static {{ Type }} Distance({{ type_t }} firstPoint, {{ type_t }} secondPoint)
+		=> {{ Type }}.Sqrt(DistanceSquared(firstPoint, secondPoint));
+
+	/// <summary>
+	/// Computes distance squared between two points.
+	/// </summary>
+	{{ inline }}
+	public static {{ Type }} DistanceSquared({{ type_t }} firstPoint, {{ type_t }} secondPoint)
+	{
+		var diff = secondPoint - firstPoint;
+		return Dot(diff, diff);
+	}
+
+	public readonly {{ Type }} LengthSquared
+	{
+		{{ inline }}
+		get => Dot(this, this);
+	}
+
+	public readonly {{ Type }} Length
+	{
+		{{ inline }}
+		get => {{ Type }}.Sqrt(LengthSquared);
+	}
+
+	{%- endif -%}
+	
+	{{ inline }}
+	public static {{ Type }} Dot({{ type_t }} lhs, {{ type_t }} rhs)
+	{
+		return
+		{%- for i in (0..3) | limit: Count -%}
+			(lhs.{{ arguments[i] }} * rhs.{{ arguments[i] }}){% if i != last_index%} +{% else %};{% endif %}
+		{%- endfor -%}
+	}
+
+	{{ inline }}
+	public static {{ type_t }} Max({{ type_t }} lhs, {{ type_t }} rhs)
+	{
+		return new(
+		{%- for i in (0..3) | limit: Count -%}
+			{{ Type }}.Max(lhs.{{ arguments[i] }}, rhs.{{ arguments[i] }}){% if i != last_index%},{% endif %}
+		{%- endfor -%}
+			);
+	}
+
+	{{ inline }}
+	public static {{ type_t }} Min({{ type_t }} lhs, {{ type_t }} rhs)
+	{
+		return new(
+		{%- for i in (0..3) | limit: Count -%}
+			{{ Type }}.Max(lhs.{{ arguments[i] }}, rhs.{{ arguments[i] }}){% if i != last_index%},{% endif %}
+		{%- endfor -%}
+			);
+	}
+
+	#endregion
+	{%- endif -%}
 
 	{{ inline }}
 	public static bool operator ==({{ type_t }} lhs, {{ type_t }} rhs)
@@ -193,6 +288,16 @@ public struct {{ type_t }} :
 	}
 
 	{{ inline }}
+	public static {{ type_t }} operator *({{ type_t }} lhs, {{ Type }} rhs)
+	{
+		return new(
+		{%- for i in (0..3) | limit: Count -%}
+			lhs.{{ arguments[i] }} * rhs{% if i != last_index %},{% endif %}
+ 		{%- endfor -%}
+			);
+	}
+
+	{{ inline }}
 	public static {{ type_t }} operator /({{ type_t }} lhs, {{ type_t }} rhs)
 	{
 		return new(
@@ -203,11 +308,31 @@ public struct {{ type_t }} :
 	}
 
 	{{ inline }}
+	public static {{ type_t }} operator /({{ type_t }} lhs, {{ Type }} rhs)
+	{
+		return new(
+		{%- for i in (0..3) | limit: Count -%}
+			lhs.{{ arguments[i] }} / rhs{% if i != last_index %},{% endif %}
+ 		{%- endfor -%}
+			);
+	}
+
+	{{ inline }}
 	public static {{ type_t }} operator %({{ type_t }} lhs, {{ type_t }} rhs)
 	{
 		return new(
 		{%- for i in (0..3) | limit: Count -%}
 			lhs.{{ arguments[i] }} % rhs.{{ arguments[i] }}{% if i != last_index %},{% endif %}
+ 		{%- endfor -%}
+			);
+	}
+
+	{{ inline }}
+	public static {{ type_t }} operator %({{ type_t }} lhs, {{ Type }} rhs)
+	{
+		return new(
+		{%- for i in (0..3) | limit: Count -%}
+			lhs.{{ arguments[i] }} % rhs{% if i != last_index %},{% endif %}
  		{%- endfor -%}
 			);
 	}

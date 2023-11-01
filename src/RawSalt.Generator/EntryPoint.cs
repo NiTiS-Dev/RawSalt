@@ -6,7 +6,7 @@ using DotLiquid;
 
 while (!Directory.GetDirectories(Environment.CurrentDirectory).Any(d => Path.GetFileName(d) is ".git/" or ".git" or ".git\\"))
 {
-	Environment.CurrentDirectory = Directory.GetParent(Environment.CurrentDirectory).FullName;
+	Environment.CurrentDirectory = Directory.GetParent(Environment.CurrentDirectory)!.FullName;
 }
 
 Dictionary<string, Dictionary<string, object>> contexts = new()
@@ -34,7 +34,7 @@ foreach (KeyValuePair<string, Dictionary<string, object>> context in contexts)
 {
 	File.Delete(context.Key);
 
-	Template templ = Template.Parse(File.ReadAllText(Path.Combine(Environment.CurrentDirectory, "src/RawSalt.Generator/templates", context.Value["GenerationFile"] as string)));
+	Template templ = Template.Parse(File.ReadAllText(Path.Combine(Environment.CurrentDirectory, "src/RawSalt.Generator/templates", (context.Value["GenerationFile"] as string)!)));
 
 	File.WriteAllText(context.Key, templ.Render(Hash.FromDictionary(context.Value)));
 }

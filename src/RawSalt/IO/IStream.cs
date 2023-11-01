@@ -4,7 +4,7 @@ namespace RawSalt.IO;
 
 public interface IStream : IDisposable
 {
-	bool EndOfStream { get; }
+	bool IsEndOfStream { get; }
 	nuint Position { get; }
 	nuint Length { get; }
 }

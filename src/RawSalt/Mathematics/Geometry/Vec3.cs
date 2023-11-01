@@ -1,11 +1,11 @@
 /// Generated with src/RawSalt.Generator/templates/vector.cs.liquid; please not edit this file
 
 using System;
+using System.Numerics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
-using System.Numerics;
 
-namespace RawSalt.Maths;
+namespace RawSalt.Mathematics.Geometry;
 
 
 [StructLayout(LayoutKind.Sequential)]
@@ -53,9 +53,15 @@ public struct Vec3 :
 		if (data.Length < Count)
 			throw new ArgumentOutOfRangeException(nameof(data));
 
-		this = Unsafe.ReadUnaligned<Vec3>(ref Unsafe.As<float, byte>( ref MemoryMarshal.GetReference(data)));
+		this = Unsafe.ReadUnaligned<Vec3>(ref Unsafe.As<float, byte>(ref MemoryMarshal.GetReference(data)));
 	}
-	
+	/// <summary>
+	/// Constructs vector by extending the <paramref name="xy"/> vector
+	/// </summary>
+	public Vec3(Vec2 xy, float z)
+		=> (this.x, this.y, this.z) = (xy.x, xy.y, z);
+
+
 	public Vec3(ReadOnlySpan<byte> data)
 	{
 		if (data.Length < sizeof(float) * Count)
@@ -66,35 +72,98 @@ public struct Vec3 :
 
 
 	public static Vec3 One
-		=> new(
-			1f,
-			1f,
-			1f
-			);
+		=> new(1f, 1f, 1f);
 
 	public static Vec3 Zero
-		=> new(
-			0f,
-			0f,
-			0f
-			);
+		=> new(0f, 0f, 0f);
 
 	/// <inheritdoc/>
 	public readonly bool Equals(Vec3 other)
 		=> this == other;
-	
+
 	/// <inheritdoc/>
 	public override readonly bool Equals(object? other)
 		=> other is Vec3 otherVector && this == otherVector;
-	
+
 	/// <inheritdoc/>
 	public override readonly int GetHashCode()
 		=> HashCode.Combine(this.x, this.y, this.z);
-		
-	/// <inheritdoc/>
+
+	/// <summary>
+	/// Returns string representation of vector.
+	/// </summary>
 	public override readonly string ToString()
 		=> $"<{x}, {y}, {z}>";
 
+	#region Vector operations
+
+	/// <summary>
+	/// Restricts vector by <paramref name="max"/> and <paramref name="max"/> values.
+	/// </summary>
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public static Vec3 Clamp(Vec3 value, Vec3 min, Vec3 max)
+		=> Min(Max(value, min), max);
+
+	/// <summary>
+	/// Computes distance between two points.
+	/// </summary>
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public static float Distance(Vec3 firstPoint, Vec3 secondPoint)
+		=> float.Sqrt(DistanceSquared(firstPoint, secondPoint));
+
+	/// <summary>
+	/// Computes distance squared between two points.
+	/// </summary>
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public static float DistanceSquared(Vec3 firstPoint, Vec3 secondPoint)
+	{
+		var diff = secondPoint - firstPoint;
+		return Dot(diff, diff);
+	}
+
+	public readonly float LengthSquared
+	{
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		get => Dot(this, this);
+	}
+
+	public readonly float Length
+	{
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		get => float.Sqrt(LengthSquared);
+	}
+
+
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public static float Dot(Vec3 lhs, Vec3 rhs)
+	{
+		return
+			(lhs.x * rhs.x) +
+			(lhs.y * rhs.y) +
+			(lhs.z * rhs.z);
+	}
+
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public static Vec3 Max(Vec3 lhs, Vec3 rhs)
+	{
+		return new(
+			float.Max(lhs.x, rhs.x),
+			float.Max(lhs.y, rhs.y),
+			float.Max(lhs.z, rhs.z)
+			);
+	}
+
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public static Vec3 Min(Vec3 lhs, Vec3 rhs)
+	{
+		return new(
+			float.Max(lhs.x, rhs.x),
+			float.Max(lhs.y, rhs.y),
+			float.Max(lhs.z, rhs.z)
+			);
+	}
+
+	#endregion
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public static bool operator ==(Vec3 lhs, Vec3 rhs)
@@ -102,7 +171,7 @@ public struct Vec3 :
 		return
 			lhs.x == rhs.x &&
 			lhs.y == rhs.y &&
-			lhs.z == rhs.z 
+			lhs.z == rhs.z
 			;
 	}
 
@@ -147,6 +216,16 @@ public struct Vec3 :
 	}
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public static Vec3 operator *(Vec3 lhs, float rhs)
+	{
+		return new(
+			lhs.x * rhs,
+			lhs.y * rhs,
+			lhs.z * rhs
+			);
+	}
+
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public static Vec3 operator /(Vec3 lhs, Vec3 rhs)
 	{
 		return new(
@@ -157,12 +236,32 @@ public struct Vec3 :
 	}
 
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public static Vec3 operator /(Vec3 lhs, float rhs)
+	{
+		return new(
+			lhs.x / rhs,
+			lhs.y / rhs,
+			lhs.z / rhs
+			);
+	}
+
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public static Vec3 operator %(Vec3 lhs, Vec3 rhs)
 	{
 		return new(
 			lhs.x % rhs.x,
 			lhs.y % rhs.y,
 			lhs.z % rhs.z
+			);
+	}
+
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public static Vec3 operator %(Vec3 lhs, float rhs)
+	{
+		return new(
+			lhs.x % rhs,
+			lhs.y % rhs,
+			lhs.z % rhs
 			);
 	}
 

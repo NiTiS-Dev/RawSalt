@@ -2,3 +2,4 @@
 .vs/
 bin/
 obj/
+/samples/Triangle/Properties/launchSettings.json

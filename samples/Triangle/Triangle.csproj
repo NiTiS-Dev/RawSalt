@@ -11,4 +11,8 @@
 		<PackageReference Include="SixLabors.ImageSharp.Drawing" Version="1.0.0" />
 	</ItemGroup>
 
+	<ItemGroup>
+	  <ProjectReference Include="..\..\src\RawSalt\RawSalt.csproj" />
+	</ItemGroup>
+
 </Project>

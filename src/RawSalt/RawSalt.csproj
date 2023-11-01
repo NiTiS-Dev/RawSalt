@@ -1,11 +1,26 @@
 <Project Sdk="Microsoft.NET.Sdk">
+	<PropertyGroup>
+		<RS_WSL>false</RS_WSL>
+	</PropertyGroup>
 	<Import Project="../../build/RawSalt.props" />
 
 	<PropertyGroup>
-		<NoWarn></NoWarn>
+		<NoWarn>CS8618</NoWarn>
+		<AllowUnsafeBlocks>True</AllowUnsafeBlocks>
 	</PropertyGroup>
 
 	<ItemGroup>
-	  <Folder Include="Mathematics\Geometry\" />
+		<Folder Include="Mathematics\Geometry\" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<PackageReference Include="Glob" Version="1.1.9" />
+		<!-- PackageReference Include="NiTiS.Native.SDL.Container" Version="0.0.11" >
+			<ExcludeAssets>compile</ExcludeAssets>
+		</PackageReference -->
+	</ItemGroup>
+
+	<ItemGroup>
+	  <ProjectReference Include="..\NiTiS.Annotations\NiTiS.Annotations.csproj" />
 	</ItemGroup>
 </Project>

@@ -1,11 +1,19 @@
-<Project InitialTargets="RawSaltGetGitHash">
-	<Target Name="RawSaltGetGitHash">
+<Project>
+	<!-- Target Name="RawSaltGetGitHash">
 		<Exec ConsoleToMSBuild="True"
 				Command="git rev-parse HEAD"
 				WorkingDirectory="$(SolutionDir)">
 			<Output TaskParameter="ConsoleOutput" PropertyName="_RawSaltGitHash" />
 		</Exec>
-	</Target>
+	</Target -->
+
+	<PropertyGroup Label="Definitions">
+		<RS_LinuxHost Condition="'$([System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform($([System.Runtime.InteropServices.OSPlatform]::Linux)))' == 'true'">true</RS_LinuxHost>
+		<RS_WindowsHost Condition="'$([System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform($([System.Runtime.InteropServices.OSPlatform]::Windows)))' == 'true'">true</RS_WindowsHost>
+		<DefineConstants Condition="'$(RS_WindowsHost)' == 'true'">$(DefineConstants);RS_WINDOWSHOST</DefineConstants>
+		<DefineConstants Condition="'$(RS_LinuxHost)' == 'true'">$(DefineConstants);RS_LINUXHOST</DefineConstants>
+		<DefineConstants Condition="'$(RS_WSL)' == 'true'">$(DefineConstants);RS_LINUXHOST</DefineConstants>
+	</PropertyGroup>
 
 	<PropertyGroup>
 		<TargetFrameworks>net7.0</TargetFrameworks>

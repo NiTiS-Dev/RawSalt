@@ -11,6 +11,7 @@
 
 	<ItemGroup>
 		<Folder Include="Mathematics\Geometry\" />
+		<Folder Include="Properties\" />
 	</ItemGroup>
 
 	<ItemGroup>

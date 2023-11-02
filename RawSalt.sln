@@ -17,6 +17,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Triangle", "samples\Triangl
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".etc", ".etc", "{73C41B1A-49B4-420F-BA72-54E64FFAD489}"
 	ProjectSection(SolutionItems) = preProject
+		.gitignore = .gitignore
+		LICENSE = LICENSE
 		build\RawSalt.props = build\RawSalt.props
 		TODOs.md = TODOs.md
 	EndProjectSection

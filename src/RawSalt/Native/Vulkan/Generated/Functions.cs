@@ -1,4 +1,6 @@
 using System;
+using System.IO;
+using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Security;
 
@@ -6,14 +8,21 @@ namespace RawSalt.Native.Vulkan;
 
 public static partial class Vulkan
 {
-#if RS_LINUXHOST
-	internal const string LibraryName = "vulkan1.so";
-#elif RS_WINDOWSHOST
-	internal const string LibraryName = "vulkan-1.dll";
-#else
-#warning "Unknown RawSalt host"
-	internal const string LibraryName = "vulkan-1";
-#endif
+	public const string LibraryName = "vulkan-1.dll";
+	public const string LibraryNameLinux = "libvulkan1.so";
+
+	static Vulkan()
+	{
+		if (MachineInfo.IsLinux)
+		{
+			NativeLibrary.SetDllImportResolver(typeof(Vulkan).Assembly, LinuxLibraryResolver);
+		}
+	}
+
+	internal static nint LinuxLibraryResolver(string libraryName, Assembly asm, DllImportSearchPath? path)
+	{
+		return NativeLibrary.Load(LibraryNameLinux);
+	}
 
 	public static unsafe Instance CreateInstance(ref InstanceCreateInfo createInfo, AllocationCallbacks* allocator = null)
 	{

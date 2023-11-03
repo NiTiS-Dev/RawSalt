@@ -1,27 +1,28 @@
 ﻿using RawSalt;
-using RawSalt.Graphics;
-using RawSalt.Native.SDL;
-using RawSalt.Native.Windows;
+using System;
 
 namespace Triangle;
 
-public class Program : Application
+public class Program : DesktopApplication
 {
-	public Program(RenderOptions renderOptions) : base(renderOptions)
+	public const string TriangleAppId = "triangle";
+	public Program(string appId) : base(appId)
 	{
 	}
 
 	static void Main(string[] args)
 	{
-		SDL2.SDL_ShowSimpleMessageBox(SDL2.SDL_MessageBoxFlags.SDL_MESSAGEBOX_WARNING, "Hi", "Anaans", 0);
-		//try
-		//{
-		//	Program app = new(new RenderOptions(false, 60));
-		//	app.Run();
-		//}
-		//catch (Exception e)
-		//{
-		//	Console.Error.WriteLine(e);
-		//}
+		try
+		{
+			Program app = new(TriangleAppId);
+			
+			app.Setup();
+			
+			app.Run();
+		}
+		catch (Exception e)
+		{
+			Console.Error.WriteLine(e);
+		}
 	}
 }

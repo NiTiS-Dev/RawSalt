@@ -59,7 +59,6 @@ public static class SDL2
 		if (!NativeLibrary.TryLoad(LibraryNameLinux, out result))
 			NativeLibrary.TryLoad(NativePathResolver.GetAdditionalPath(LibraryNameLinux), out result);
 
-		Console.WriteLine(NativePathResolver.GetAdditionalPath(LibraryNameLinux));
 		return result;
 	}
 	internal static nint WindowsLibraryResolver(string libraryName, Assembly asm, DllImportSearchPath? path)

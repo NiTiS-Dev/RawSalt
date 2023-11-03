@@ -1,7 +1,4 @@
 <Project Sdk="Microsoft.NET.Sdk">
-	<PropertyGroup>
-		<RS_WSL>false</RS_WSL>
-	</PropertyGroup>
 	<Import Project="../../build/RawSalt.props" />
 
 	<PropertyGroup>
@@ -23,5 +20,7 @@
 
 	<ItemGroup>
 	  <ProjectReference Include="..\NiTiS.Annotations\NiTiS.Annotations.csproj" />
+	  <ProjectReference Include="..\RawSalt.Native.SDL\RawSalt.Native.SDL.csproj" />
+	  <ProjectReference Include="..\RawSalt.Native.Vulkan\RawSalt.Native.Vulkan.csproj" />
 	</ItemGroup>
 </Project>

@@ -1,0 +1,47 @@
+<Project Sdk="Microsoft.NET.Sdk">
+	<Import Project="../RawSalt.Native.Shared/RawSalt.Native.Shared.projitems" Label="Shared" />
+	<Import Project="../../build/RawSalt.props" />
+
+	<PropertyGroup>
+		<NoWarn>CS8618</NoWarn>
+		<AllowUnsafeBlocks>True</AllowUnsafeBlocks>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<Content Include="$(MSBuildThisFileDirectory)runtimes/win-x64/native/SDL2.dll">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+			<PackagePath>runtimes/win-x64/native</PackagePath>
+			<Pack>true</Pack>
+		</Content>
+		<Content Include="$(MSBuildThisFileDirectory)runtimes/win-arm64/native/SDL2.dll">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+			<PackagePath>runtimes/win-arm64/native</PackagePath>
+			<Pack>true</Pack>
+		</Content>
+		<Content Include="$(MSBuildThisFileDirectory)runtimes/win-x86/native/SDL2.dll">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+			<PackagePath>runtimes/win-x86/native</PackagePath>
+			<Pack>true</Pack>
+		</Content>
+		<Content Include="$(MSBuildThisFileDirectory)runtimes/osx-x64/native/libSDL2.dylib">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+			<PackagePath>runtimes/osx-x64/native</PackagePath>
+			<Pack>true</Pack>
+		</Content>
+		<Content Include="$(MSBuildThisFileDirectory)runtimes/osx-arm64/native/libSDL2.dylib">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+			<PackagePath>runtimes/osx-arm64/native</PackagePath>
+			<Pack>true</Pack>
+		</Content>
+		<Content Include="$(MSBuildThisFileDirectory)runtimes/linux-x64/native/libSDL2.so">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+			<PackagePath>runtimes/linux-x64/native</PackagePath>
+			<Pack>true</Pack>
+		</Content>
+		<Content Include="$(MSBuildThisFileDirectory)runtimes/linux-x86/native/libSDL2.so">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+			<PackagePath>runtimes/linux-x86/native</PackagePath>
+			<Pack>true</Pack>
+		</Content>
+	</ItemGroup>
+</Project>

@@ -1,0 +1,1 @@
+# Shared files for all Native binding libraries of RS family

@@ -1,0 +1,9 @@
+<Project Sdk="Microsoft.NET.Sdk">
+	<Import Project="..\RawSalt.Native.Shared\RawSalt.Native.Shared.projitems" Label="Shared" />
+	<Import Project="../../build/RawSalt.props" />
+
+	<PropertyGroup>
+		<NoWarn>CS8618</NoWarn>
+		<AllowUnsafeBlocks>True</AllowUnsafeBlocks>
+	</PropertyGroup>
+</Project>

@@ -1,5 +1,4 @@
 using System;
-using System.IO;
 using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Security;
@@ -13,15 +12,31 @@ public static partial class Vulkan
 
 	static Vulkan()
 	{
-		if (MachineInfo.IsLinux)
+		if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
 		{
 			NativeLibrary.SetDllImportResolver(typeof(Vulkan).Assembly, LinuxLibraryResolver);
+		}
+		else if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+		{
+			NativeLibrary.SetDllImportResolver(typeof(Vulkan).Assembly, WindowsLibraryResolver);
 		}
 	}
 
 	internal static nint LinuxLibraryResolver(string libraryName, Assembly asm, DllImportSearchPath? path)
 	{
-		return NativeLibrary.Load(LibraryNameLinux);
+		nint result = 0;
+		if (!NativeLibrary.TryLoad(LibraryNameLinux, out result))
+			NativeLibrary.TryLoad(NativePathResolver.GetAdditionalPath(LibraryNameLinux), out result);
+
+		return result;
+	}
+	internal static nint WindowsLibraryResolver(string libraryName, Assembly asm, DllImportSearchPath? path)
+	{
+		nint result = 0;
+		if (!NativeLibrary.TryLoad(LibraryName, out result))
+			NativeLibrary.TryLoad(NativePathResolver.GetAdditionalPath(LibraryName), out result);
+
+		return result;
 	}
 
 	public static unsafe Instance CreateInstance(ref InstanceCreateInfo createInfo, AllocationCallbacks* allocator = null)

@@ -98,7 +98,7 @@ public struct DMat4x4
 	/// <summary>
 	/// The 1 row of matrix.
 	/// </summary>
-	public readonly Vec4 R1
+	public readonly DVec4 R1
 		=> new(
 			M11,
 			M12,
@@ -108,7 +108,7 @@ public struct DMat4x4
 	/// <summary>
 	/// The 2 row of matrix.
 	/// </summary>
-	public readonly Vec4 R2
+	public readonly DVec4 R2
 		=> new(
 			M21,
 			M22,
@@ -118,7 +118,7 @@ public struct DMat4x4
 	/// <summary>
 	/// The 3 row of matrix.
 	/// </summary>
-	public readonly Vec4 R3
+	public readonly DVec4 R3
 		=> new(
 			M31,
 			M32,
@@ -128,7 +128,7 @@ public struct DMat4x4
 	/// <summary>
 	/// The 4 row of matrix.
 	/// </summary>
-	public readonly Vec4 R4
+	public readonly DVec4 R4
 		=> new(
 			M41,
 			M42,
@@ -139,7 +139,7 @@ public struct DMat4x4
 	/// <summary>
 	/// The 1 column of matrix.
 	/// </summary>
-	public readonly Vec4 C1
+	public readonly DVec4 C1
 		=> new(
 			M11,
 			M21,
@@ -149,7 +149,7 @@ public struct DMat4x4
 	/// <summary>
 	/// The 2 column of matrix.
 	/// </summary>
-	public readonly Vec4 C2
+	public readonly DVec4 C2
 		=> new(
 			M12,
 			M22,
@@ -159,7 +159,7 @@ public struct DMat4x4
 	/// <summary>
 	/// The 3 column of matrix.
 	/// </summary>
-	public readonly Vec4 C3
+	public readonly DVec4 C3
 		=> new(
 			M13,
 			M23,
@@ -169,7 +169,7 @@ public struct DMat4x4
 	/// <summary>
 	/// The 4 column of matrix.
 	/// </summary>
-	public readonly Vec4 C4
+	public readonly DVec4 C4
 		=> new(
 			M14,
 			M24,

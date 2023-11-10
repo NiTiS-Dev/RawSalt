@@ -1,14 +1,16 @@
 ﻿/// Generated with src/RawSalt.Generator/templates/{{ GenerationFile }}; please not edit this file
 
-{%- assign row_t =  "Vec" | append: Rows -%}
-{%- assign column_t =  "Vec" | append: Columns -%}
 {%- assign row_last_index = Rows | minus: 1 -%}
 {%- assign column_last_index = Columns | minus: 1 -%}
 
 {%- if Type == "float" -%}
+	{%- assign row_t =  "Vec" | append: Rows -%}
+	{%- assign column_t =  "Vec" | append: Columns -%}
 	{%- assign type_t =  "Mat" | append: Rows | append: "x" | append: Columns -%}
 	{%- assign element_size = 4 -%}
 {%- elsif Type == "double" -%}
+	{%- assign row_t =  "DVec" | append: Rows -%}
+	{%- assign column_t =  "DVec" | append: Columns -%}
 	{%- assign type_t =  "DMat" | append: Rows | append: "x" | append: Columns -%}
 	{%- assign element_size = 8 -%}
 {%- endif -%}

@@ -63,7 +63,7 @@ public struct DMat3x3
 	/// <summary>
 	/// The 1 row of matrix.
 	/// </summary>
-	public readonly Vec3 R1
+	public readonly DVec3 R1
 		=> new(
 			M11,
 			M12,
@@ -72,7 +72,7 @@ public struct DMat3x3
 	/// <summary>
 	/// The 2 row of matrix.
 	/// </summary>
-	public readonly Vec3 R2
+	public readonly DVec3 R2
 		=> new(
 			M21,
 			M22,
@@ -81,7 +81,7 @@ public struct DMat3x3
 	/// <summary>
 	/// The 3 row of matrix.
 	/// </summary>
-	public readonly Vec3 R3
+	public readonly DVec3 R3
 		=> new(
 			M31,
 			M32,
@@ -91,7 +91,7 @@ public struct DMat3x3
 	/// <summary>
 	/// The 1 column of matrix.
 	/// </summary>
-	public readonly Vec3 C1
+	public readonly DVec3 C1
 		=> new(
 			M11,
 			M21,
@@ -100,7 +100,7 @@ public struct DMat3x3
 	/// <summary>
 	/// The 2 column of matrix.
 	/// </summary>
-	public readonly Vec3 C2
+	public readonly DVec3 C2
 		=> new(
 			M12,
 			M22,
@@ -109,7 +109,7 @@ public struct DMat3x3
 	/// <summary>
 	/// The 3 column of matrix.
 	/// </summary>
-	public readonly Vec3 C3
+	public readonly DVec3 C3
 		=> new(
 			M13,
 			M23,

@@ -1,9 +1,9 @@
 /// Generated with src/RawSalt.Generator/templates/vector.cs.liquid; please not edit this file
 
 using System;
-using System.Numerics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using System.Numerics;
 
 namespace RawSalt.Mathematics.Geometry;
 
@@ -49,9 +49,9 @@ public struct Vec2 :
 		if (data.Length < Count)
 			throw new ArgumentOutOfRangeException(nameof(data));
 
-		this = Unsafe.ReadUnaligned<Vec2>(ref Unsafe.As<float, byte>(ref MemoryMarshal.GetReference(data)));
+		this = Unsafe.ReadUnaligned<Vec2>(ref Unsafe.As<float, byte>( ref MemoryMarshal.GetReference(data)));
 	}
-
+	
 	public Vec2(ReadOnlySpan<byte> data)
 	{
 		if (data.Length < sizeof(float) * Count)
@@ -62,23 +62,23 @@ public struct Vec2 :
 
 
 	public static Vec2 One
-		=> new(1f, 1f);
+		=> new(1f,1f);
 
 	public static Vec2 Zero
-		=> new(0f, 0f);
+		=> new(0f,0f);
 
 	/// <inheritdoc/>
 	public readonly bool Equals(Vec2 other)
 		=> this == other;
-
+	
 	/// <inheritdoc/>
 	public override readonly bool Equals(object? other)
 		=> other is Vec2 otherVector && this == otherVector;
-
+	
 	/// <inheritdoc/>
 	public override readonly int GetHashCode()
 		=> HashCode.Combine(this.x, this.y);
-
+		
 	/// <summary>
 	/// Returns string representation of vector.
 	/// </summary>
@@ -123,7 +123,7 @@ public struct Vec2 :
 		get => float.Sqrt(LengthSquared);
 	}
 
-
+	
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public static float Dot(Vec2 lhs, Vec2 rhs)
 	{
@@ -157,7 +157,7 @@ public struct Vec2 :
 	{
 		return
 			lhs.x == rhs.x &&
-			lhs.y == rhs.y
+			lhs.y == rhs.y 
 			;
 	}
 

@@ -1,9 +1,9 @@
 /// Generated with src/RawSalt.Generator/templates/vector.cs.liquid; please not edit this file
 
 using System;
-using System.Numerics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using System.Numerics;
 
 namespace RawSalt.Mathematics.Geometry;
 
@@ -57,7 +57,7 @@ public struct Vec4 :
 		if (data.Length < Count)
 			throw new ArgumentOutOfRangeException(nameof(data));
 
-		this = Unsafe.ReadUnaligned<Vec4>(ref Unsafe.As<float, byte>(ref MemoryMarshal.GetReference(data)));
+		this = Unsafe.ReadUnaligned<Vec4>(ref Unsafe.As<float, byte>( ref MemoryMarshal.GetReference(data)));
 	}
 	/// <summary>
 	/// Constructs vector by extending the <paramref name="xy"/> vector
@@ -71,7 +71,7 @@ public struct Vec4 :
 	public Vec4(Vec3 xyz, float w)
 		=> (this.x, this.y, this.z, this.w) = (xyz.x, xyz.y, xyz.z, w);
 
-
+	
 	public Vec4(ReadOnlySpan<byte> data)
 	{
 		if (data.Length < sizeof(float) * Count)
@@ -82,23 +82,23 @@ public struct Vec4 :
 
 
 	public static Vec4 One
-		=> new(1f, 1f, 1f, 1f);
+		=> new(1f,1f,1f,1f);
 
 	public static Vec4 Zero
-		=> new(0f, 0f, 0f, 0f);
+		=> new(0f,0f,0f,0f);
 
 	/// <inheritdoc/>
 	public readonly bool Equals(Vec4 other)
 		=> this == other;
-
+	
 	/// <inheritdoc/>
 	public override readonly bool Equals(object? other)
 		=> other is Vec4 otherVector && this == otherVector;
-
+	
 	/// <inheritdoc/>
 	public override readonly int GetHashCode()
 		=> HashCode.Combine(this.x, this.y, this.z, this.w);
-
+		
 	/// <summary>
 	/// Returns string representation of vector.
 	/// </summary>
@@ -143,7 +143,7 @@ public struct Vec4 :
 		get => float.Sqrt(LengthSquared);
 	}
 
-
+	
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public static float Dot(Vec4 lhs, Vec4 rhs)
 	{
@@ -185,7 +185,7 @@ public struct Vec4 :
 			lhs.x == rhs.x &&
 			lhs.y == rhs.y &&
 			lhs.z == rhs.z &&
-			lhs.w == rhs.w
+			lhs.w == rhs.w 
 			;
 	}
 

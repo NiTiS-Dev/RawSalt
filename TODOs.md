@@ -1,6 +1,7 @@
-# RawSalt.Math - *mathematics module*
+# TODO list
 
-+ [ ] bvec\* `new(byte[] data)` and `new(element[] data)`
-+ [ ] bvec\* `CopyTo(element[] dst)`, `CopyTo(byte[] dst)`, `CopyTo(Span<byte> dst)` and `CopyTo(Span<element> dst)`
-+ [ ] **SIMD optimizations!!!**
++ [ ] **SIMD vector optimizations!!!**
 + [ ] *PerlinNoise*
++ [ ] RTX mb??? https://www.phoronix.com/search/VK_NV_ray_tracing
++ [ ] Better logger
++ [ ] Multithread support

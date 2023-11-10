@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Drawing;
 using System.IO;
 using System.Linq;
 using DotLiquid;
@@ -28,6 +29,12 @@ Dictionary<string, Dictionary<string, object>> contexts = new()
 	["src/RawSalt/Mathematics/Geometry/Vec2.cs"]	= CreateVectorContext("float", 2),
 	["src/RawSalt/Mathematics/Geometry/DVec2.cs"]	= CreateVectorContext("double", 2),
 	["src/RawSalt/Mathematics/Geometry/BVec2.cs"]	= CreateVectorContext("bool", 2),
+
+	["src/RawSalt/Mathematics/Geometry/DMat4x4.cs"]	= CreateMatrixContext("double", 4, 4),
+	["src/RawSalt/Mathematics/Geometry/Mat4x4.cs"]	= CreateMatrixContext("float", 4, 4),
+	
+	["src/RawSalt/Mathematics/Geometry/DMat3x3.cs"]	= CreateMatrixContext("double", 3, 3),
+	["src/RawSalt/Mathematics/Geometry/Mat3x3.cs"]	= CreateMatrixContext("float", 3, 3),
 };
 
 foreach (KeyValuePair<string, Dictionary<string, object>> context in contexts)
@@ -52,4 +59,39 @@ static Dictionary<string, object> CreateVectorContext(string type, int size)
 		["all_arguments"] = new string[] { "all", "all", "all", "all", }.Take((int)size).ToArray(),
 		["out_typed_arguments"] = new string[] { "out " + type + " x", "out " + type + " y", "out " + type + " z", "out " + type + " w", }.Take((int)size).ToArray(),
 	};
+}
+
+static Dictionary<string, object> CreateMatrixContext(string type, int rows, int columns)
+{
+	var dict = new Dictionary<string, object>()
+	{
+		["GenerationFile"] = "matrix.cs.liquid",
+		["Count"] = rows * columns,
+		["elements"] = GenerateRange(rows * columns),
+		["Rows"] = rows,
+		["Columns"] = columns,
+		["Type"] = type,
+		["columns_indexes"] = GenerateRange(columns),
+		["rows_indexes"] = GenerateRange(rows),
+	};
+	
+	if (rows == columns)
+	{
+		dict["is_identity"] = true;
+		dict["identity_elements"] = new string[] { "M11", "M22", "M33", "M44" }.Take(rows * columns / rows);
+	}
+
+	return dict;
+}
+
+static int[] GenerateRange(int count)
+{
+	int[] ints = new int[count];
+
+	for (int i = 0; i < count; i++)
+	{
+		ints[i] = (i);
+	}
+
+	return ints;
 }

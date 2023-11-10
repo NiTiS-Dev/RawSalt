@@ -7,7 +7,8 @@ public partial struct Instance : IEquatable<Instance>
 {
 	public readonly static Instance Null = new Instance();
 
-	internal IntPtr NativeHandle;
+	internal IntPtr nativeHandle;
+	public IntPtr NativeHandle => nativeHandle;
 
 	public static bool operator ==(Instance left, Instance right)
 	{
@@ -21,17 +22,17 @@ public partial struct Instance : IEquatable<Instance>
 
 	public bool Equals(Instance other)
 	{
-		return NativeHandle == other.NativeHandle;
+		return nativeHandle == other.nativeHandle;
 	}
 
 	public override int GetHashCode()
 	{
-		return NativeHandle.GetHashCode();
+		return nativeHandle.GetHashCode();
 	}
 
 	public override string ToString()
 	{
-		return NativeHandle.ToString();
+		return nativeHandle.ToString();
 	}
 }
 

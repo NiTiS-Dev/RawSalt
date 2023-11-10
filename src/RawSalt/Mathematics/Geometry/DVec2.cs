@@ -1,9 +1,9 @@
 /// Generated with src/RawSalt.Generator/templates/vector.cs.liquid; please not edit this file
 
 using System;
-using System.Numerics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using System.Numerics;
 
 namespace RawSalt.Mathematics.Geometry;
 
@@ -49,9 +49,9 @@ public struct DVec2 :
 		if (data.Length < Count)
 			throw new ArgumentOutOfRangeException(nameof(data));
 
-		this = Unsafe.ReadUnaligned<DVec2>(ref Unsafe.As<double, byte>(ref MemoryMarshal.GetReference(data)));
+		this = Unsafe.ReadUnaligned<DVec2>(ref Unsafe.As<double, byte>( ref MemoryMarshal.GetReference(data)));
 	}
-
+	
 	public DVec2(ReadOnlySpan<byte> data)
 	{
 		if (data.Length < sizeof(double) * Count)
@@ -62,23 +62,23 @@ public struct DVec2 :
 
 
 	public static DVec2 One
-		=> new(1, 1);
+		=> new(1,1);
 
 	public static DVec2 Zero
-		=> new(0, 0);
+		=> new(0,0);
 
 	/// <inheritdoc/>
 	public readonly bool Equals(DVec2 other)
 		=> this == other;
-
+	
 	/// <inheritdoc/>
 	public override readonly bool Equals(object? other)
 		=> other is DVec2 otherVector && this == otherVector;
-
+	
 	/// <inheritdoc/>
 	public override readonly int GetHashCode()
 		=> HashCode.Combine(this.x, this.y);
-
+		
 	/// <summary>
 	/// Returns string representation of vector.
 	/// </summary>
@@ -123,7 +123,7 @@ public struct DVec2 :
 		get => double.Sqrt(LengthSquared);
 	}
 
-
+	
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public static double Dot(DVec2 lhs, DVec2 rhs)
 	{
@@ -157,7 +157,7 @@ public struct DVec2 :
 	{
 		return
 			lhs.x == rhs.x &&
-			lhs.y == rhs.y
+			lhs.y == rhs.y 
 			;
 	}
 

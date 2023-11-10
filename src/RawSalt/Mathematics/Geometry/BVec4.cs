@@ -3,6 +3,7 @@
 using System;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using System.Numerics;
 
 namespace RawSalt.Mathematics.Geometry;
 
@@ -52,7 +53,7 @@ public struct BVec4 :
 		if (data.Length < Count)
 			throw new ArgumentOutOfRangeException(nameof(data));
 
-		this = Unsafe.ReadUnaligned<BVec4>(ref Unsafe.As<bool, byte>(ref MemoryMarshal.GetReference(data)));
+		this = Unsafe.ReadUnaligned<BVec4>(ref Unsafe.As<bool, byte>( ref MemoryMarshal.GetReference(data)));
 	}
 	/// <summary>
 	/// Constructs vector by extending the <paramref name="xy"/> vector
@@ -66,7 +67,7 @@ public struct BVec4 :
 	public BVec4(BVec3 xyz, bool w)
 		=> (this.x, this.y, this.z, this.w) = (xyz.x, xyz.y, xyz.z, w);
 
-
+	
 	public BVec4(ReadOnlySpan<byte> data)
 	{
 		if (data.Length < sizeof(bool) * Count)
@@ -77,23 +78,23 @@ public struct BVec4 :
 
 
 	public static BVec4 True
-		=> new(true, true, true, true);
+		=> new(true,true,true,true);
 
 	public static BVec4 False
-		=> new(false, false, false, false);
+		=> new(false,false,false,false);
 
 	/// <inheritdoc/>
 	public readonly bool Equals(BVec4 other)
 		=> this == other;
-
+	
 	/// <inheritdoc/>
 	public override readonly bool Equals(object? other)
 		=> other is BVec4 otherVector && this == otherVector;
-
+	
 	/// <inheritdoc/>
 	public override readonly int GetHashCode()
 		=> HashCode.Combine(this.x, this.y, this.z, this.w);
-
+		
 	/// <summary>
 	/// Returns string representation of vector.
 	/// </summary>
@@ -108,7 +109,7 @@ public struct BVec4 :
 			lhs.x == rhs.x &&
 			lhs.y == rhs.y &&
 			lhs.z == rhs.z &&
-			lhs.w == rhs.w
+			lhs.w == rhs.w 
 			;
 	}
 

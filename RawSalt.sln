@@ -27,6 +27,18 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RawSalt", "src\RawSalt\RawS
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NiTiS.Annotations", "src\NiTiS.Annotations\NiTiS.Annotations.csproj", "{E280EE62-77A6-4DCC-A95E-42501CD96825}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RawSalt.Engine.Anturazhie", "src\RawSalt.Engine.Anturazhie\RawSalt.Engine.Anturazhie.csproj", "{A6A2D553-9A81-409A-9DE6-8F04F8C2A3A5}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RawSalt.Engine.Launcher", "src\RawSalt.Engine.Launcher\RawSalt.Engine.Launcher.csproj", "{50D1FE7B-4173-425E-852B-F78C120FADA6}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RawSalt.Native.Vulkan", "src\RawSalt.Native.Vulkan\RawSalt.Native.Vulkan.csproj", "{8DEC1F3F-B536-4498-90DB-6A351E6BEAEC}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RawSalt.Native.SDL", "src\RawSalt.Native.SDL\RawSalt.Native.SDL.csproj", "{1473247A-3518-439A-BEF2-59BBA0ADB32F}"
+EndProject
+Project("{D954291E-2A0B-460D-934E-DC6B0785DB48}") = "RawSalt.Native.Shared", "src\RawSalt.Native.Shared\RawSalt.Native.Shared.shproj", "{D7507D26-E7A7-47BE-BE40-54E78F218EAE}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RawSalt.Native.Windows", "src\RawSalt.Native.Windows\RawSalt.Native.Windows.csproj", "{889E87C9-5252-4B62-B63E-5289DA6C5A96}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -53,6 +65,26 @@ Global
 		{E280EE62-77A6-4DCC-A95E-42501CD96825}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{E280EE62-77A6-4DCC-A95E-42501CD96825}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{E280EE62-77A6-4DCC-A95E-42501CD96825}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A6A2D553-9A81-409A-9DE6-8F04F8C2A3A5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A6A2D553-9A81-409A-9DE6-8F04F8C2A3A5}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A6A2D553-9A81-409A-9DE6-8F04F8C2A3A5}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A6A2D553-9A81-409A-9DE6-8F04F8C2A3A5}.Release|Any CPU.Build.0 = Release|Any CPU
+		{50D1FE7B-4173-425E-852B-F78C120FADA6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{50D1FE7B-4173-425E-852B-F78C120FADA6}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{50D1FE7B-4173-425E-852B-F78C120FADA6}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{50D1FE7B-4173-425E-852B-F78C120FADA6}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8DEC1F3F-B536-4498-90DB-6A351E6BEAEC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8DEC1F3F-B536-4498-90DB-6A351E6BEAEC}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8DEC1F3F-B536-4498-90DB-6A351E6BEAEC}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8DEC1F3F-B536-4498-90DB-6A351E6BEAEC}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1473247A-3518-439A-BEF2-59BBA0ADB32F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1473247A-3518-439A-BEF2-59BBA0ADB32F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1473247A-3518-439A-BEF2-59BBA0ADB32F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1473247A-3518-439A-BEF2-59BBA0ADB32F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{889E87C9-5252-4B62-B63E-5289DA6C5A96}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{889E87C9-5252-4B62-B63E-5289DA6C5A96}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{889E87C9-5252-4B62-B63E-5289DA6C5A96}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{889E87C9-5252-4B62-B63E-5289DA6C5A96}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -63,8 +95,19 @@ Global
 		{47BE8F68-B254-492D-9A15-C9E396CB9BE1} = {829354B2-6FB9-4FF6-9899-BE56AE719028}
 		{315D60B9-468C-46D9-9985-42AB096AA2FB} = {2E3397A8-739F-492B-B149-D16254B831E9}
 		{E280EE62-77A6-4DCC-A95E-42501CD96825} = {2E3397A8-739F-492B-B149-D16254B831E9}
+		{A6A2D553-9A81-409A-9DE6-8F04F8C2A3A5} = {E45497EC-BD2C-4D4D-9A60-8DEFA47F32B8}
+		{50D1FE7B-4173-425E-852B-F78C120FADA6} = {E45497EC-BD2C-4D4D-9A60-8DEFA47F32B8}
+		{8DEC1F3F-B536-4498-90DB-6A351E6BEAEC} = {2E3397A8-739F-492B-B149-D16254B831E9}
+		{1473247A-3518-439A-BEF2-59BBA0ADB32F} = {2E3397A8-739F-492B-B149-D16254B831E9}
+		{D7507D26-E7A7-47BE-BE40-54E78F218EAE} = {2E3397A8-739F-492B-B149-D16254B831E9}
+		{889E87C9-5252-4B62-B63E-5289DA6C5A96} = {2E3397A8-739F-492B-B149-D16254B831E9}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {FF5DA4B0-5F16-4C41-8FD5-48C2AB184997}
+	EndGlobalSection
+	GlobalSection(SharedMSBuildProjectFiles) = preSolution
+		src\RawSalt.Native.Shared\RawSalt.Native.Shared.projitems*{1473247a-3518-439a-bef2-59bba0adb32f}*SharedItemsImports = 5
+		src\RawSalt.Native.Shared\RawSalt.Native.Shared.projitems*{8dec1f3f-b536-4498-90db-6a351e6beaec}*SharedItemsImports = 5
+		src\RawSalt.Native.Shared\RawSalt.Native.Shared.projitems*{d7507d26-e7a7-47be-be40-54e78f218eae}*SharedItemsImports = 13
 	EndGlobalSection
 EndGlobal

@@ -20,5 +20,6 @@
 		<Nullable>enable</Nullable>
 		<LangVersion>latest</LangVersion>
 		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+		<Deterministic>true</Deterministic>
 	</PropertyGroup>
 </Project>

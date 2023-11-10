@@ -1,9 +1,9 @@
 /// Generated with src/RawSalt.Generator/templates/vector.cs.liquid; please not edit this file
 
 using System;
-using System.Numerics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using System.Numerics;
 
 namespace RawSalt.Mathematics.Geometry;
 
@@ -53,7 +53,7 @@ public struct DVec3 :
 		if (data.Length < Count)
 			throw new ArgumentOutOfRangeException(nameof(data));
 
-		this = Unsafe.ReadUnaligned<DVec3>(ref Unsafe.As<double, byte>(ref MemoryMarshal.GetReference(data)));
+		this = Unsafe.ReadUnaligned<DVec3>(ref Unsafe.As<double, byte>( ref MemoryMarshal.GetReference(data)));
 	}
 	/// <summary>
 	/// Constructs vector by extending the <paramref name="xy"/> vector
@@ -61,7 +61,7 @@ public struct DVec3 :
 	public DVec3(DVec2 xy, double z)
 		=> (this.x, this.y, this.z) = (xy.x, xy.y, z);
 
-
+	
 	public DVec3(ReadOnlySpan<byte> data)
 	{
 		if (data.Length < sizeof(double) * Count)
@@ -72,23 +72,23 @@ public struct DVec3 :
 
 
 	public static DVec3 One
-		=> new(1, 1, 1);
+		=> new(1,1,1);
 
 	public static DVec3 Zero
-		=> new(0, 0, 0);
+		=> new(0,0,0);
 
 	/// <inheritdoc/>
 	public readonly bool Equals(DVec3 other)
 		=> this == other;
-
+	
 	/// <inheritdoc/>
 	public override readonly bool Equals(object? other)
 		=> other is DVec3 otherVector && this == otherVector;
-
+	
 	/// <inheritdoc/>
 	public override readonly int GetHashCode()
 		=> HashCode.Combine(this.x, this.y, this.z);
-
+		
 	/// <summary>
 	/// Returns string representation of vector.
 	/// </summary>
@@ -133,7 +133,7 @@ public struct DVec3 :
 		get => double.Sqrt(LengthSquared);
 	}
 
-
+	
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public static double Dot(DVec3 lhs, DVec3 rhs)
 	{
@@ -171,7 +171,7 @@ public struct DVec3 :
 		return
 			lhs.x == rhs.x &&
 			lhs.y == rhs.y &&
-			lhs.z == rhs.z
+			lhs.z == rhs.z 
 			;
 	}
 

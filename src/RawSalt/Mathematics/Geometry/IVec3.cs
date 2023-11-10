@@ -1,9 +1,9 @@
 /// Generated with src/RawSalt.Generator/templates/vector.cs.liquid; please not edit this file
 
 using System;
-using System.Numerics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using System.Numerics;
 
 namespace RawSalt.Mathematics.Geometry;
 
@@ -53,7 +53,7 @@ public struct IVec3 :
 		if (data.Length < Count)
 			throw new ArgumentOutOfRangeException(nameof(data));
 
-		this = Unsafe.ReadUnaligned<IVec3>(ref Unsafe.As<int, byte>(ref MemoryMarshal.GetReference(data)));
+		this = Unsafe.ReadUnaligned<IVec3>(ref Unsafe.As<int, byte>( ref MemoryMarshal.GetReference(data)));
 	}
 	/// <summary>
 	/// Constructs vector by extending the <paramref name="xy"/> vector
@@ -61,7 +61,7 @@ public struct IVec3 :
 	public IVec3(IVec2 xy, int z)
 		=> (this.x, this.y, this.z) = (xy.x, xy.y, z);
 
-
+	
 	public IVec3(ReadOnlySpan<byte> data)
 	{
 		if (data.Length < sizeof(int) * Count)
@@ -72,23 +72,23 @@ public struct IVec3 :
 
 
 	public static IVec3 One
-		=> new(1, 1, 1);
+		=> new(1,1,1);
 
 	public static IVec3 Zero
-		=> new(0, 0, 0);
+		=> new(0,0,0);
 
 	/// <inheritdoc/>
 	public readonly bool Equals(IVec3 other)
 		=> this == other;
-
+	
 	/// <inheritdoc/>
 	public override readonly bool Equals(object? other)
 		=> other is IVec3 otherVector && this == otherVector;
-
+	
 	/// <inheritdoc/>
 	public override readonly int GetHashCode()
 		=> HashCode.Combine(this.x, this.y, this.z);
-
+		
 	/// <summary>
 	/// Returns string representation of vector.
 	/// </summary>
@@ -104,7 +104,7 @@ public struct IVec3 :
 	public static IVec3 Clamp(IVec3 value, IVec3 min, IVec3 max)
 		=> Min(Max(value, min), max);
 
-
+	
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	public static int Dot(IVec3 lhs, IVec3 rhs)
 	{
@@ -142,7 +142,7 @@ public struct IVec3 :
 		return
 			lhs.x == rhs.x &&
 			lhs.y == rhs.y &&
-			lhs.z == rhs.z
+			lhs.z == rhs.z 
 			;
 	}
 

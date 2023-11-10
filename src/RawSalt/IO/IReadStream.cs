@@ -25,7 +25,7 @@ public interface IReadStream : IStream
 
 	/// <inheritdoc cref="IReadStream.Read(byte[], nint, nint)"/>
 	/// <param name="buffer">A region of memory. When this method returns, the contents of this region are replaced by the bytes read from the current source.</param>
-	/// <returns>The total number of bytes read into the buffer. This can be less than the size of the buffer if that many bytes are not currently available, or zero (0) if the buffer's length is zero or the end of the stream has been reached.</returns>
+	/// <returns>The total number of bytes read into the buffer. This can be less than the Size of the buffer if that many bytes are not currently available, or zero (0) if the buffer's length is zero or the end of the stream has been reached.</returns>
 	nuint Read(Span<byte> buffer);
 	virtual byte ReadByte()
 	{

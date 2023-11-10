@@ -3,6 +3,7 @@
 using System;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using System.Numerics;
 
 namespace RawSalt.Mathematics.Geometry;
 
@@ -48,7 +49,7 @@ public struct BVec3 :
 		if (data.Length < Count)
 			throw new ArgumentOutOfRangeException(nameof(data));
 
-		this = Unsafe.ReadUnaligned<BVec3>(ref Unsafe.As<bool, byte>(ref MemoryMarshal.GetReference(data)));
+		this = Unsafe.ReadUnaligned<BVec3>(ref Unsafe.As<bool, byte>( ref MemoryMarshal.GetReference(data)));
 	}
 	/// <summary>
 	/// Constructs vector by extending the <paramref name="xy"/> vector
@@ -56,7 +57,7 @@ public struct BVec3 :
 	public BVec3(BVec2 xy, bool z)
 		=> (this.x, this.y, this.z) = (xy.x, xy.y, z);
 
-
+	
 	public BVec3(ReadOnlySpan<byte> data)
 	{
 		if (data.Length < sizeof(bool) * Count)
@@ -67,23 +68,23 @@ public struct BVec3 :
 
 
 	public static BVec3 True
-		=> new(true, true, true);
+		=> new(true,true,true);
 
 	public static BVec3 False
-		=> new(false, false, false);
+		=> new(false,false,false);
 
 	/// <inheritdoc/>
 	public readonly bool Equals(BVec3 other)
 		=> this == other;
-
+	
 	/// <inheritdoc/>
 	public override readonly bool Equals(object? other)
 		=> other is BVec3 otherVector && this == otherVector;
-
+	
 	/// <inheritdoc/>
 	public override readonly int GetHashCode()
 		=> HashCode.Combine(this.x, this.y, this.z);
-
+		
 	/// <summary>
 	/// Returns string representation of vector.
 	/// </summary>
@@ -97,7 +98,7 @@ public struct BVec3 :
 		return
 			lhs.x == rhs.x &&
 			lhs.y == rhs.y &&
-			lhs.z == rhs.z
+			lhs.z == rhs.z 
 			;
 	}
 

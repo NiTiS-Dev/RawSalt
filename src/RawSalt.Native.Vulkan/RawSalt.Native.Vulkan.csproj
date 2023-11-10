@@ -3,7 +3,7 @@
 	<Import Project="../../build/RawSalt.props" />
 
 	<PropertyGroup>
-		<NoWarn>CS8618</NoWarn>
+		<NoWarn>CS8618;CS0660</NoWarn>
 		<AllowUnsafeBlocks>True</AllowUnsafeBlocks>
 	</PropertyGroup>
 </Project>

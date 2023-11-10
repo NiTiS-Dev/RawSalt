@@ -1,0 +1,103 @@
+﻿/// Generated with src/RawSalt.Generator/templates/{{ GenerationFile }}; please not edit this file
+
+{%- assign row_t =  "Vec" | append: Rows -%}
+{%- assign column_t =  "Vec" | append: Columns -%}
+{%- assign row_last_index = Rows | minus: 1 -%}
+{%- assign column_last_index = Columns | minus: 1 -%}
+
+{%- if Type == "float" -%}
+	{%- assign type_t =  "Mat" | append: Rows | append: "x" | append: Columns -%}
+	{%- assign element_size = 4 -%}
+{%- elsif Type == "double" -%}
+	{%- assign type_t =  "DMat" | append: Rows | append: "x" | append: Columns -%}
+	{%- assign element_size = 8 -%}
+{%- endif -%}
+
+{%- assign inline = "[MethodImpl(MethodImplOptions.AggressiveInlining)]" -%}
+using System;
+using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
+using System.Numerics;
+
+namespace RawSalt.Mathematics.Geometry;
+
+public struct {{ type_t }}
+{
+	#region Elements
+	{%- for row in rows_indexes -%}
+	{%- for column in columns_indexes -%}
+	/// <summary>
+	/// The {{ row | minus: -1 }}x{{ column | minus: -1 }} element of matrix.
+	/// </summary>
+	public {{ Type }} M{{ row | minus: -1 }}{{ column | minus: -1 }};
+
+	{%- endfor -%}
+	{%- endfor %}
+	#endregion
+
+	{%- for row in rows_indexes -%}
+	/// <summary>
+	/// The {{ row | minus: -1 }} row of matrix.
+	/// </summary>
+	public readonly {{ row_t }} R{{ row | minus: -1 }}
+		=> new(
+		{%- for column in columns_indexes -%}
+			M{{ row | minus: -1 }}{{ column | minus: -1 }}{% if column_last_index != column %},{% endif %}
+		{%- endfor -%}
+			);
+	{%- endfor -%}
+
+	{%- for column in columns_indexes -%}
+	/// <summary>
+	/// The {{ column | minus: -1 }} column of matrix.
+	/// </summary>
+	public readonly {{ column_t }} C{{ column | minus: -1 }}
+		=> new(
+		{%- for row in rows_indexes -%}
+			M{{ row | minus: -1 }}{{ column | minus: -1 }}{% if row_last_index != row %},{% endif %}
+		{%- endfor -%}
+			);
+	{%- endfor -%}
+
+	public const int ElementCount = {{ Count }};
+	public const int RowCount = {{ Rows }};
+	public const int ColumnCount = {{ Columns }};
+
+	/// <summary>
+	/// Creates a matrix with default values.
+	/// </summary>
+	{{ inline }}
+	public {{ type_t }}()
+		=> this = default;
+
+	public {{ type_t }}(ReadOnlySpan<{{ Type }}> data)
+	{
+		if (data.Length < ElementCount)
+			throw new ArgumentOutOfRangeException(nameof(data));
+
+		this = Unsafe.ReadUnaligned<{{ type_t }}>(ref Unsafe.As<{{ Type }}, byte>( ref MemoryMarshal.GetReference(data)));
+	}
+
+	public {{ type_t }}(ReadOnlySpan<byte> data)
+	{
+		if (data.Length < sizeof({{ Type }}) * ElementCount)
+			throw new ArgumentOutOfRangeException(nameof(data));
+
+		this = Unsafe.ReadUnaligned<{{ type_t }}>(ref MemoryMarshal.GetReference(data));
+	}
+
+	{%- if is_identity -%}
+	public static {{ type_t }} Identity
+	{
+		get {
+			{{ type_t }} retusa = default;
+
+			{%- for identity_element in identity_elements -%}
+			retusa.{{ identity_element }} = 1;
+			{%- endfor -%}
+
+			return retusa;
+		}
+	}
+	{%- endif -%}
+}

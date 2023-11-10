@@ -16,7 +16,7 @@ public class Program : DesktopApplication
 		{
 			Program app = new(TriangleAppId);
 			
-			app.Setup();
+			app.Initialize();
 			
 			app.Run();
 		}

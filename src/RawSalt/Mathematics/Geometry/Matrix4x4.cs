@@ -1,16 +1,18 @@
-/// Generated with src/RawSalt.Generator/templates/matrix.cs.liquid; please not edit this file
-
-
-
 using System;
+using System.Diagnostics.CodeAnalysis;
+using System.Numerics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
-using System.Numerics;
 
 namespace RawSalt.Mathematics.Geometry;
 
-public struct Mat4x4
+[StructLayout(LayoutKind.Sequential)]
+public partial struct Matrix4x4
 {
+	public const int ElementCount = 16;
+	public const int RowCount = 4;
+	public const int ColumnCount = 4;
+
 	#region Elements
 	/// <summary>
 	/// The 1x1 element of matrix.
@@ -95,6 +97,7 @@ public struct Mat4x4
 
 	#endregion
 
+	#region Rows & Columns
 	/// <summary>
 	/// The 1 row of matrix.
 	/// </summary>
@@ -176,38 +179,44 @@ public struct Mat4x4
 			M34,
 			M44
 			);
-
-	public const int ElementCount = 16;
-	public const int RowCount = 4;
-	public const int ColumnCount = 4;
+	#endregion
 
 	/// <summary>
 	/// Creates a matrix with default values.
 	/// </summary>
 	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public Mat4x4()
+	public Matrix4x4()
 		=> this = default;
 
-	public Mat4x4(ReadOnlySpan<float> data)
+	public Matrix4x4(ReadOnlySpan<float> data)
 	{
 		if (data.Length < ElementCount)
 			throw new ArgumentOutOfRangeException(nameof(data));
 
-		this = Unsafe.ReadUnaligned<Mat4x4>(ref Unsafe.As<float, byte>( ref MemoryMarshal.GetReference(data)));
+		this = Unsafe.ReadUnaligned<Matrix4x4>(ref Unsafe.As<float, byte>( ref MemoryMarshal.GetReference(data)));
 	}
 
-	public Mat4x4(ReadOnlySpan<byte> data)
+	public Matrix4x4(ReadOnlySpan<byte> data)
 	{
 		if (data.Length < sizeof(float) * ElementCount)
 			throw new ArgumentOutOfRangeException(nameof(data));
 
-		this = Unsafe.ReadUnaligned<Mat4x4>(ref MemoryMarshal.GetReference(data));
+		this = Unsafe.ReadUnaligned<Matrix4x4>(ref MemoryMarshal.GetReference(data));
 	}
 
-	public static Mat4x4 Identity
+	public float this[int row, int column]
+	{
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		readonly get => AsRORaw()[row, column];
+
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		set => AsRaw()[row, column] = value;
+	}
+
+	public static Matrix4x4 Identity
 	{
 		get {
-			Mat4x4 retusa = default;
+			Matrix4x4 retusa = default;
 
 			retusa.M11 = 1;
 			retusa.M22 = 1;
@@ -216,5 +225,17 @@ public struct Mat4x4
 
 			return retusa;
 		}
+	}
+
+	public readonly bool IsIdentity
+		=> AsRORaw().IsIdentity;
+
+	public Vec3 Translation
+	{
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		readonly get => Unsafe.As<Vector3, Vec3>(ref Unsafe.AsRef(AsRORaw().Translation));
+
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		set => AsRaw().Translation = Unsafe.As<Vec3, Vector3>(ref value);
 	}
 }

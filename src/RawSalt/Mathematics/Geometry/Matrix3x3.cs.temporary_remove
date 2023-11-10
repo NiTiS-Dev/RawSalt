@@ -1,87 +1,88 @@
-/// Generated with src/RawSalt.Generator/templates/matrix.cs.liquid; please not edit this file
-
-
-
 using System;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
-using System.Numerics;
 
 namespace RawSalt.Mathematics.Geometry;
 
-public struct DMat3x3
+[StructLayout(LayoutKind.Sequential)]
+public struct Matrix3x3
 {
+	public const int ElementCount = 9;
+	public const int RowCount = 3;
+	public const int ColumnCount = 3;
+
 	#region Elements
 	/// <summary>
 	/// The 1x1 element of matrix.
 	/// </summary>
-	public double M11;
+	public float M11;
 
 	/// <summary>
 	/// The 1x2 element of matrix.
 	/// </summary>
-	public double M12;
+	public float M12;
 
 	/// <summary>
 	/// The 1x3 element of matrix.
 	/// </summary>
-	public double M13;
+	public float M13;
 
 	/// <summary>
 	/// The 2x1 element of matrix.
 	/// </summary>
-	public double M21;
+	public float M21;
 
 	/// <summary>
 	/// The 2x2 element of matrix.
 	/// </summary>
-	public double M22;
+	public float M22;
 
 	/// <summary>
 	/// The 2x3 element of matrix.
 	/// </summary>
-	public double M23;
+	public float M23;
 
 	/// <summary>
 	/// The 3x1 element of matrix.
 	/// </summary>
-	public double M31;
+	public float M31;
 
 	/// <summary>
 	/// The 3x2 element of matrix.
 	/// </summary>
-	public double M32;
+	public float M32;
 
 	/// <summary>
 	/// The 3x3 element of matrix.
 	/// </summary>
-	public double M33;
+	public float M33;
 
 
 	#endregion
 
+	#region Rows & Columns
 	/// <summary>
-	/// The 1 row of matrix.
+	/// The first row of matrix.
 	/// </summary>
-	public readonly DVec3 R1
+	public readonly Vec3 R1
 		=> new(
 			M11,
 			M12,
 			M13
 			);
 	/// <summary>
-	/// The 2 row of matrix.
+	/// The second row of matrix.
 	/// </summary>
-	public readonly DVec3 R2
+	public readonly Vec3 R2
 		=> new(
 			M21,
 			M22,
 			M23
 			);
 	/// <summary>
-	/// The 3 row of matrix.
+	/// The third row of matrix.
 	/// </summary>
-	public readonly DVec3 R3
+	public readonly Vec3 R3
 		=> new(
 			M31,
 			M32,
@@ -91,7 +92,7 @@ public struct DMat3x3
 	/// <summary>
 	/// The 1 column of matrix.
 	/// </summary>
-	public readonly DVec3 C1
+	public readonly Vec3 C1
 		=> new(
 			M11,
 			M21,
@@ -100,7 +101,7 @@ public struct DMat3x3
 	/// <summary>
 	/// The 2 column of matrix.
 	/// </summary>
-	public readonly DVec3 C2
+	public readonly Vec3 C2
 		=> new(
 			M12,
 			M22,
@@ -109,44 +110,19 @@ public struct DMat3x3
 	/// <summary>
 	/// The 3 column of matrix.
 	/// </summary>
-	public readonly DVec3 C3
+	public readonly Vec3 C3
 		=> new(
 			M13,
 			M23,
 			M33
 			);
+	#endregion
 
-	public const int ElementCount = 9;
-	public const int RowCount = 3;
-	public const int ColumnCount = 3;
-
-	/// <summary>
-	/// Creates a matrix with default values.
-	/// </summary>
-	[MethodImpl(MethodImplOptions.AggressiveInlining)]
-	public DMat3x3()
-		=> this = default;
-
-	public DMat3x3(ReadOnlySpan<double> data)
+	public static Matrix3x3 Identity
 	{
-		if (data.Length < ElementCount)
-			throw new ArgumentOutOfRangeException(nameof(data));
-
-		this = Unsafe.ReadUnaligned<DMat3x3>(ref Unsafe.As<double, byte>( ref MemoryMarshal.GetReference(data)));
-	}
-
-	public DMat3x3(ReadOnlySpan<byte> data)
-	{
-		if (data.Length < sizeof(double) * ElementCount)
-			throw new ArgumentOutOfRangeException(nameof(data));
-
-		this = Unsafe.ReadUnaligned<DMat3x3>(ref MemoryMarshal.GetReference(data));
-	}
-
-	public static DMat3x3 Identity
-	{
-		get {
-			DMat3x3 retusa = default;
+		get
+		{
+			Matrix3x3 retusa = default;
 
 			retusa.M11 = 1;
 			retusa.M22 = 1;
@@ -154,5 +130,35 @@ public struct DMat3x3
 
 			return retusa;
 		}
+	}
+
+	/// <summary>
+	/// Creates a matrix with default values.
+	/// </summary>
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
+	public Matrix3x3()
+		=> this = default;
+
+	public Matrix3x3(ReadOnlySpan<float> data)
+	{
+		if (data.Length < ElementCount)
+			throw new ArgumentOutOfRangeException(nameof(data));
+
+		this = Unsafe.ReadUnaligned<Matrix3x3>(ref Unsafe.As<float, byte>( ref MemoryMarshal.GetReference(data)));
+	}
+
+	public Matrix3x3(ReadOnlySpan<byte> data)
+	{
+		if (data.Length < sizeof(float) * ElementCount)
+			throw new ArgumentOutOfRangeException(nameof(data));
+
+		this = Unsafe.ReadUnaligned<Matrix3x3>(ref MemoryMarshal.GetReference(data));
+	}
+
+	public readonly bool IsIdentity()
+	{
+		return M11 == 1 && M22 == 1 && M33 == 1
+			&& M12 == 0 && M13 == 0 && M21 == 0
+			&& M23 == 0 && M31 == 0 && M32 == 0;
 	}
 }

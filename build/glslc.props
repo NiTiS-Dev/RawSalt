@@ -1,0 +1,5 @@
+<Project>
+	<Target Name="CompileShaders" BeforeTargets="Build">
+		<Exec Command="glslc %(ShaderFiles.Identity) -o %(RelativeDir)%(ShaderFiles.Filename)%(Extension).spv" />
+	</Target>
+</Project>

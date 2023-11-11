@@ -17,7 +17,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Triangle", "samples\Triangl
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".etc", ".etc", "{73C41B1A-49B4-420F-BA72-54E64FFAD489}"
 	ProjectSection(SolutionItems) = preProject
+		.filenesting.json = .filenesting.json
 		.gitignore = .gitignore
+		build\glslc.props = build\glslc.props
 		LICENSE = LICENSE
 		build\RawSalt.props = build\RawSalt.props
 		TODOs.md = TODOs.md
@@ -37,7 +39,7 @@ Project("{D954291E-2A0B-460D-934E-DC6B0785DB48}") = "RawSalt.Native.Shared", "sr
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RawSalt.Native.Windows", "src\RawSalt.Native.Windows\RawSalt.Native.Windows.csproj", "{889E87C9-5252-4B62-B63E-5289DA6C5A96}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Testing.Benchmark.RawSalt", "tests\Testing.Benchmark.RawSalt\Testing.Benchmark.RawSalt.csproj", "{F1C4A36A-BF0E-420E-BDBA-7590D9D50452}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Testing.Benchmark.RawSalt", "tests\Testing.Benchmark.RawSalt\Testing.Benchmark.RawSalt.csproj", "{F1C4A36A-BF0E-420E-BDBA-7590D9D50452}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{B5CD64B6-CA85-4271-97AD-D4F15830331C}"
 EndProject

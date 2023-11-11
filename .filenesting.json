@@ -1,0 +1,11 @@
+{
+  "dependentFileProviders": {
+	"add": {
+	  "extensionToExtension": {
+		"add": {
+		  ".psv": [".frag", ".vert", ".geom"]
+		}
+	  }
+	}
+  }
+}

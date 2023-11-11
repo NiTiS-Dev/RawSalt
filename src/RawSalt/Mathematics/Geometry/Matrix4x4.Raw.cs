@@ -96,6 +96,23 @@ public partial struct Matrix4x4
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public static Raw operator +(in Raw self)
+			=> self;
+
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public static Raw operator -(in Raw self)
+		{
+			Raw retusa;
+
+			retusa.Row1 = -self.Row1;
+			retusa.Row2 = -self.Row2;
+			retusa.Row3 = -self.Row3;
+			retusa.Row4 = -self.Row4;
+
+			return retusa;
+		}
+
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public static Raw operator +(in Raw left, in Raw right)
 		{
 			Raw retusa;
@@ -135,6 +152,19 @@ public partial struct Matrix4x4
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public static Raw operator *(in Raw left, float right)
+		{
+			Raw retusa;
+
+			retusa.Row1 = left.Row1 * right;
+			retusa.Row2 = left.Row2 * right;
+			retusa.Row3 = left.Row3 * right;
+			retusa.Row4 = left.Row4 * right;
+
+			return retusa;
+		}
+
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public static Raw operator /(in Raw left, in Raw right)
 		{
 			Raw retusa;
@@ -143,6 +173,19 @@ public partial struct Matrix4x4
 			retusa.Row2 = left.Row2 / right.Row2;
 			retusa.Row3 = left.Row3 / right.Row3;
 			retusa.Row4 = left.Row4 / right.Row4;
+
+			return retusa;
+		}
+
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public static Raw operator /(in Raw left, float right)
+		{
+			Raw retusa;
+
+			retusa.Row1 = left.Row1 / right;
+			retusa.Row2 = left.Row2 / right;
+			retusa.Row3 = left.Row3 / right;
+			retusa.Row4 = left.Row4 / right;
 
 			return retusa;
 		}

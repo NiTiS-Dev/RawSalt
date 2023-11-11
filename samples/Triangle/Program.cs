@@ -1,4 +1,5 @@
 ﻿using RawSalt;
+using RawSalt.Mathematics.Geometry;
 using System;
 
 namespace Triangle;
@@ -12,6 +13,7 @@ public class Program : DesktopApplication
 
 	static void Main(string[] args)
 	{
+
 		try
 		{
 			Program app = new(TriangleAppId);

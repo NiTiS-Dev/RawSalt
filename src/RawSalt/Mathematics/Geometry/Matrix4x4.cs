@@ -239,68 +239,33 @@ public partial struct Matrix4x4
 		set => AsRaw().Translation = Unsafe.As<Vec3, Vector3>(ref value);
 	}
 
-	[SkipLocalsInit]
-	public static Matrix4x4 op_Addition(Matrix4x4 lhs, Matrix4x4 rhs)
-	{
-		Matrix4x4 retusa;
+	public static Matrix4x4 operator +(in Matrix4x4 lhs)
+		=> (+lhs.AsRORaw()).AsStruct();
 
-		retusa.M11 = lhs.M11 + rhs.M11;
-		retusa.M12 = lhs.M12 + rhs.M12;
-		retusa.M13 = lhs.M13 + rhs.M13;
-		retusa.M14 = lhs.M14 + rhs.M14;
+	public static Matrix4x4 operator -(in Matrix4x4 lhs)
+		=> (-lhs.AsRORaw()).AsStruct();
 
-		retusa.M21 = lhs.M21 + rhs.M21;
-		retusa.M22 = lhs.M22 + rhs.M22;
-		retusa.M23 = lhs.M23 + rhs.M23;
-		retusa.M24 = lhs.M24 + rhs.M24;
+	public static Matrix4x4 operator +(in Matrix4x4 lhs, in Matrix4x4 rhs)
+		=> (lhs.AsRORaw() + rhs.AsRORaw()).AsStruct();
 
-		retusa.M31 = lhs.M31 + rhs.M31;
-		retusa.M32 = lhs.M32 + rhs.M32;
-		retusa.M33 = lhs.M33 + rhs.M33;
-		retusa.M34 = lhs.M34 + rhs.M34;
+	public static Matrix4x4 operator -(in Matrix4x4 lhs, in Matrix4x4 rhs)
+		=> (lhs.AsRORaw() - rhs.AsRORaw()).AsStruct();
 
-		retusa.M41 = lhs.M41 + rhs.M41;
-		retusa.M42 = lhs.M42 + rhs.M42;
-		retusa.M43 = lhs.M43 + rhs.M43;
-		retusa.M44 = lhs.M44 + rhs.M44;
+	public static Matrix4x4 operator *(in Matrix4x4 lhs, in Matrix4x4 rhs)
+		=> (lhs.AsRORaw() * rhs.AsRORaw()).AsStruct();
 
-		return retusa;
-	}
+	public static Matrix4x4 operator *(in Matrix4x4 lhs, float rhs)
+		=> (lhs.AsRORaw() * rhs).AsStruct();
 
-	[SkipLocalsInit]
-	public static Matrix4x4 op_Addition2(in Matrix4x4 lhs, in Matrix4x4 rhs)
-	{
-		Matrix4x4 retusa;
+	public static Matrix4x4 operator /(in Matrix4x4 lhs, in Matrix4x4 rhs)
+		=> (lhs.AsRORaw() / rhs.AsRORaw()).AsStruct();
 
-		retusa.M11 = lhs.M11 + rhs.M11;
-		retusa.M12 = lhs.M12 + rhs.M12;
-		retusa.M13 = lhs.M13 + rhs.M13;
-		retusa.M14 = lhs.M14 + rhs.M14;
+	public static Matrix4x4 operator /(in Matrix4x4 lhs, float rhs)
+		=> (lhs.AsRORaw() / rhs).AsStruct();
 
-		retusa.M21 = lhs.M21 + rhs.M21;
-		retusa.M22 = lhs.M22 + rhs.M22;
-		retusa.M23 = lhs.M23 + rhs.M23;
-		retusa.M24 = lhs.M24 + rhs.M24;
+	public static bool operator ==(in Matrix4x4 lhs, in Matrix4x4 rhs)
+		=> lhs.AsRORaw() == rhs.AsRORaw();
 
-		retusa.M31 = lhs.M31 + rhs.M31;
-		retusa.M32 = lhs.M32 + rhs.M32;
-		retusa.M33 = lhs.M33 + rhs.M33;
-		retusa.M34 = lhs.M34 + rhs.M34;
-
-		retusa.M41 = lhs.M41 + rhs.M41;
-		retusa.M42 = lhs.M42 + rhs.M42;
-		retusa.M43 = lhs.M43 + rhs.M43;
-		retusa.M44 = lhs.M44 + rhs.M44;
-
-		return retusa;
-	}
-
-	public static Matrix4x4 op_AdditionRaw(Matrix4x4 lhs, Matrix4x4 rhs)
-	{
-		return (lhs.AsRORaw() + rhs.AsRORaw()).AsStruct();
-	}
-	public static Matrix4x4 op_AdditionRaw2(in Matrix4x4 lhs, in Matrix4x4 rhs)
-	{
-		return (lhs.AsRORaw() + rhs.AsRORaw()).AsStruct();
-	}
+	public static bool operator !=(in Matrix4x4 lhs, in Matrix4x4 rhs)
+		=> lhs.AsRORaw() != rhs.AsRORaw();
 }

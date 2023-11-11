@@ -11,7 +11,15 @@
 	</ItemGroup>
 
 	<ItemGroup>
-	  <ProjectReference Include="..\RawSalt.Native.SDL\RawSalt.Native.SDL.csproj" />
-	  <ProjectReference Include="..\RawSalt.Native.Vulkan\RawSalt.Native.Vulkan.csproj" />
+		<ShaderFiles Include="resources/shaders/*" />
+	</ItemGroup>
+	<Import Project="../../build/glslc.props" />
+	<ItemGroup>
+	  <ShaderFiles Remove="resources\shaders\main.vert" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<ProjectReference Include="../RawSalt.Native.SDL/RawSalt.Native.SDL.csproj" />
+		<ProjectReference Include="../RawSalt.Native.Vulkan/RawSalt.Native.Vulkan.csproj" />
 	</ItemGroup>
 </Project>

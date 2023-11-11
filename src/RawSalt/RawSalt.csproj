@@ -7,19 +7,10 @@
 	</PropertyGroup>
 
 	<ItemGroup>
-		<Folder Include="Mathematics\Geometry\" />
-		<Folder Include="Properties\" />
-	</ItemGroup>
-
-	<ItemGroup>
 		<PackageReference Include="Glob" Version="1.1.9" />
-		<!-- PackageReference Include="NiTiS.Native.SDL.Container" Version="0.0.11" >
-			<ExcludeAssets>compile</ExcludeAssets>
-		</PackageReference -->
 	</ItemGroup>
 
 	<ItemGroup>
-	  <ProjectReference Include="..\NiTiS.Annotations\NiTiS.Annotations.csproj" />
 	  <ProjectReference Include="..\RawSalt.Native.SDL\RawSalt.Native.SDL.csproj" />
 	  <ProjectReference Include="..\RawSalt.Native.Vulkan\RawSalt.Native.Vulkan.csproj" />
 	</ItemGroup>

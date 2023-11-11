@@ -1,5 +1,6 @@
 ﻿using RawSalt.Logging;
 using RawSalt.Mathematics.Geometry;
+using RawSalt.Scenes;
 using System;
 
 namespace RawSalt;
@@ -10,11 +11,14 @@ public abstract unsafe partial class Application : IDisposable
 	/// Application logger.
 	/// </summary>
 	protected static readonly Logger logger = Logger.CreateLogger<Application>();
+
 	
 	/// <summary>
 	/// Application identificator.
 	/// </summary>
 	public readonly string Id;
+
+	protected private Scene scene;
 
 	/// <summary>
 	/// Defines Size of view/window.
@@ -39,6 +43,7 @@ public abstract unsafe partial class Application : IDisposable
 		if (applicationId.IndexOf(' ') != -1)
 			throw new ArgumentException("Application id must have no spaces.", nameof(applicationId));
 		Id = applicationId;
+		scene = new();
 	}
 
 	/// <summary>

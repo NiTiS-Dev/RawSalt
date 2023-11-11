@@ -30,11 +30,11 @@ Dictionary<string, Dictionary<string, object>> contexts = new()
 	["src/RawSalt/Mathematics/Geometry/DVec2.cs"]	= CreateVectorContext("double", 2),
 	["src/RawSalt/Mathematics/Geometry/BVec2.cs"]	= CreateVectorContext("bool", 2),
 
-	["src/RawSalt/Mathematics/Geometry/DMat4x4.cs"]	= CreateMatrixContext("double", 4, 4),
-	["src/RawSalt/Mathematics/Geometry/Mat4x4.cs"]	= CreateMatrixContext("float", 4, 4),
+	//["src/RawSalt/Mathematics/Geometry/DMat4x4.cs"]	= CreateMatrixContext("double", 4, 4),
+	//["src/RawSalt/Mathematics/Geometry/Mat4x4.cs"]	= CreateMatrixContext("float", 4, 4),
 	
-	["src/RawSalt/Mathematics/Geometry/DMat3x3.cs"]	= CreateMatrixContext("double", 3, 3),
-	["src/RawSalt/Mathematics/Geometry/Mat3x3.cs"]	= CreateMatrixContext("float", 3, 3),
+	//["src/RawSalt/Mathematics/Geometry/DMat3x3.cs"]	= CreateMatrixContext("double", 3, 3),
+	//["src/RawSalt/Mathematics/Geometry/Mat3x3.cs"]	= CreateMatrixContext("float", 3, 3),
 };
 
 foreach (KeyValuePair<string, Dictionary<string, object>> context in contexts)

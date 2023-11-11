@@ -19,6 +19,12 @@ public partial struct Matrix4x4
 
 	internal struct Raw
 	{
+		[UnscopedRef]
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		internal ref Matrix4x4 AsStruct()
+		=> ref Unsafe.As<Raw, Matrix4x4>(ref this);
+
+
 		public Vector4 Row1;
 		public Vector4 Row2;
 		public Vector4 Row3;

@@ -1,0 +1,10 @@
+<Solution>
+  <Folder Name="/Root/">
+    <File Path="../../../../Projects/RawSalt/.editorconfig" />
+    <File Path="../../../../Projects/RawSalt/.gitignore" />
+  </Folder>
+  <Project Path="RawSalt.Graphics.Vulkan/RawSalt.Graphics.Vulkan.csproj" />
+  <Project Path="RawSalt.Windowing.Win32/RawSalt.Windowing.Win32.csproj" />
+  <Project Path="RawSalt/RawSalt.csproj" />
+  <Project Path="templates/NekoRotation/NekoRotation.csproj" />
+</Solution>

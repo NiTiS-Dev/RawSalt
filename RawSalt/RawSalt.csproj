@@ -1,0 +1,18 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net10.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+    </PropertyGroup>
+
+    <!-- Expose internals to a specific assembly -->
+    <ItemGroup>
+        <InternalsVisibleTo Include="RawSalt.Windowing.Win32" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <PackageReference Include="CommunityToolkit.Diagnostics" Version="8.4.2" />
+    </ItemGroup>
+
+</Project>

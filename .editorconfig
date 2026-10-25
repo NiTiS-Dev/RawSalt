@@ -1,0 +1,17 @@
+root = true
+
+[**.cs]
+charset = utf-8
+indent_style = tab
+indent_size = 4
+tab_width = 4
+insert_final_newline = false
+trim_trailing_whitespace = true
+
+# remove required T prefix for generic types
+dotnet_naming_style.prefix_type_parameters_with_t_style.capitalization = pascal_case
+dotnet_naming_style.prefix_type_parameters_with_t_style.required_prefix =
+dotnet_naming_symbols.type_parameter_group.applicable_kinds = type_parameter
+dotnet_naming_rule.type_parameter_rule.symbols = type_parameter_group
+dotnet_naming_rule.type_parameter_rule.style = prefix_type_parameters_with_t_style
+dotnet_naming_rule.type_parameter_rule.severity = warning

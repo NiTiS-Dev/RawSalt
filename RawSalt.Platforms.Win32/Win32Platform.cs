@@ -4,15 +4,18 @@ using System.Runtime.Versioning;
 using Windows.Win32;
 using Windows.Win32.Foundation;
 using Windows.Win32.Graphics.Gdi;
+using NiTiS.Mathematics;
+using RawSalt.Logging;
 using RawSalt.Platforms;
-using Monitor = RawSalt.Platforms.Monitor;
 
 namespace RawSalt.Windowing.Win32;
 
 public class Win32Platform : Platform
 {
+	private List<Win32Display> _displays;
+
 	[SupportedOSPlatform("windows5.0")]
-	public override unsafe IReadOnlyList<Monitor> GetMonitors()
+	public override unsafe IReadOnlyList<Display> GetDisplays()
 	{
 		PInvoke.EnumDisplayMonitors(HDC.Null, null, MonitorEnumProc, default);
 
@@ -26,8 +29,12 @@ public class Win32Platform : Platform
 		info.monitorInfo.cbSize = (uint)Unsafe.SizeOf<MONITORINFOEXW>();
 		if (!PInvoke.GetMonitorInfo(hMonitor, (MONITORINFO*)&info))
 		{
-			throw new Win32Exception();
+			_displays.Add(new Win32Display(info.szDevice.ToString(), default));
 		}
+
+		string name = info.szDevice.ToString();
+
+		Log.Info(name);
 
 		return true;
 	}

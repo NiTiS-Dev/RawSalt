@@ -1,20 +1,14 @@
+using System.Collections.Immutable;
+using RawSalt.Graphics;
+
 namespace RawSalt;
 
-public sealed class LaunchConfiguration
+public sealed partial class LaunchConfiguration
 {
-	public static Builder CreateBuilder()
-	{
-		return new Builder();
-	}
+	public ImmutableArray<GraphicsBackend> GraphicsBackends { get; }
 
-	public class Builder
+	private LaunchConfiguration()
 	{
-		internal Builder()
-		{ }
-
-		public LaunchConfiguration Build()
-		{
-			return new LaunchConfiguration();
-		}
+		GraphicsBackends = [];
 	}
 }

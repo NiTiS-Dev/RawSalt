@@ -5,6 +5,7 @@
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
         <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+        <RootNamespace>RawSalt.Windowing.Win32</RootNamespace>
     </PropertyGroup>
 
     <ItemGroup>

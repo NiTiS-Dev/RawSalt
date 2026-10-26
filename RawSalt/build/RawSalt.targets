@@ -18,12 +18,12 @@
     </ItemGroup>
 
     <ItemGroup Condition="'$(RawSaltUsePackages)' != 'true'">
-        <ProjectReference Include="$(RawSaltRoot)RawSalt.Windowing.$(RawSaltPlatform)/RawSalt.Windowing.$(RawSaltPlatform).csproj" />
+        <ProjectReference Include="$(RawSaltRoot)RawSalt.Platforms.$(RawSaltPlatform)/RawSalt.Platforms.$(RawSaltPlatform).csproj" />
         <ProjectReference Include="@(_RawSaltBackend->'$(RawSaltRoot)RawSalt.Graphics.%(Identity)/RawSalt.Graphics.%(Identity).csproj')" />
     </ItemGroup>
 
     <ItemGroup Condition="'$(RawSaltUsePackages)' == 'true'">
-        <PackageReference Include="RawSalt.Windowing.$(RawSaltPlatform)" Version="$(RawSaltVersion)" />
+        <PackageReference Include="RawSalt.Platforms.$(RawSaltPlatform)" Version="$(RawSaltVersion)" />
         <PackageReference Include="@(RawSaltBackend->'RawSalt.Graphics.%(Identity)')" Version="$(RawSaltVersion)" />
     </ItemGroup>
 

@@ -1,7 +1,7 @@
 <Solution>
   <Folder Name="/Root/">
-    <File Path="../../../../Projects/RawSalt/.editorconfig" />
-    <File Path="../../../../Projects/RawSalt/.gitignore" />
+      <File Path=".editorconfig" />
+      <File Path=".gitignore" />
   </Folder>
   <Project Path="RawSalt.Graphics.Vulkan/RawSalt.Graphics.Vulkan.csproj" />
   <Project Path="RawSalt.Platforms.Win32/RawSalt.Platforms.Win32.csproj" />

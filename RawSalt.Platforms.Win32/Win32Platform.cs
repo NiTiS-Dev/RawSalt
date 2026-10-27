@@ -46,7 +46,9 @@ public class Win32Platform : Platform
 
 		string deviceName = info.szDevice.ToString();
 		string displayName = GetDisplayName(deviceName);
-		_displays.Add(new Win32Display(displayName, default));
+		Region2<int> region = info.monitorInfo.rcMonitor.AsRegion();
+		Region2<int> workRegion = info.monitorInfo.rcWork.AsRegion();
+		_displays.Add(new Win32Display(displayName, region, workRegion));
 
 		return true;
 	}
@@ -77,13 +79,18 @@ public class Win32Platform : Platform
 		return deviceName;
 	}
 
-	public override View CreateView(in WindowConfiguration configuration)
+	public override Win32Window CreateView(in WindowConfiguration configuration)
 	{
 		throw new NotImplementedException();
 	}
 
 	public override bool ReleaseView(View view)
 	{
-		throw new NotImplementedException();
+		if (view is not Win32Window window)
+		{
+			return false;
+		}
+
+		return false;
 	}
 }

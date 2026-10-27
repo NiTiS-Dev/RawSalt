@@ -6,6 +6,8 @@ RegisterClassEx
 EnumDisplayMonitors
 MONITORINFOEXW
 GetMonitorInfoW
+EnumDisplayDevices
+DISPLAY_DEVICEW
 
 CreateWindowExW
 AdjustWindowRectEx

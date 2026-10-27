@@ -1,4 +1,5 @@
 using System.ComponentModel;
+using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Runtime.Versioning;
 using Windows.Win32;
@@ -12,31 +13,68 @@ namespace RawSalt.Windowing.Win32;
 
 public class Win32Platform : Platform
 {
-	private List<Win32Display> _displays;
+	private List<Win32Display>? _displays;
 
 	[SupportedOSPlatform("windows5.0")]
 	public override unsafe IReadOnlyList<Display> GetDisplays()
 	{
-		PInvoke.EnumDisplayMonitors(HDC.Null, null, MonitorEnumProc, default);
+		if (_displays == null)
+		{
+			_displays = [];
+		}
+		else
+		{
+			_displays.Clear();
+		}
 
-		return [];
+		PInvoke.EnumDisplayMonitors(HDC.Null, null, MonitorEnumProc, default);
+		return _displays.AsReadOnly();
 	}
 
 	[SupportedOSPlatform("windows5.0")]
 	private unsafe BOOL MonitorEnumProc(HMONITOR hMonitor, HDC hdcMonitor, RECT* lprcMonitor, LPARAM dwData)
 	{
+		Debug.Assert(_displays is not null);
+
 		MONITORINFOEXW info;
 		info.monitorInfo.cbSize = (uint)Unsafe.SizeOf<MONITORINFOEXW>();
 		if (!PInvoke.GetMonitorInfo(hMonitor, (MONITORINFO*)&info))
 		{
-			_displays.Add(new Win32Display(info.szDevice.ToString(), default));
+			Log.Error("GetMonitorInfo failed");
+			return true;
 		}
 
-		string name = info.szDevice.ToString();
-
-		Log.Info(name);
+		string deviceName = info.szDevice.ToString();
+		string displayName = GetDisplayName(deviceName);
+		_displays.Add(new Win32Display(displayName, default));
 
 		return true;
+	}
+
+	[SupportedOSPlatform("windows5.0")]
+	private static unsafe string GetDisplayName(string deviceName)
+	{
+		DISPLAY_DEVICEW displayDevice = new()
+		{
+			cb = (uint)sizeof(DISPLAY_DEVICEW)
+		};
+
+		for (uint i = 0;
+		     PInvoke.EnumDisplayDevices(deviceName, i, ref displayDevice, 0);
+		     i++)
+		{
+			if ((displayDevice.StateFlags & DISPLAY_DEVICE_STATE_FLAGS.DISPLAY_DEVICE_ACTIVE) != 0)
+			{
+				return displayDevice.DeviceString.ToString();
+			}
+
+			displayDevice = new DISPLAY_DEVICEW
+			{
+				cb = (uint)sizeof(DISPLAY_DEVICEW)
+			};
+		}
+
+		return deviceName;
 	}
 
 	public override View CreateView(in WindowConfiguration configuration)

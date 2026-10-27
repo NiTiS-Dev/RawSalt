@@ -13,6 +13,8 @@ namespace RawSalt.Windowing.Win32;
 
 public class Win32Platform : Platform
 {
+	public override WellKnownPlatformApi Api => WellKnownPlatformApi.Win32;
+
 	private List<Win32Display>? _displays;
 
 	[SupportedOSPlatform("windows5.0")]

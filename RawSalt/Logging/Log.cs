@@ -6,25 +6,32 @@ namespace RawSalt.Logging;
 public static class Log
 {
 	// TODO: Add Logger: replacement of scopes
-	private static readonly Lock _sinkLock = new();
-	private static readonly List<ILoggerSink> _sinks = [];
+	private static readonly PendingSmallList<ILoggerSink> _sinks = new();
 	private static readonly Thread _backgroundThread;
 	private static readonly Channel<LogMessage> _messageChannel;
 
+	/// <summary>
+	/// Adds a <paramref name="sink"/> to the global logger sinks.
+	/// </summary>
+	/// <remarks>
+	/// If <paramref name="sink"/> implements <see cref="IDisposable"/> interface,
+	/// it will be disposed at application exit by application thread manually.
+	/// </remarks>
+	/// <param name="sink">Logger sink.</param>
 	public static void AddSink(ILoggerSink sink)
 	{
-		using (_sinkLock.EnterScope())
-		{
-			_sinks.Add(sink);
-		}
+		_sinks.Add(sink);
 	}
 
+	/// <summary>
+	/// Remove sink from global logger sinks.
+	/// </summary>
+	/// <remarks>
+	/// Sink is not disposed on removal.
+	/// </remarks>
 	public static bool RemoveSink(ILoggerSink sink)
 	{
-		using (_sinkLock.EnterScope())
-		{
-			return _sinks.Remove(sink);
-		}
+		return _sinks.Remove(sink);
 	}
 
 	public static Scope BeginScope(string name)
@@ -90,26 +97,53 @@ public static class Log
 			IsBackground = true,
 		};
 		_backgroundThread.Start();
+
+		AppDomain.CurrentDomain.ProcessExit += Stop;
 	}
 
 	private static void Run()
 	{
 		ChannelReader<LogMessage> reader = _messageChannel.Reader;
+
 		while (reader.WaitToReadAsync().AsTask().GetAwaiter().GetResult())
 		{
-			using (_sinkLock.EnterScope())
+			while (reader.TryRead(out LogMessage? message))
 			{
-				while (reader.TryRead(out LogMessage? message))
+				foreach (var t in _sinks)
 				{
-					foreach (ILoggerSink sink in _sinks)
-					{
-						sink.Write(message);
-					}
+					t.Write(message);
 				}
+			}
 
-				foreach (ILoggerSink s in _sinks)
+			foreach (var t in _sinks)
+			{
+				t.Flush();
+			}
+		}
+	}
+
+	private static void Stop(object? sender, EventArgs args)
+	{
+		try
+		{
+			_messageChannel.Writer.TryComplete();
+
+			// Wait maximum 5 seconds
+			_backgroundThread.Join(TimeSpan.FromSeconds(5));
+		}
+		finally
+		{
+			var sinksToDispose = _sinks.ClearAndGet();
+
+			foreach (ILoggerSink sink in sinksToDispose)
+			{
+				if (sink is IDisposable disposable)
 				{
-					s.Flush();
+					try
+					{
+						disposable.Dispose();
+					}
+					catch { } // Probably user was already disposed sink
 				}
 			}
 		}

@@ -1,5 +1,6 @@
 using System.Collections.Immutable;
 using CommunityToolkit.Diagnostics;
+using RawSalt.Graphics;
 using RawSalt.Platforms;
 
 namespace RawSalt;
@@ -14,6 +15,7 @@ public partial class LaunchConfiguration
 	public class Builder
 	{
 		private readonly HashSet<Platform> _platforms = [];
+		private readonly HashSet<GraphicsBackend> _backends = [];
 
 		internal Builder()
 		{ }
@@ -26,9 +28,17 @@ public partial class LaunchConfiguration
 			return this;
 		}
 
+		public Builder AddGraphicsBackendCandidate(GraphicsBackend backend)
+		{
+			Guard.IsNotNull(backend);
+
+			_backends.Add(backend);
+			return this;
+		}
+
 		public LaunchConfiguration Build()
 		{
-			return new LaunchConfiguration([.._platforms], []);
+			return new LaunchConfiguration([.._platforms], [.._backends]);
 		}
 	}
 }

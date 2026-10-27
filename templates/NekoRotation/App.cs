@@ -1,4 +1,5 @@
 ﻿using RawSalt;
+using RawSalt.Graphics.Vulkan;
 using RawSalt.Logging;
 using RawSalt.Windowing.Win32;
 
@@ -14,6 +15,7 @@ internal sealed class App : Application
 
         var config = LaunchConfiguration.CreateBuilder()
 	        .AddWin32Platform()
+	        .AddVulkanBackend()
 	        .Build();
 
         app.Launch(config);

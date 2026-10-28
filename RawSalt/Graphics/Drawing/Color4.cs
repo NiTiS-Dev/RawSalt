@@ -1,37 +1,43 @@
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
-using System.Numerics;
-using System.Runtime.CompilerServices;
 
-namespace RawSalt.Graphics;
+namespace RawSalt.Graphics.Drawing;
 
 [DebuggerDisplay("{ToString(),nq}")]
-public struct Color4 : IEquatable<Color4>, IEquatable<Color4?>
+public struct Color4 : IApproximatelyEquatable<Color4, double>, IEquatable<Color4?>
 {
-	public byte Red, Green, Blue, Alpha;
+	public float Red, Green, Blue, Alpha;
 
-	public Color4(byte gray)
+	public Color4(float gray)
 	{
 		Red = gray;
 		Green = gray;
 		Blue = gray;
-		Alpha = 255;
+		Alpha = 1f;
 	}
 
-	public Color4(byte red, byte green, byte blue)
+	public Color4(float red, float green, float blue)
 	{
 		Red = red;
 		Green = green;
 		Blue = blue;
-		Alpha = 255;
+		Alpha = 1f;
 	}
 
-	public Color4(byte red, byte green, byte blue, byte alpha)
+	public Color4(float red, float green, float blue, float alpha)
 	{
 		Red = red;
 		Green = green;
 		Blue = blue;
 		Alpha = alpha;
+	}
+
+	public bool Equals(Color4 other, double tolerance)
+	{
+		return Math.Abs(Red - other.Red) < tolerance &&
+		       Math.Abs(Green - other.Green) < tolerance &&
+		       Math.Abs(Blue - other.Blue) < tolerance &&
+		       Math.Abs(Alpha - other.Alpha) < tolerance;
 	}
 
 	public bool Equals(Color4 other)
@@ -42,7 +48,7 @@ public struct Color4 : IEquatable<Color4>, IEquatable<Color4?>
 		       Alpha == other.Alpha;
 	}
 
-	public bool Equals(Color4? other)
+	public bool Equals([NotNullWhen(true)] Color4? other)
 	{
 		return other is { } notNull && Equals(notNull);
 	}
@@ -54,7 +60,7 @@ public struct Color4 : IEquatable<Color4>, IEquatable<Color4?>
 
 	public override int GetHashCode()
 	{
-		return Unsafe.BitCast<Color4, int>(this);
+		return HashCode.Combine(Red, Green, Blue, Alpha);
 	}
 
 	public override string ToString()
@@ -70,10 +76,5 @@ public struct Color4 : IEquatable<Color4>, IEquatable<Color4?>
 	public static bool operator !=(Color4 left, Color4 right)
 	{
 		return !(left == right);
-	}
-
-	public Vector4 ToNormalized()
-	{
-		return new Vector4(Red / 255f, Green / 255f, Blue / 255f, Alpha / 255f);
 	}
 }

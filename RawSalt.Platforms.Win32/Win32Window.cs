@@ -1,3 +1,4 @@
+using System.IO.Compression;
 using System.Runtime.Versioning;
 using Windows.Win32;
 using Windows.Win32.Foundation;
@@ -16,6 +17,10 @@ public class Win32Window : Window, IWin32Window
 	nint IWin32Window.Handle => Handle;
 	nint IWin32Window.ModuleHandle => _platform.HInstance;
 
+	private bool _alive = true;
+	public override bool ShouldUpdate => _alive;
+	public override event Action<CloseRequest>? CloseRequest;
+
 	internal Win32Window(HWND handle, Win32Platform platform)
 	{
 		Handle = handle;
@@ -30,5 +35,26 @@ public class Win32Window : Window, IWin32Window
 			PInvoke.TranslateMessage(msg);
 			PInvoke.DispatchMessage(msg);
 		}
+	}
+
+	[SupportedOSPlatform("windows5.0")]
+	public void Close()
+	{
+		PInvoke.DestroyWindow(Handle);
+		_alive = false;
+	}
+
+	internal void OnCloseRequested()
+	{
+		if (CloseRequest is null)
+		{
+			_alive = false;
+			return;
+		}
+
+		CloseRequest request = new();
+		CloseRequest.Invoke(request);
+
+		_alive = !request.ShouldClose;
 	}
 }

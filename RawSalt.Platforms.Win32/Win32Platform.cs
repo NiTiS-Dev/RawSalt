@@ -1,4 +1,3 @@
-using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Runtime.Versioning;
@@ -102,8 +101,17 @@ public partial class Win32Platform : Platform
 	public override unsafe Win32Window CreateView(in WindowConfiguration configuration)
 	{
 		RegisterClass();
-		WINDOW_STYLE style = 0;
-		WINDOW_EX_STYLE exStyle = 0;
+		WINDOW_STYLE style = WINDOW_STYLE.WS_OVERLAPPEDWINDOW;
+		WINDOW_EX_STYLE exStyle = WINDOW_EX_STYLE.WS_EX_APPWINDOW;
+
+		RECT rect = new()
+		{
+			left = 0,
+			top = 0,
+			right = configuration.Size.X,
+			bottom = configuration.Size.Y
+		};
+		PInvoke.AdjustWindowRectEx(&rect, style, false, exStyle);
 
 		HWND handle;
 		Win32Window window;
@@ -112,8 +120,8 @@ public partial class Win32Platform : Platform
 			handle = PInvoke.CreateWindowEx(exStyle, (PCWSTR)(void*)_classAtom, (PCWSTR)pTitle, style,
 				configuration.Position?.X ?? PInvoke.CW_USEDEFAULT,
 				configuration.Position?.Y ?? PInvoke.CW_USEDEFAULT,
-				configuration.Size.X,
-				configuration.Size.Y,
+				rect.Width,
+				rect.Height,
 				HWND.Null,
 				HMENU.Null,
 				HInstance,
@@ -143,16 +151,32 @@ public partial class Win32Platform : Platform
 			return false;
 		}
 
-		return false;
+		window.Close();
+		return true;
 	}
 
 	[SupportedOSPlatform("windows5.0")]
 	private LRESULT WndProc(HWND hWnd, uint msg, WPARAM wParam, LPARAM lParam)
 	{
+		if (msg == PInvoke.WM_DESTROY)
+		{
+			_windows.Remove(hWnd);
+			return new LRESULT(0);
+		}
+
 		if (msg == PInvoke.WM_SETTINGCHANGE)
 		{
 			UpdateTheme(hWnd);
 			return PInvoke.DefWindowProc(hWnd, msg, wParam, lParam);
+		}
+
+		if (_windows.TryGetValue(hWnd, out Win32Window? window))
+		{
+			if (msg == PInvoke.WM_CLOSE)
+			{
+				window.OnCloseRequested();
+				return new LRESULT(0);
+			}
 		}
 
 		return PInvoke.DefWindowProc(hWnd, msg, wParam, lParam);

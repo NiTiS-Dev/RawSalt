@@ -3,6 +3,7 @@ using System.Runtime.Versioning;
 using RawSalt.Logging;
 using Windows.Win32;
 using Windows.Win32.Foundation;
+using Windows.Win32.Graphics.Gdi;
 using Windows.Win32.UI.WindowsAndMessaging;
 using Microsoft.Win32;
 
@@ -29,11 +30,13 @@ public partial class Win32Platform
 
 		ushort RegisterClassSlow()
 		{
-			fixed (char* pClassName = $"RawSalt.Platforms.Win32.Class{_counter++}")
+			int index = Interlocked.Increment(ref _counter);
+			fixed (char* pClassName = $"RawSalt.Platforms.Win32.Class{index}")
 			{
 				WNDCLASSEXW param = default;
 				param.cbSize = (uint)sizeof(WNDCLASSEXW);
 				param.hInstance = HInstance;
+				param.hbrBackground = (HBRUSH)(nint)PInvoke.GetStockObject(GET_STOCK_OBJECT_FLAGS.BLACK_BRUSH);
 				param.lpszClassName = pClassName;
 				param.lpfnWndProc = _wndproc;
 

@@ -38,7 +38,7 @@ public class Application
 
 	private void AppLoop(View view)
 	{
-		while (true)
+		while (view.ShouldUpdate)
 		{
 			view.PumpEvents();
 		}

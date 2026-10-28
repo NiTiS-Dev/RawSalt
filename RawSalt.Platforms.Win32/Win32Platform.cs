@@ -1,3 +1,5 @@
+using System.ComponentModel;
+using System.Drawing;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Runtime.Versioning;
@@ -30,6 +32,15 @@ public partial class Win32Platform : Platform
 	}
 
 	[SupportedOSPlatform("windows5.0")]
+	public override Display GetPrimaryDisplay()
+	{
+		HMONITOR handle = PInvoke.MonitorFromPoint(Point.Empty, MONITOR_FROM_FLAGS.MONITOR_DEFAULTTOPRIMARY);
+
+		Win32Display primary = GetDisplay(handle);
+		return primary;
+	}
+
+	[SupportedOSPlatform("windows5.0")]
 	public override unsafe IReadOnlyList<Display> GetDisplays()
 	{
 		if (_displays == null)
@@ -54,21 +65,27 @@ public partial class Win32Platform : Platform
 			return true;
 		}
 
+		Win32Display display = GetDisplay(hMonitor);
+		_displays.Add(display);
+
+		return true;
+	}
+
+	[SupportedOSPlatform("windows5.0")]
+	private static unsafe Win32Display GetDisplay(HMONITOR handle)
+	{
 		MONITORINFOEXW info;
 		info.monitorInfo.cbSize = (uint)Unsafe.SizeOf<MONITORINFOEXW>();
-		if (!PInvoke.GetMonitorInfo(hMonitor, (MONITORINFO*)&info))
+		if (!PInvoke.GetMonitorInfo(handle, (MONITORINFO*)&info))
 		{
-			Log.Error("GetMonitorInfo failed");
-			return true;
+			throw new Win32Exception(Marshal.GetLastPInvokeError(), Marshal.GetLastPInvokeErrorMessage());
 		}
 
 		string deviceName = info.szDevice.ToString();
 		string displayName = GetDisplayName(deviceName);
 		Region2<int> region = info.monitorInfo.rcMonitor.AsRegion();
 		Region2<int> workRegion = info.monitorInfo.rcWork.AsRegion();
-		_displays.Add(new Win32Display(displayName, region, workRegion));
-
-		return true;
+		return new Win32Display(displayName, region, workRegion);
 	}
 
 	[SupportedOSPlatform("windows5.0")]

@@ -9,6 +9,7 @@ MONITORINFOEXW
 GetMonitorInfoW
 EnumDisplayDevices
 DISPLAY_DEVICEW
+MonitorFromPoint
 
 CreateWindowExW
 AdjustWindowRectEx

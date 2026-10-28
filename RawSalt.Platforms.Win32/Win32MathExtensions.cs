@@ -9,7 +9,7 @@ internal static class Win32MathExtensions
 	{
 		public Region2<int> AsRegion()
 		{
-			Vector2<int> origin = new(rect.left, rect.bottom);
+			Vector2<int> origin = new(rect.left, rect.top);
 			Vector2<int> size = new(rect.Width, rect.Height);
 			return new(origin, size);
 		}

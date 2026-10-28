@@ -13,7 +13,7 @@ public struct WindowConfiguration
 	public Vec2i? Position { get; set; }
 
 	/// <summary>
-	/// Size of the window including borders in virtual space.
+	/// Size of the window in virtual space. Does not include window borders.
 	/// </summary>
 	public Vec2i Size { get; set; }
 }

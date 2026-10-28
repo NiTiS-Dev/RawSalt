@@ -5,17 +5,29 @@ using System.Runtime.Versioning;
 using Windows.Win32;
 using Windows.Win32.Foundation;
 using Windows.Win32.Graphics.Gdi;
+using Windows.Win32.UI.HiDpi;
+using Windows.Win32.UI.WindowsAndMessaging;
 using NiTiS.Mathematics;
+using RawSalt.Collections;
 using RawSalt.Logging;
 using RawSalt.Platforms;
 
 namespace RawSalt.Windowing.Win32;
 
-public class Win32Platform : Platform
+public partial class Win32Platform : Platform
 {
 	public override WellKnownPlatformApi Api => WellKnownPlatformApi.Win32;
 
 	private List<Win32Display>? _displays;
+	private readonly SmallDictionary<nint /*HWND*/, Win32Window> _windows = [];
+
+	[SupportedOSPlatform("windows10.0.15063")]
+	public Win32Platform()
+	{
+		PInvoke.SetProcessDpiAwarenessContext(DPI_AWARENESS_CONTEXT.DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2);
+		HInstance = PInvoke.GetModuleHandle((PCWSTR)null);
+		_wndproc = WndProc;
+	}
 
 	[SupportedOSPlatform("windows5.0")]
 	public override unsafe IReadOnlyList<Display> GetDisplays()
@@ -81,11 +93,39 @@ public class Win32Platform : Platform
 		return deviceName;
 	}
 
-	public override Win32Window CreateView(in WindowConfiguration configuration)
+	[SupportedOSPlatform("windows5.0")]
+	public override unsafe Win32Window CreateView(in WindowConfiguration configuration)
 	{
-		throw new NotImplementedException();
+		RegisterClass();
+		WINDOW_STYLE style = 0;
+		WINDOW_EX_STYLE exStyle = 0;
+
+		HWND handle;
+		Win32Window window;
+		fixed (char* pTitle = configuration.Title)
+		{
+			handle = PInvoke.CreateWindowEx(exStyle, (PCWSTR)(void*)_classAtom, (PCWSTR)pTitle, style,
+				configuration.Position?.X ?? PInvoke.CW_USEDEFAULT,
+				configuration.Position?.Y ?? PInvoke.CW_USEDEFAULT,
+				configuration.Size.X,
+				configuration.Size.Y,
+				HWND.Null,
+				HMENU.Null,
+				HInstance,
+				null);
+		}
+
+		Debug.Assert(handle != default);
+		window = new(handle, this);
+		_windows.Add(handle, window);
+
+		PInvoke.UpdateWindow(handle);
+		PInvoke.ShowWindow(handle, SHOW_WINDOW_CMD.SW_SHOW);
+
+		return window;
 	}
 
+	[SupportedOSPlatform("windows5.0")]
 	public override bool ReleaseView(View view)
 	{
 		if (view is not Win32Window window)
@@ -94,5 +134,11 @@ public class Win32Platform : Platform
 		}
 
 		return false;
+	}
+
+	[SupportedOSPlatform("windows5.0")]
+	private LRESULT WndProc(HWND hWnd, uint msg, WPARAM wParam, LPARAM lParam)
+	{
+		return PInvoke.DefWindowProc(hWnd, msg, wParam, lParam);
 	}
 }

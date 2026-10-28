@@ -2,6 +2,7 @@
 
 GetModuleHandle
 RegisterClassEx
+UnregisterClass
 
 EnumDisplayMonitors
 MONITORINFOEXW

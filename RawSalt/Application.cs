@@ -1,4 +1,5 @@
 using System.Collections.Immutable;
+using RawSalt.Graphics;
 using RawSalt.Logging;
 using RawSalt.Platforms;
 
@@ -7,6 +8,7 @@ namespace RawSalt;
 public class Application
 {
 	public Platform Platform { get; private set; }
+	public GraphicsBackend GraphicsBackend { get; private set; }
 
 	protected Application()
 	{
@@ -28,6 +30,8 @@ public class Application
 				Size = new(1280, 720)
 			};
 			View view = Platform.CreateView(in windowConfig);
+
+			GraphicsBackend = SelectBestGraphicsBackend(config.GraphicsBackends);
 			AppLoop(view);
 		}
 		catch (Exception ex)
@@ -44,16 +48,24 @@ public class Application
 		}
 	}
 
-	private static Platform SelectBestPlatform(params ImmutableArray<Platform> platforms)
+	private static GraphicsBackend SelectBestGraphicsBackend(params ImmutableArray<GraphicsBackend> backends)
 	{
-		if (platforms.Length == 0)
+		if (backends.Length == 0)
 		{
-			throw new ArgumentException("No platform candidates provided.", nameof(platforms));
+			throw new ArgumentException("No graphics backend candidates provided.", nameof(backends));
 		}
 
-		if (platforms.IsEmpty)
+		return backends[0];
+	}
+
+	private static Platform SelectBestPlatform(params ImmutableArray<Platform> platforms)
+	{
+		switch (platforms.Length)
 		{
-			return platforms[0];
+			case 0:
+				throw new ArgumentException("No platform candidates provided.", nameof(platforms));
+			case 1:
+				return platforms[0];
 		}
 
 		// Prefer wayland over Xlib

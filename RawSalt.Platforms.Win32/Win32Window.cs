@@ -1,10 +1,6 @@
-using System.IO.Compression;
-using System.Numerics;
-using System.Reflection.Metadata;
 using System.Runtime.Versioning;
 using Windows.Win32;
 using Windows.Win32.Foundation;
-using Windows.Win32.Graphics.Dwm;
 using Windows.Win32.UI.WindowsAndMessaging;
 using NiTiS.Mathematics;
 using RawSalt.Platforms;
@@ -65,10 +61,25 @@ public class Win32Window : Window, IWin32Window
 		_alive = !request.ShouldClose;
 	}
 
-	internal void OnResize(Vector2<int> size, Vector2<int> surfaceSize)
+	[SupportedOSPlatform("windows10.0.14393")]
+	internal void UpdateSize()
 	{
-		_size = size;
-		_surfaceSize = surfaceSize;
-		SizeChanged?.Invoke(new SizeChangedEventArgs(size, surfaceSize));
+		PInvoke.GetWindowRect(Handle, out RECT windowRect);
+		Vector2<int> newSize = new(windowRect.Width, windowRect.Height);
+
+		PInvoke.GetClientRect(Handle, out RECT clientRect);
+		uint dpi = PInvoke.GetDpiForWindow(Handle);
+		int surfaceWidth = PInvoke.MulDiv(clientRect.Width, (int)dpi, 96);
+		int surfaceHeight = PInvoke.MulDiv(clientRect.Height, (int)dpi, 96);
+		Vector2<int> newSurfaceSize = new(surfaceWidth, surfaceHeight);
+
+		if (_size == newSize && _surfaceSize == newSurfaceSize)
+		{
+			return;
+		}
+
+		_size = newSize;
+		_surfaceSize = newSurfaceSize;
+		SizeChanged?.Invoke(new SizeChangedEventArgs(_size, _surfaceSize));
 	}
 }

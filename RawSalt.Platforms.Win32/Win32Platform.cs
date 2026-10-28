@@ -189,6 +189,24 @@ public partial class Win32Platform : Platform
 
 		if (_windows.TryGetValue(hWnd, out Win32Window? window))
 		{
+			if (msg == PInvoke.WM_SIZE)
+			{
+				if (OperatingSystem.IsWindowsVersionAtLeast(10, 0, 14393))
+				{
+					window.UpdateSize();
+				}
+				return PInvoke.DefWindowProc(hWnd, msg, wParam, lParam);
+			}
+
+			if (msg == PInvoke.WM_DPICHANGED)
+			{
+				if (OperatingSystem.IsWindowsVersionAtLeast(10, 0, 14393))
+				{
+					window.UpdateSize();
+				}
+				return PInvoke.DefWindowProc(hWnd, msg, wParam, lParam);
+			}
+
 			if (msg == PInvoke.WM_CLOSE)
 			{
 				window.OnCloseRequested();

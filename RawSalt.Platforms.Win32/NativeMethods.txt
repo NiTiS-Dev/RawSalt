@@ -20,6 +20,7 @@ ShowWindow
 UpdateWindow
 DestroyWindow
 CW_USEDEFAULT
+DwmSetWindowAttribute
 
 GetStockObject
 LoadIcon
@@ -46,9 +47,11 @@ WM_RBUTTONUP
 WM_MBUTTONDOWN
 WM_MBUTTONUP
 WM_MOUSEWHEEL
+WM_SETTINGCHANGE
 SetCapture
 ReleaseCapture
 TranslateMessage
 DispatchMessage
 DefWindowProc
 PostQuitMessage
+S_OK

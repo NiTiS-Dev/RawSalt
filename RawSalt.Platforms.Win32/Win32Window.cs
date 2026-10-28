@@ -1,4 +1,8 @@
+using System.Runtime.Versioning;
+using Windows.Win32;
 using Windows.Win32.Foundation;
+using Windows.Win32.Graphics.Dwm;
+using Windows.Win32.UI.WindowsAndMessaging;
 using RawSalt.Platforms;
 
 namespace RawSalt.Windowing.Win32;
@@ -16,5 +20,15 @@ public class Win32Window : Window, IWin32Window
 	{
 		Handle = handle;
 		_platform = platform;
+	}
+
+	[SupportedOSPlatform("windows5.0")]
+	public override void PumpEvents()
+	{
+		while (PInvoke.PeekMessage(out MSG msg, Handle, 0, 0, PEEK_MESSAGE_REMOVE_TYPE.PM_REMOVE))
+		{
+			PInvoke.TranslateMessage(msg);
+			PInvoke.DispatchMessage(msg);
+		}
 	}
 }

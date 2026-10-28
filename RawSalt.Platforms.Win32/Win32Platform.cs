@@ -1,9 +1,10 @@
 using System.ComponentModel;
-using System.Diagnostics;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 using System.Runtime.Versioning;
 using Windows.Win32;
 using Windows.Win32.Foundation;
+using Windows.Win32.Graphics.Dwm;
 using Windows.Win32.Graphics.Gdi;
 using Windows.Win32.UI.HiDpi;
 using Windows.Win32.UI.WindowsAndMessaging;
@@ -48,7 +49,11 @@ public partial class Win32Platform : Platform
 	[SupportedOSPlatform("windows5.0")]
 	private unsafe BOOL MonitorEnumProc(HMONITOR hMonitor, HDC hdcMonitor, RECT* lprcMonitor, LPARAM dwData)
 	{
-		Debug.Assert(_displays is not null);
+		if (_displays is null)
+		{
+			Log.Error("_displays is null: {0}", Marshal.GetLastPInvokeError());
+			return true;
+		}
 
 		MONITORINFOEXW info;
 		info.monitorInfo.cbSize = (uint)Unsafe.SizeOf<MONITORINFOEXW>();
@@ -115,10 +120,15 @@ public partial class Win32Platform : Platform
 				null);
 		}
 
-		Debug.Assert(handle != default);
+		if (handle == default)
+		{
+			Log.Error("CreateWindowEx failed: {0}", Marshal.GetLastPInvokeError());
+		}
+
 		window = new(handle, this);
 		_windows.Add(handle, window);
 
+		UpdateTheme(handle);
 		PInvoke.UpdateWindow(handle);
 		PInvoke.ShowWindow(handle, SHOW_WINDOW_CMD.SW_SHOW);
 
@@ -139,6 +149,29 @@ public partial class Win32Platform : Platform
 	[SupportedOSPlatform("windows5.0")]
 	private LRESULT WndProc(HWND hWnd, uint msg, WPARAM wParam, LPARAM lParam)
 	{
+		if (msg == PInvoke.WM_SETTINGCHANGE)
+		{
+			UpdateTheme(hWnd);
+			return PInvoke.DefWindowProc(hWnd, msg, wParam, lParam);
+		}
+
 		return PInvoke.DefWindowProc(hWnd, msg, wParam, lParam);
+	}
+
+	private static unsafe void UpdateTheme(HWND hWnd)
+	{
+    	BOOL useDark = IsDarkModeEnabled();
+
+    	if (OperatingSystem.IsWindowsVersionAtLeast(10, 0, 17763))
+    	{
+    		HRESULT result = PInvoke.DwmSetWindowAttribute(hWnd,
+    			DWMWINDOWATTRIBUTE.DWMWA_USE_IMMERSIVE_DARK_MODE,
+    			&useDark, (uint)sizeof(BOOL));
+
+		    if (result != HRESULT.S_OK)
+		    {
+			    Log.Error("Failed to change window theme; hresult: {0}", result);
+		    }
+    	}
 	}
 }

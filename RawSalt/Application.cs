@@ -6,6 +6,8 @@ namespace RawSalt;
 
 public class Application
 {
+	public Platform Platform { get; private set; }
+
 	protected Application()
 	{
 
@@ -17,7 +19,7 @@ public class Application
 		{
 			Log.Info("Launch application.");
 
-			Platform platform = SelectBestPlatform(config.Platforms);
+			Platform = SelectBestPlatform(config.Platforms);
 
 			WindowConfiguration windowConfig = new()
 			{
@@ -25,11 +27,20 @@ public class Application
 				Position = null,
 				Size = new(1280, 720)
 			};
-			View view = platform.CreateView(in windowConfig);
+			View view = Platform.CreateView(in windowConfig);
+			AppLoop(view);
 		}
 		catch (Exception ex)
 		{
 			Log.Error(ex, "Error during application launch.");
+		}
+	}
+
+	private void AppLoop(View view)
+	{
+		while (true)
+		{
+			view.PumpEvents();
 		}
 	}
 

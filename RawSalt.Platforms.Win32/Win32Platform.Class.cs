@@ -1,8 +1,10 @@
-using System.Diagnostics;
+using System.Runtime.InteropServices;
 using System.Runtime.Versioning;
+using RawSalt.Logging;
 using Windows.Win32;
 using Windows.Win32.Foundation;
 using Windows.Win32.UI.WindowsAndMessaging;
+using Microsoft.Win32;
 
 namespace RawSalt.Windowing.Win32;
 
@@ -36,9 +38,35 @@ public partial class Win32Platform
 				param.lpfnWndProc = _wndproc;
 
 				ushort result = PInvoke.RegisterClassEx(in param);
-				Debug.Assert(result != 0);
+				if (result == 0)
+				{
+					Log.Error("RegisterClassEx failed: {0}", Marshal.GetLastPInvokeError());
+				}
+
 				return result;
 			}
 		}
+	}
+
+	public static bool IsDarkModeEnabled()
+	{
+		if (!OperatingSystem.IsWindows()) return false;
+
+		try
+		{
+			using var key = Registry.CurrentUser.OpenSubKey(
+				@"Software\Microsoft\Windows\CurrentVersion\Themes\Personalize");
+			object? value = key?.GetValue("AppsUseLightTheme");
+			if (value is int i)
+			{
+				return i == 0; // 0 = dark, 1 = light
+			}
+		}
+		catch
+		{
+			// Ignore failures and default to light mode
+		}
+
+		return false;
 	}
 }

@@ -8,8 +8,9 @@ namespace RawSalt;
 
 public class Application
 {
-	public Platform Platform { get; private set; }
-	public GraphicsBackend GraphicsBackend { get; private set; }
+	public Platform Platform { get; private set; } = null!;
+	public View MainView { get; private set; } = null!;
+	public GraphicsBackend GraphicsBackend { get; private set; } = null!;
 
 	protected Application()
 	{
@@ -32,24 +33,18 @@ public class Application
 				Position = null,
 				Size = new(1280, 720)
 			};
-			View view = Platform.CreateView(in windowConfig);
+			MainView = Platform.CreateView(in windowConfig);
 
 			GraphicsBackend = SelectBestGraphicsBackend(config.GraphicsBackends.Select(t => t(this)).ToList());
 
-			var adapters = GraphicsBackend.GetAdapters();
-			if (adapters is not null && adapters.Count == 0)
-			{
-				// TODO: Add documentation how to fix that error on laptops with switchable graphics.
-				Log.Error("Failed to get any viable adapter.");
-			}
-
-			RenderThread renderThread = new(GraphicsBackend, view);
+			RenderThread renderThread = new(GraphicsBackend, MainView);
 			renderThread.Start();
 
-			AppLoop(renderThread, view);
+			AppLoop(renderThread, MainView);
 
 			renderThread.Stop();
-			Platform.ReleaseView(view);
+			Platform.ReleaseView(MainView);
+			MainView = null!;
 		}
 		catch (Exception ex)
 		{

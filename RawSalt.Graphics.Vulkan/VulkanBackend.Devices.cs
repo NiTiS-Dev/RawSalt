@@ -116,8 +116,7 @@ public partial class VulkanBackend
 		VkDeviceApi deviceApi = Vk.GetApi(instanceApi.Instance, device);
 		deviceApi.vkGetDeviceQueue(graphicsQueueFamilyIndex, 0, out VkQueue graphicsQueue);
 		deviceApi.vkGetDeviceQueue(graphicsQueueFamilyIndex, 0, out VkQueue presentQueue);
-
-		return new VulkanDevice(adapter, device, deviceApi, graphicsQueueFamilyIndex, graphicsQueue, presentQueueFamilyIndex, presentQueue);
+		return new VulkanDevice(adapter, device, instanceApi, deviceApi, graphicsQueueFamilyIndex, graphicsQueue, presentQueueFamilyIndex, presentQueue);
 	}
 
 	private static VulkanAdapter SelectAdapter(IReadOnlyList<VulkanAdapter> adapters)

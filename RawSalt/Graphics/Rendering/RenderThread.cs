@@ -1,5 +1,5 @@
 using System.Diagnostics;
-using System.Threading.Channels;
+using RawSalt.Graphics.Drawing;
 using RawSalt.Logging;
 using RawSalt.Platforms;
 
@@ -34,7 +34,11 @@ internal sealed class RenderThread
 	{
 		_stop = true;
 		_thread.Join();
-		if (_failure != null) throw new AggregateException(_failure);
+
+		if (_failure != null)
+		{
+			throw new AggregateException(_failure);
+		}
 	}
 
 	private void Run()
@@ -43,20 +47,37 @@ internal sealed class RenderThread
 		{
 			using GraphicsDevice device = _backend.CreateDevice(null, _surface);
 			using Swapchain swapchain = device.CreateSwapchain(_surface);
+			using Renderer renderer = device.CreateRenderer(swapchain);
 
-			while (!_stop)
+			void OnSizeChanged(SizeChangedEventArgs args)
 			{
-			// 	DrainMessages(swapchain);
-			// 	if (swapchain.IsZeroSized)
-			// 	{
-			// 		Thread.Sleep(10);
-			// 		continue;
-			//  }
-			//
-				swapchain.Present();
+				swapchain.Resize(args.SurfaceSize);
 			}
+			_surface.View.SizeChanged += OnSizeChanged;
 
-			device.WaitIdle();
+			try
+			{
+				while (!_stop)
+				{
+					if (!renderer.TryBeginFrame(out RenderFrame? frame))
+					{
+						Thread.Sleep(1);
+						continue;
+					}
+
+					CommandList cmd = frame.Commands;
+					cmd.BeginRenderPass(new RenderPassDesc(frame.BackBuffer, new Color4(0.3f, 0.3f, 0.2f)));
+
+					cmd.EndRenderPass();
+
+					renderer.EndFrame(frame);
+				}
+			}
+			finally
+			{
+				_surface.View.SizeChanged -= OnSizeChanged;
+				device.WaitIdle();
+			}
 		}
 		catch (Exception ex)
 		{

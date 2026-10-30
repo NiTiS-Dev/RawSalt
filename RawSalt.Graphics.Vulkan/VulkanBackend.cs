@@ -67,15 +67,20 @@ public sealed partial class VulkanBackend : GraphicsBackend
 		};
 
 #if DEBUG
+		bool enableValidationLayer = IsInstanceLayerSupported(Vk.VK_LAYER_KHRONOS_VALIDATION_EXTENSION_NAME);
 		bool enableDebugUtils = IsInstanceExtensionSupported(Vk.VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
 #else
+		const bool enableValidationLayer = false;
 		const bool enableDebugUtils = false;
 #endif
 
+		using VkStringArray layers = GetRequiredLayers(enableValidationLayer);
 		using VkStringArray extensions = GetRequiredExtensions(Platform.Api, enableDebugUtils);
 		VkInstanceCreateInfo createInfo = new()
 		{
 			pApplicationInfo = &applicationInfo,
+			enabledLayerCount = layers.Length,
+			ppEnabledLayerNames = layers,
 			enabledExtensionCount = extensions.Length,
 			ppEnabledExtensionNames = extensions
 		};
@@ -115,6 +120,21 @@ public sealed partial class VulkanBackend : GraphicsBackend
 			_instanceApi?.vkDestroyInstance();
 			_instanceApi = null;
 		}
+	}
+
+	/// <remarks>
+	/// Do not forget to dispose array safely.
+	/// </remarks>
+	private static VkStringArray GetRequiredLayers(bool enableValidationLayer)
+	{
+		List<VkUtf8String> strings = [];
+
+		if (enableValidationLayer)
+		{
+			strings.Add(Vk.VK_LAYER_KHRONOS_VALIDATION_EXTENSION_NAME);
+		}
+
+		return new VkStringArray(strings);
 	}
 
 	/// <remarks>
@@ -175,6 +195,45 @@ public sealed partial class VulkanBackend : GraphicsBackend
 		{
 			byte* name = properties.extensionName;
 			if (new VkUtf8String(name).Span.SequenceEqual(extensionName.Span))
+			{
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	private static unsafe bool IsInstanceLayerSupported(VkUtf8String layerName)
+	{
+		VkResult result = Vk.vkEnumerateInstanceLayerProperties(out uint layerCount);
+		if (result != VkResult.Success && result != VkResult.Incomplete)
+		{
+			Log.Warning("Failed to enumerate Vulkan instance layers, reason: {0}", result);
+			return false;
+		}
+
+		if (layerCount == 0)
+		{
+			return false;
+		}
+
+		VkLayerProperties[] layers = new VkLayerProperties[layerCount];
+		result = Vk.vkEnumerateInstanceLayerProperties(layers);
+		if (result != VkResult.Success && result != VkResult.Incomplete)
+		{
+			Log.Warning("Failed to retrieve Vulkan instance layers, reason: {0}", result);
+			return false;
+		}
+
+		return ContainsLayer(layers, layerName);
+	}
+
+	private static unsafe bool ContainsLayer(ReadOnlySpan<VkLayerProperties> layers, VkUtf8String layerName)
+	{
+		foreach (VkLayerProperties properties in layers)
+		{
+			byte* name = properties.layerName;
+			if (new VkUtf8String(name).Span.SequenceEqual(layerName.Span))
 			{
 				return true;
 			}

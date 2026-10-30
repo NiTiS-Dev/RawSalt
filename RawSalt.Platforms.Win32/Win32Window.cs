@@ -9,7 +9,7 @@ namespace RawSalt.Windowing.Win32;
 
 public class Win32Window : Window, IWin32Window
 {
-	private readonly Win32Platform _platform;
+	public override Win32Platform Platform { get; }
 
 	internal HWND Handle { get; }
 	private Vector2<int> _size, _surfaceSize;
@@ -18,7 +18,7 @@ public class Win32Window : Window, IWin32Window
 	public override event Action<SizeChangedEventArgs>? SizeChanged;
 
 	nint IWin32Window.Handle => Handle;
-	nint IWin32Window.ModuleHandle => _platform.HInstance;
+	nint IWin32Window.ModuleHandle => Platform.HInstance;
 
 	private bool _alive = true;
 	public override bool ShouldUpdate => _alive;
@@ -27,7 +27,7 @@ public class Win32Window : Window, IWin32Window
 	internal Win32Window(HWND handle, Win32Platform platform)
 	{
 		Handle = handle;
-		_platform = platform;
+		Platform = platform;
 	}
 
 	[SupportedOSPlatform("windows5.0")]

@@ -10,6 +10,7 @@ public class Application
 {
 	public Platform Platform { get; private set; } = null!;
 	public View MainView { get; private set; } = null!;
+	public RenderSurface MainSurface { get; private set; } = null!;
 	public GraphicsBackend GraphicsBackend { get; private set; } = null!;
 
 	protected Application()
@@ -36,8 +37,9 @@ public class Application
 			MainView = Platform.CreateView(in windowConfig);
 
 			GraphicsBackend = SelectBestGraphicsBackend(config.GraphicsBackends.Select(t => t(this)).ToList());
+			MainSurface = GraphicsBackend.CreateSurface(MainView);
 
-			RenderThread renderThread = new(GraphicsBackend, MainView);
+			RenderThread renderThread = new(GraphicsBackend, MainSurface);
 			renderThread.Start();
 
 			AppLoop(renderThread, MainView);

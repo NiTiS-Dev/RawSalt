@@ -9,18 +9,18 @@ internal sealed class RenderThread
 {
 	private readonly Thread _thread;
 	private readonly GraphicsBackend _backend;
-	private readonly View _view;
+	private readonly RenderSurface _surface;
 	//private readonly Channel<RenderMessage> _messages = Channel.CreateUnbounded<RenderMessage>(new() { SingleReader = true });
 	private volatile bool _stop;
 	private Exception? _failure;
 
-	public RenderThread(GraphicsBackend backend, View view)
+	public RenderThread(GraphicsBackend backend, RenderSurface surface)
 	{
 		Debug.Assert(backend != null);
-		Debug.Assert(view != null);
+		Debug.Assert(surface != null);
 
 		_backend = backend;
-		_view = view;
+		_surface = surface;
 		_thread = new Thread(Run)
 		{
 			Name = "RawSalt/RenderThread"
@@ -41,10 +41,9 @@ internal sealed class RenderThread
 	{
 		try
 		{
-			using GraphicsDevice device = _backend.CreateDevice(null);
-			// using var swapchain = device.CreateSwapchain(_view);
-			// var triangle = new TriangleRenderer(device);
-			//
+			using GraphicsDevice device = _backend.CreateDevice(null, _surface);
+			using Swapchain swapchain = device.CreateSwapchain(_surface);
+
 			while (!_stop)
 			{
 			// 	DrainMessages(swapchain);
@@ -52,13 +51,12 @@ internal sealed class RenderThread
 			// 	{
 			// 		Thread.Sleep(10);
 			// 		continue;
+			//  }
+			//
+				swapchain.Present();
 			}
-			//
-			// 	triangle.Render(swapchain);
-			// 	swapchain.Present();
-			// }
-			//
-			// device.WaitIdle();
+
+			device.WaitIdle();
 		}
 		catch (Exception ex)
 		{

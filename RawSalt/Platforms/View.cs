@@ -2,6 +2,8 @@ namespace RawSalt.Platforms;
 
 public abstract class View
 {
+	public abstract Platform Platform { get; }
+
 	public abstract bool ShouldUpdate { get; }
 
 	public abstract event Action<CloseRequest>? CloseRequest;

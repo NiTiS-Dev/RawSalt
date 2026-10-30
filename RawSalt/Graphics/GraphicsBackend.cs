@@ -1,3 +1,6 @@
+using RawSalt.Graphics.Rendering;
+using RawSalt.Platforms;
+
 namespace RawSalt.Graphics;
 
 public abstract class GraphicsBackend : IDisposable
@@ -16,7 +19,9 @@ public abstract class GraphicsBackend : IDisposable
 	/// <returns>Readonly list of available adapters, or <see langword="null"/> if adapter enumeration is not supported.</returns>
 	public abstract IReadOnlyList<Adapter>? GetAdapters();
 
-	public abstract GraphicsDevice CreateDevice(Adapter? device);
+	public abstract GraphicsDevice CreateDevice(Adapter? device, RenderSurface renderSurface);
+
+	public abstract RenderSurface CreateSurface(View view);
 
 	public void Dispose()
 	{

@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using RawSalt.Graphics.Rendering;
 using RawSalt.Logging;
 using RawSalt.Platforms;
 
@@ -121,6 +122,32 @@ public sealed partial class VulkanBackend : GraphicsBackend
 			_instanceApi = null;
 		}
 	}
+
+	public override VulkanSurface CreateSurface(View view)
+	{
+		if (view is IWin32Window win32Window)
+		{
+			VkSurfaceKHR surface;
+			VkWin32SurfaceCreateInfoKHR createInfo = new()
+			{
+				hwnd = win32Window.Handle,
+				hinstance = win32Window.ModuleHandle
+			};
+
+			VkResult result = InstanceApi.vkCreateWin32SurfaceKHR(in createInfo, out surface);
+
+			if (result != VkResult.Success)
+			{
+				Log.Error("Failed to create Vulkan surface for Win32 window, reason: {0}", result);
+				throw new Exception("Failed to create Vulkan surface for Win32 window");
+			}
+
+			return new VulkanSurface(view, surface);
+		}
+
+		throw new NotImplementedException("VulkanBackend.CreateSurface only supports Win32 windows for now.");
+	}
+
 
 	/// <remarks>
 	/// Do not forget to dispose array safely.

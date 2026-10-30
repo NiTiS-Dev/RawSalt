@@ -1,17 +1,26 @@
+using System.Diagnostics;
+using RawSalt.Graphics.Rendering;
 using RawSalt.Logging;
 
 namespace RawSalt.Graphics.Vulkan;
 
 public partial class VulkanBackend
 {
-	public override GraphicsDevice CreateDevice(Adapter? device)
+	public override GraphicsDevice CreateDevice(Adapter? device, RenderSurface renderSurface)
 	{
+		Debug.Assert(renderSurface != null);
+		if (renderSurface is not VulkanSurface vulkanSurface)
+		{
+			throw new ArgumentException("Provided render surface is not of Vulkan.");
+		}
+
 		VulkanAdapter adapter;
 		if (device is null)
 		{
 			IReadOnlyList<VulkanAdapter> adapters = GetAdapters();
 			if (adapters.Count == 0)
 			{
+				// TODO: Add documentation how to fix that error on laptops with switchable graphics?
 				throw new InvalidOperationException("No Vulkan adapter is available.");
 			}
 
@@ -23,7 +32,6 @@ public partial class VulkanBackend
 		}
 		else
 		{
-			// TODO: Add documentation how to fix that error on laptops with switchable graphics?
 			throw new ArgumentException("Provided adapter device is not of Vulkan.");
 		}
 
@@ -42,27 +50,48 @@ public partial class VulkanBackend
 			throw new NotSupportedException($"Adapter \"{adapter.Name}\" does not expose any queue families.");
 		}
 
+		uint? graphics = null;
+		uint? present = null;
+
 		VkQueueFamilyProperties[] queueFamilies = new VkQueueFamilyProperties[queueFamilyCount];
 		instanceApi.vkGetPhysicalDeviceQueueFamilyProperties(physicalDevice, queueFamilies);
-
 		for (uint i = 0; i < queueFamilies.Length; i++)
 		{
-			if ((queueFamilies[i].queueFlags & VkQueueFlags.Graphics) != 0)
+			if (queueFamilies[i].queueFlags.HasFlag(VkQueueFlags.Graphics))
 			{
-				Log.Info("Using Vulkan adapter: {0}", adapter.Name);
-				return CreateDevice(instanceApi, adapter, i);
+				graphics = i;
+				continue;
+			}
+
+			instanceApi.vkGetPhysicalDeviceSurfaceSupportKHR(physicalDevice, i, vulkanSurface.Surface, out VkBool32 supported);
+			if (supported)
+			{
+				present = i;
+				continue;
 			}
 		}
 
-		throw new NotSupportedException($"Adapter \"{adapter.Name}\" does not support graphics operations.");
+		if (graphics != null && present != null)
+		{
+			return CreateDevice(InstanceApi, adapter, graphics.Value, present.Value);
+		}
+
+		throw new NotSupportedException($"Adapter \"{adapter.Name}\" does not support required operations.");
 	}
 
-	private static unsafe VulkanDevice CreateDevice(VkInstanceApi instanceApi, VulkanAdapter adapter, uint queueFamilyIndex)
+	private static unsafe VulkanDevice CreateDevice(VkInstanceApi instanceApi, VulkanAdapter adapter, uint graphicsQueueFamilyIndex, uint presentQueueFamilyIndex)
 	{
 		float queuePriority = 1.0f;
-		VkDeviceQueueCreateInfo queueCreateInfo = new()
+		VkDeviceQueueCreateInfo* queueCreateInfos = stackalloc VkDeviceQueueCreateInfo[2];
+		queueCreateInfos[0] = new()
 		{
-			queueFamilyIndex = queueFamilyIndex,
+			queueFamilyIndex = graphicsQueueFamilyIndex,
+			queueCount = 1,
+			pQueuePriorities = &queuePriority
+		};
+		queueCreateInfos[1] = new()
+		{
+			queueFamilyIndex = presentQueueFamilyIndex,
 			queueCount = 1,
 			pQueuePriorities = &queuePriority
 		};
@@ -72,8 +101,8 @@ public partial class VulkanBackend
 
 		VkDeviceCreateInfo createInfo = new()
 		{
-			queueCreateInfoCount = 1,
-			pQueueCreateInfos = &queueCreateInfo,
+			queueCreateInfoCount = 2,
+			pQueueCreateInfos = queueCreateInfos,
 			enabledExtensionCount = extensions.Length,
 			ppEnabledExtensionNames = extensions
 		};
@@ -85,9 +114,10 @@ public partial class VulkanBackend
 		}
 
 		VkDeviceApi deviceApi = Vk.GetApi(instanceApi.Instance, device);
-		deviceApi.vkGetDeviceQueue(queueFamilyIndex, 0, out VkQueue graphicsQueue);
+		deviceApi.vkGetDeviceQueue(graphicsQueueFamilyIndex, 0, out VkQueue graphicsQueue);
+		deviceApi.vkGetDeviceQueue(graphicsQueueFamilyIndex, 0, out VkQueue presentQueue);
 
-		return new VulkanDevice(adapter, device, deviceApi, queueFamilyIndex, graphicsQueue);
+		return new VulkanDevice(adapter, device, deviceApi, graphicsQueueFamilyIndex, graphicsQueue, presentQueueFamilyIndex, presentQueue);
 	}
 
 	private static VulkanAdapter SelectAdapter(IReadOnlyList<VulkanAdapter> adapters)

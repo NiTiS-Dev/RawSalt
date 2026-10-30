@@ -1,10 +1,10 @@
-using RawSalt.Platforms;
+using RawSalt.Graphics.Rendering;
 
 namespace RawSalt.Graphics;
 
 public abstract class GraphicsDevice : IDisposable
 {
-	public abstract GraphicsSwapchain CreateSwapchain(View view);
+	public abstract Swapchain CreateSwapchain(RenderSurface surface);
 
 	public abstract void WaitIdle();
 

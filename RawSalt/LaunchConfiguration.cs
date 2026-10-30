@@ -6,10 +6,11 @@ namespace RawSalt;
 
 public sealed partial class LaunchConfiguration
 {
-	public ImmutableArray<Platform> Platforms { get; }
-	public ImmutableArray<GraphicsBackend> GraphicsBackends { get; }
+	public ImmutableArray<Func<Application, Platform>> Platforms { get; }
+	public ImmutableArray<Func<Application, GraphicsBackend>> GraphicsBackends { get; }
 
-	private LaunchConfiguration(ImmutableArray<Platform> platforms, ImmutableArray<GraphicsBackend> graphicsBackends)
+	private LaunchConfiguration(ImmutableArray<Func<Application, Platform>> platforms,
+		ImmutableArray<Func<Application, GraphicsBackend>> graphicsBackends)
 	{
 		Platforms = platforms;
 		GraphicsBackends = graphicsBackends;

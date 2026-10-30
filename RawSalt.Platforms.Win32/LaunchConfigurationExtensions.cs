@@ -8,14 +8,17 @@ public static class LaunchConfigurationExtensions
 	{
 		public LaunchConfiguration.Builder AddWin32Platform()
 		{
-			if (OperatingSystem.IsWindowsVersionAtLeast(10, 0, 15063))
+			if (OperatingSystem.IsWindowsVersionAtLeast(10, 0))
 			{
-				return builder.AddPlatformCandidate(new Win32Platform());
+				// Roslyn, you are baka 💢
+#pragma warning disable CA1416
+				return builder.AddPlatformCandidate(app => new Win32Platform(app));
+#pragma warning restore CA1416
 			}
 
 			if (OperatingSystem.IsWindows())
 			{
-				Log.Error("Failed to add Windows platform. Required minimum Windows version: 10.0.15063");
+				Log.Error("Failed to add Windows platform. Required Windows version: 10 or newer.");
 			}
 
 			return builder;

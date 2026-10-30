@@ -6,7 +6,7 @@ public static class LaunchConfigurationExtensions
 	{
 		public LaunchConfiguration.Builder AddVulkanBackend()
 		{
-			configBuilder.AddGraphicsBackendCandidate(new VulkanGraphicsBackend());
+			configBuilder.AddGraphicsBackendCandidate(app => new VulkanBackend(app));
 			return configBuilder;
 		}
 	}

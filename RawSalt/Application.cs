@@ -1,5 +1,6 @@
 using System.Collections.Immutable;
 using RawSalt.Graphics;
+using RawSalt.Graphics.Rendering;
 using RawSalt.Logging;
 using RawSalt.Platforms;
 
@@ -15,14 +16,16 @@ public class Application
 
 	}
 
-	protected void Launch(LaunchConfiguration config)
+	protected bool Launch(LaunchConfiguration config)
 	{
 		try
 		{
 			Log.Info("Launch application.");
 
-			Platform = SelectBestPlatform(config.Platforms);
+			// TODO: allow user to configure force candidate (parse program cli arguments)
+			Platform = SelectBestPlatform(config.Platforms.Select(t => t(this)).ToList());
 
+			// TODO: config.GetConfiguration<ViewConfiguration>() ?? default;
 			WindowConfiguration windowConfig = new()
 			{
 				Title = "Application",
@@ -31,16 +34,26 @@ public class Application
 			};
 			View view = Platform.CreateView(in windowConfig);
 
-			GraphicsBackend = SelectBestGraphicsBackend(config.GraphicsBackends);
-			AppLoop(view);
+			GraphicsBackend = SelectBestGraphicsBackend(config.GraphicsBackends.Select(t => t(this)).ToList());
+
+			RenderThread renderThread = new(GraphicsBackend, view);
+			renderThread.Start();
+
+			AppLoop(renderThread, view);
+
+			renderThread.Stop();
+			Platform.ReleaseView(view);
 		}
 		catch (Exception ex)
 		{
 			Log.Error(ex, "Error during application launch.");
+			return false;
 		}
+
+		return true;
 	}
 
-	private void AppLoop(View view)
+	private void AppLoop(RenderThread renderThread, View view)
 	{
 		while (view.ShouldUpdate)
 		{
@@ -48,9 +61,9 @@ public class Application
 		}
 	}
 
-	private static GraphicsBackend SelectBestGraphicsBackend(params ImmutableArray<GraphicsBackend> backends)
+	private static GraphicsBackend SelectBestGraphicsBackend(params IList<GraphicsBackend> backends)
 	{
-		if (backends.Length == 0)
+		if (backends.Count == 0)
 		{
 			throw new ArgumentException("No graphics backend candidates provided.", nameof(backends));
 		}
@@ -58,9 +71,9 @@ public class Application
 		return backends[0];
 	}
 
-	private static Platform SelectBestPlatform(params ImmutableArray<Platform> platforms)
+	private static Platform SelectBestPlatform(params IList<Platform> platforms)
 	{
-		switch (platforms.Length)
+		switch (platforms.Count)
 		{
 			case 0:
 				throw new ArgumentException("No platform candidates provided.", nameof(platforms));

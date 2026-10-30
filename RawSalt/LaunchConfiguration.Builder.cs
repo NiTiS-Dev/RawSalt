@@ -14,13 +14,13 @@ public partial class LaunchConfiguration
 
 	public class Builder
 	{
-		private readonly HashSet<Platform> _platforms = [];
-		private readonly HashSet<GraphicsBackend> _backends = [];
+		private readonly HashSet<Func<Application, Platform>> _platforms = [];
+		private readonly HashSet<Func<Application, GraphicsBackend>> _backends = [];
 
 		internal Builder()
 		{ }
 
-		public Builder AddPlatformCandidate(Platform platform)
+		public Builder AddPlatformCandidate(Func<Application, Platform> platform)
 		{
 			Guard.IsNotNull(platform);
 
@@ -28,7 +28,7 @@ public partial class LaunchConfiguration
 			return this;
 		}
 
-		public Builder AddGraphicsBackendCandidate(GraphicsBackend backend)
+		public Builder AddGraphicsBackendCandidate(Func<Application, GraphicsBackend> backend)
 		{
 			Guard.IsNotNull(backend);
 

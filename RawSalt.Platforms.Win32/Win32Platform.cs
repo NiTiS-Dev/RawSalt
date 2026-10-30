@@ -1,4 +1,5 @@
 using System.ComponentModel;
+using System.Diagnostics;
 using System.Drawing;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
@@ -16,6 +17,7 @@ using RawSalt.Platforms;
 
 namespace RawSalt.Windowing.Win32;
 
+[SupportedOSPlatform("windows10.0")]
 public partial class Win32Platform : Platform
 {
 	public override WellKnownPlatformApi Api => WellKnownPlatformApi.Win32;
@@ -23,15 +25,33 @@ public partial class Win32Platform : Platform
 	private List<Win32Display>? _displays;
 	private readonly SmallDictionary<nint /*HWND*/, Win32Window> _windows = [];
 
-	[SupportedOSPlatform("windows10.0.15063")]
-	public Win32Platform()
+	public Win32Platform(Application application) : base(application)
 	{
-		PInvoke.SetProcessDpiAwarenessContext(DPI_AWARENESS_CONTEXT.DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2);
+		if (OperatingSystem.IsWindowsVersionAtLeast(10, 0, 15063))
+		{
+			PInvoke.SetProcessDpiAwarenessContext(DPI_AWARENESS_CONTEXT.DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2);
+		}
+		else
+		{
+			Log.Error("Failed to enable DPI Awareness Context.");
+		}
 		HInstance = PInvoke.GetModuleHandle((PCWSTR)null);
 		_wndproc = WndProc;
 	}
 
-	[SupportedOSPlatform("windows5.0")]
+	protected override void Dispose(bool disposing)
+	{
+		foreach (var x in _windows)
+		{
+			PInvoke.DestroyWindow((HWND)x.Key);
+		}
+
+		if (disposing)
+		{
+
+		}
+	}
+
 	public override Display GetPrimaryDisplay()
 	{
 		HMONITOR handle = PInvoke.MonitorFromPoint(Point.Empty, MONITOR_FROM_FLAGS.MONITOR_DEFAULTTOPRIMARY);
@@ -40,7 +60,6 @@ public partial class Win32Platform : Platform
 		return primary;
 	}
 
-	[SupportedOSPlatform("windows5.0")]
 	public override unsafe IReadOnlyList<Display> GetDisplays()
 	{
 		if (_displays == null)
@@ -56,14 +75,9 @@ public partial class Win32Platform : Platform
 		return _displays.AsReadOnly();
 	}
 
-	[SupportedOSPlatform("windows5.0")]
 	private unsafe BOOL MonitorEnumProc(HMONITOR hMonitor, HDC hdcMonitor, RECT* lprcMonitor, LPARAM dwData)
 	{
-		if (_displays is null)
-		{
-			Log.Error("_displays is null: {0}", Marshal.GetLastPInvokeError());
-			return true;
-		}
+		Debug.Assert(_displays != null);
 
 		Win32Display display = GetDisplay(hMonitor);
 		_displays.Add(display);
@@ -71,7 +85,6 @@ public partial class Win32Platform : Platform
 		return true;
 	}
 
-	[SupportedOSPlatform("windows5.0")]
 	private static unsafe Win32Display GetDisplay(HMONITOR handle)
 	{
 		MONITORINFOEXW info;
@@ -88,7 +101,6 @@ public partial class Win32Platform : Platform
 		return new Win32Display(displayName, region, workRegion);
 	}
 
-	[SupportedOSPlatform("windows5.0")]
 	private static unsafe string GetDisplayName(string deviceName)
 	{
 		DISPLAY_DEVICEW displayDevice = new()
@@ -114,7 +126,6 @@ public partial class Win32Platform : Platform
 		return deviceName;
 	}
 
-	[SupportedOSPlatform("windows5.0")]
 	public override unsafe Win32Window CreateView(in WindowConfiguration configuration)
 	{
 		RegisterClass();
@@ -160,7 +171,6 @@ public partial class Win32Platform : Platform
 		return window;
 	}
 
-	[SupportedOSPlatform("windows5.0")]
 	public override bool ReleaseView(View view)
 	{
 		if (view is not Win32Window window)
@@ -172,7 +182,6 @@ public partial class Win32Platform : Platform
 		return true;
 	}
 
-	[SupportedOSPlatform("windows5.0")]
 	private LRESULT WndProc(HWND hWnd, uint msg, WPARAM wParam, LPARAM lParam)
 	{
 		if (msg == PInvoke.WM_DESTROY)

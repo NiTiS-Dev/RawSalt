@@ -18,6 +18,8 @@ internal sealed class App : Application
 	        .AddVulkanBackend()
 	        .Build();
 
-        app.Launch(config);
+        bool success = app.Launch(config);
+
+        Environment.Exit(success ? 0 : -1);
     }
 }

@@ -36,6 +36,13 @@ public class Application
 
 			GraphicsBackend = SelectBestGraphicsBackend(config.GraphicsBackends.Select(t => t(this)).ToList());
 
+			var adapters = GraphicsBackend.GetAdapters();
+			if (adapters is not null && adapters.Count == 0)
+			{
+				// TODO: Add documentation how to fix that error on laptops with switchable graphics.
+				Log.Error("Failed to get any viable adapter.");
+			}
+
 			RenderThread renderThread = new(GraphicsBackend, view);
 			renderThread.Start();
 

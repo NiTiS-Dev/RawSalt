@@ -9,6 +9,7 @@ public sealed partial class VulkanBackend : GraphicsBackend
 	private static volatile int _instanceCount;
 
 	private Platform Platform { get; }
+	private VkInstanceApi? _instanceApi;
 
 	public VulkanBackend(Application app) : base(app)
 	{
@@ -32,7 +33,61 @@ public sealed partial class VulkanBackend : GraphicsBackend
 
 		if (disposing)
 		{
+			DestroyInstance();
+		}
+	}
 
+	private VkInstanceApi InstanceApi
+	{
+		get
+		{
+			if (_instanceApi == null)
+			{
+				lock (_instanceLock)
+				{
+					_instanceApi ??= CreateInstanceApi();
+				}
+			}
+
+			return _instanceApi;
+		}
+	}
+
+	private unsafe VkInstanceApi CreateInstanceApi()
+	{
+		VkUtf8String applicationName = "RawSalt"u8;
+		VkApplicationInfo applicationInfo = new()
+		{
+			pApplicationName = applicationName,
+			applicationVersion = new VkVersion(1, 0, 0),
+			pEngineName = applicationName,
+			engineVersion = new VkVersion(1, 0, 0),
+			apiVersion = VkVersion.Version_1_0
+		};
+
+		using VkStringArray extensions = GetRequiredExtensions(Platform.Api);
+		VkInstanceCreateInfo createInfo = new()
+		{
+			pApplicationInfo = &applicationInfo,
+			enabledExtensionCount = extensions.Length,
+			ppEnabledExtensionNames = extensions
+		};
+
+		VkResult result = Vk.vkCreateInstance(in createInfo, null, out VkInstance instance);
+		if (result != VkResult.Success)
+		{
+			throw new InvalidOperationException($"Failed to create Vulkan instance, reason: {result}.");
+		}
+
+		return Vk.GetApi(instance);
+	}
+
+	private void DestroyInstance()
+	{
+		lock (_instanceLock)
+		{
+			_instanceApi?.vkDestroyInstance();
+			_instanceApi = null;
 		}
 	}
 

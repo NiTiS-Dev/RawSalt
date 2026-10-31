@@ -47,6 +47,18 @@ public class Win32Window : Window, IWin32Window
 		_alive = false;
 	}
 
+	[SupportedOSPlatform("windows5.0")]
+	public override void Hide()
+	{
+		PInvoke.ShowWindow(Handle, SHOW_WINDOW_CMD.SW_HIDE);
+	}
+
+	[SupportedOSPlatform("windows5.0")]
+	public override void Show()
+	{
+		PInvoke.ShowWindow(Handle, SHOW_WINDOW_CMD.SW_SHOW);
+	}
+
 	internal void OnCloseRequested()
 	{
 		if (CloseRequest is null)

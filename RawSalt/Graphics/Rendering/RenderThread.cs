@@ -57,6 +57,7 @@ internal sealed class RenderThread
 
 			try
 			{
+				bool firstFrame = true;
 				float deg = 0;
 				while (!_stop)
 				{
@@ -73,6 +74,11 @@ internal sealed class RenderThread
 					cmd.EndRenderPass();
 
 					renderer.EndFrame(frame);
+					if (firstFrame)
+					{
+						firstFrame = false;
+						(_surface.View as Window)?.Show();
+					}
 				}
 			}
 			finally

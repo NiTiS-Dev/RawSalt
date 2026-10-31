@@ -166,7 +166,6 @@ public partial class Win32Platform : Platform
 
 		UpdateTheme(handle);
 		PInvoke.UpdateWindow(handle);
-		PInvoke.ShowWindow(handle, SHOW_WINDOW_CMD.SW_SHOW);
 
 		return window;
 	}

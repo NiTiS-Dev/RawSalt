@@ -99,8 +99,13 @@ public partial class VulkanBackend
 		VkUtf8String[] extensionNames = [Vk.VK_KHR_SWAPCHAIN_EXTENSION_NAME];
 		using VkStringArray extensions = new(extensionNames);
 
+		VkPhysicalDeviceVulkan13Features features13 = new()
+		{
+			dynamicRendering = true
+		};
 		VkDeviceCreateInfo createInfo = new()
 		{
+			pNext = &features13,
 			queueCreateInfoCount = 2,
 			pQueueCreateInfos = queueCreateInfos,
 			enabledExtensionCount = extensions.Length,

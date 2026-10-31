@@ -57,6 +57,7 @@ internal sealed class RenderThread
 
 			try
 			{
+				float deg = 0;
 				while (!_stop)
 				{
 					if (!renderer.TryBeginFrame(out RenderFrame? frame))
@@ -66,7 +67,8 @@ internal sealed class RenderThread
 					}
 
 					CommandList cmd = frame.Commands;
-					cmd.BeginRenderPass(new RenderPassDesc(frame.BackBuffer, new Color4(0.3f, 0.3f, 0.2f)));
+					deg += 0.15f;
+					cmd.BeginRenderPass(new RenderPass(frame.BackBuffer, new Color4(0.3f, 0.3f, 0.2f).ShiftHue(deg)));
 
 					cmd.EndRenderPass();
 

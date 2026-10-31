@@ -4,7 +4,7 @@ using System.Diagnostics.CodeAnalysis;
 namespace RawSalt.Graphics.Drawing;
 
 [DebuggerDisplay("{ToString(),nq}")]
-public struct Color4 : IApproximatelyEquatable<Color4, double>, IEquatable<Color4?>
+public partial struct Color4 : IApproximatelyEquatable<Color4, double>, IEquatable<Color4?>
 {
 	public float Red, Green, Blue, Alpha;
 

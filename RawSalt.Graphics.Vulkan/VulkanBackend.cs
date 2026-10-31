@@ -64,7 +64,7 @@ public sealed partial class VulkanBackend : GraphicsBackend
 			applicationVersion = new VkVersion(1, 0, 0),
 			pEngineName = applicationName,
 			engineVersion = new VkVersion(1, 0, 0),
-			apiVersion = VkVersion.Version_1_0
+			apiVersion = VkVersion.Version_1_3
 		};
 
 #if DEBUG

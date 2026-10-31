@@ -334,13 +334,13 @@ public sealed class VulkanSwapchain : Swapchain
 
 		for (int i = 0; i < count; i++)
 		{
-			if (modes[i] == VkPresentModeKHR.Mailbox)
+			if (modes[i] == VkPresentModeKHR.Fifo)
 			{
-				return VkPresentModeKHR.Mailbox;
+				return VkPresentModeKHR.Fifo;
 			}
 		}
 
-		return VkPresentModeKHR.Fifo;
+		return VkPresentModeKHR.Mailbox;
 	}
 
 	protected override void Dispose(bool disposing)

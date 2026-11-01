@@ -1,9 +1,12 @@
 using System.Diagnostics.CodeAnalysis;
+using RawSalt.Graphics.Drawing;
 
 namespace RawSalt.Graphics.Rendering;
 
 public abstract class Renderer : IDisposable
 {
+	public abstract PixelFormat BackBufferFormat { get; }
+
 	/// <summary>
 	/// Try to begin drawing the frame.
 	/// </summary>

@@ -1,6 +1,9 @@
 using System.Buffers;
+using System.Diagnostics;
+using System.Runtime.InteropServices;
 using CommunityToolkit.Diagnostics;
 using NiTiS.Mathematics;
+using StbImageSharp;
 
 namespace RawSalt.Graphics.Drawing;
 
@@ -16,14 +19,40 @@ public abstract class PixelMap2d : IDisposable
 		GC.SuppressFinalize(this);
 	}
 
-	//public abstract void FlipX();
-	//public abstract void FlipY();
+	public abstract void FlipX();
+	public abstract void FlipY();
+
+	public abstract void Invert();
+
+	public abstract void Fill(byte[] source);
 
 	/// <summary>
 	/// Fills pixel map with provided <paramref name="color"/>.
 	/// </summary>
 	/// <param name="color">The operation color.</param>
 	public abstract void Fill(Color4 color);
+
+	public static PixelMap2d FromImageBytes(byte[] bytes)
+	{
+		ImageResult image = ImageResult.FromMemory(bytes, ColorComponents.RedGreenBlueAlpha);
+		return FromImageResult(image);
+	}
+
+	public static PixelMap2d FromImageStream(Stream stream)
+	{
+		ImageResult image = ImageResult.FromStream(stream, ColorComponents.RedGreenBlueAlpha);
+		return FromImageResult(image);
+	}
+
+	private static PixelMap2d FromImageResult(ImageResult image)
+	{
+		int width = image.Width;
+		int height = image.Height;
+		byte[] pixelData = image.Data;
+		PixelMap2d<Rgba32> pixels = new(width, height);
+		pixels.Fill(pixelData);
+		return pixels;
+	}
 }
 
 public class PixelMap2d<TPixel> : PixelMap2d
@@ -32,6 +61,7 @@ public class PixelMap2d<TPixel> : PixelMap2d
 	public override PixelFormat Format => TPixel.Format;
 	public override int Width { get; }
 	public override int Height { get; }
+	public int Length => Width * Height;
 	private readonly IMemoryOwner<TPixel> _pixels;
 
 	/// <summary>
@@ -48,6 +78,56 @@ public class PixelMap2d<TPixel> : PixelMap2d
 		Guard.IsGreaterThan(height, 0);
 
 		_pixels = MemoryPool<TPixel>.Shared.Rent(width * height);
+	}
+
+	public Span<TPixel> GetRow(int row)
+	{
+		Guard.IsGreaterThan(row, 0);
+		Guard.IsLessThan(row, Height);
+
+		int index = row * Width;
+		return _pixels.Memory.Span[index..(index + Width)];
+	}
+
+	public override void FlipX()
+	{
+		for (int y = 0; y < Height; y++)
+		{
+			Span<TPixel> row = GetRow(y);
+			row.Reverse();
+		}
+	}
+
+	public override void FlipY()
+	{
+		Span<TPixel> tmp = stackalloc TPixel[Width];
+		for (int y = 0; y < Height / 2; y++)
+		{
+			Span<TPixel> src = GetRow(y);
+			Span<TPixel> dst = GetRow(Height - 1 - y);
+			src.CopyTo(tmp);
+			dst.CopyTo(src);
+			tmp.CopyTo(dst);
+		}
+	}
+
+	public override void Invert()
+	{
+		for (int i = 0; i < Length; i++)
+		{
+			_pixels.Memory.Span[i] = _pixels.Memory.Span[i].InvertColors();
+		}
+	}
+
+	public override void Fill(byte[] source)
+	{
+		Guard.IsNotNull(source);
+		if (source.Length != Length)
+		{
+			ThrowHelper.ThrowArgumentException(nameof(source), "Source array is not same size of pixel map.");
+		}
+
+		source.CopyTo(MemoryMarshal.Cast<TPixel, byte>(_pixels.Memory.Span));
 	}
 
 	/// <inheritdoc/>

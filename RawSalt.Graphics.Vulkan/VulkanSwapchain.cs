@@ -26,6 +26,8 @@ public sealed class VulkanSwapchain : Swapchain
 	private readonly VkSurfaceFormatKHR _surfaceFormat;
 	private readonly VkPresentModeKHR _presentMode;
 
+	public VkFormat Format => _surfaceFormat.format;
+
 	private VkImage[] _images = [];
 	private VkImageView[] _views = [];
 	private VkSemaphore[] _imageAvailable = [];

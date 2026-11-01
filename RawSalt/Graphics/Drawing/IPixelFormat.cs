@@ -1,3 +1,5 @@
+using System.Numerics;
+
 namespace RawSalt.Graphics.Drawing;
 
 public interface IPixelFormat<TSelf>
@@ -6,6 +8,12 @@ public interface IPixelFormat<TSelf>
 	static abstract PixelFormat Format { get; }
 
 	static abstract TSelf FromColor(Color4 color);
+
+	/// <summary>
+	/// Invert color attributes of pixel. Do not touch alpha channel.
+	/// </summary>
+	/// <returns></returns>
+	TSelf InvertColors();
 
 	Color4 ToColor();
 }

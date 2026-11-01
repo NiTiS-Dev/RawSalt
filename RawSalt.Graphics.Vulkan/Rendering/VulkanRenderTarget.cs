@@ -9,6 +9,7 @@ internal sealed class VulkanRenderTarget : RenderTarget
 	public VkImageView View;
 	public VkExtent2D Extent;
 	public VkImageLayout Layout;
+	public VkFormat Format;
 
 	public override Vector2<int> Size => new((int)Extent.width, (int)Extent.height);
 }

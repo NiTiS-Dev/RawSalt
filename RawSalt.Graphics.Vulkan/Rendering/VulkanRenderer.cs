@@ -1,11 +1,11 @@
 using System.Diagnostics.CodeAnalysis;
+using RawSalt.Graphics.Drawing;
 using RawSalt.Graphics.Rendering;
 
 namespace RawSalt.Graphics.Vulkan.Rendering;
 
 public sealed class VulkanRenderer : Renderer
 {
-
 	private readonly VulkanDevice _device;
 	private readonly VulkanSwapchain _swapchain;
 	private readonly VkCommandPool _pool;
@@ -13,6 +13,8 @@ public sealed class VulkanRenderer : Renderer
 	private VulkanRenderFrame? _active;
 
 	private VkDeviceApi Api => _device.DeviceApi;
+
+	public override PixelFormat BackBufferFormat => _swapchain.Format.ToPixelFormat();
 
 	public unsafe VulkanRenderer(VulkanDevice device, VulkanSwapchain swapchain)
 	{
@@ -70,6 +72,7 @@ public sealed class VulkanRenderer : Renderer
 		f.Target.View = _swapchain.CurrentImageView;
 		f.Target.Extent = _swapchain.Extent;
 		f.Target.Layout = VkImageLayout.Undefined;
+		f.Target.Format = _swapchain.Format;
 		f.CommandList.Begin();
 
 		_active = f;

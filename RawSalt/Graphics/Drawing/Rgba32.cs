@@ -33,6 +33,16 @@ public struct Rgba32 : IPixelFormat<Rgba32>, IEquatable<Rgba32>
 		return rgba;
 	}
 
+	public Rgba32 InvertColors()
+	{
+		return new Rgba32(
+			(byte)(byte.MaxValue - Red),
+			(byte)(byte.MaxValue - Green),
+			(byte)(byte.MaxValue - Blue),
+			Alpha
+		);
+	}
+
 	public Color4 ToColor()
 	{
 		return new Color4(Red / 255f, Green / 255f, Blue / 255f, Alpha / 255f);
@@ -61,5 +71,25 @@ public struct Rgba32 : IPixelFormat<Rgba32>, IEquatable<Rgba32>
 	public static bool operator !=(Rgba32 left, Rgba32 right)
 	{
 		return !left.Equals(right);
+	}
+
+	public static Rgba32 operator +(Rgba32 left, Rgba32 right)
+	{
+		return new Rgba32(
+			(byte)(left.Red + right.Red),
+			(byte)(left.Green + right.Green),
+			(byte)(left.Blue + right.Blue),
+			(byte)(left.Alpha + right.Alpha)
+		);
+	}
+
+	public static Rgba32 operator -(Rgba32 left, Rgba32 right)
+	{
+		return new Rgba32(
+			(byte)(left.Red - right.Red),
+			(byte)(left.Green - right.Green),
+			(byte)(left.Blue - right.Blue),
+			(byte)(left.Alpha - right.Alpha)
+		);
 	}
 }

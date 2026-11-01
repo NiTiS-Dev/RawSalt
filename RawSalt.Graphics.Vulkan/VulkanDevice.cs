@@ -9,6 +9,7 @@ public sealed class VulkanDevice : GraphicsDevice
 {
 	public VulkanAdapter Adapter { get; }
 	public VkPhysicalDevice PhysicalDevice => Adapter.PhysicalDevice;
+	public VkPhysicalDeviceMemoryProperties MemoryProperties { get; }
 	public VkDevice Device { get; }
 	public VkInstanceApi InstanceApi { get; }
 	public VkDeviceApi DeviceApi { get; }
@@ -29,6 +30,9 @@ public sealed class VulkanDevice : GraphicsDevice
 		GraphicsQueue = graphicsQueue;
 		PresentQueueFamily = presentQueueFamily;
 		PresentQueue = presentQueue;
+
+		InstanceApi.vkGetPhysicalDeviceMemoryProperties(PhysicalDevice, out VkPhysicalDeviceMemoryProperties properties);
+		MemoryProperties = properties;
 	}
 
 	public override Swapchain CreateSwapchain(RenderSurface surface)
@@ -49,6 +53,35 @@ public sealed class VulkanDevice : GraphicsDevice
 		}
 
 		return new VulkanRenderer(this, vulkanSwapchain);
+	}
+
+	public override Buffer CreateBuffer(in BufferDescriptor descriptor, ReadOnlySpan<byte> data)
+	{
+		return new VulkanBuffer(this, descriptor, data);
+	}
+
+	public override ShaderModule CreateShader(ShaderModuleStage stage, ReadOnlySpan<byte> code)
+	{
+		return new VulkanShaderModule(this, stage, code);
+	}
+
+	public override Pipeline CreatePipeline(PipelineDescriptor descriptor)
+	{
+		return new VulkanPipeline(this, descriptor);
+	}
+
+	internal uint FindMemoryType(uint typeBits, VkMemoryPropertyFlags required)
+	{
+		for (uint i = 0; i < MemoryProperties.memoryTypeCount; i++)
+		{
+			bool allowed = (typeBits & (1u << (int)i)) != 0;
+			if (allowed && (MemoryProperties.memoryTypes[(int)i].propertyFlags & required) == required)
+			{
+				return i;
+			}
+		}
+
+		throw new InvalidOperationException("No suitable memory type.");
 	}
 
 	public override void WaitIdle()

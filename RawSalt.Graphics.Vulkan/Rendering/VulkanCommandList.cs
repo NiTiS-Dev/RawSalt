@@ -32,16 +32,16 @@ internal sealed class VulkanCommandList : CommandList
 		_api.vkEndCommandBuffer(Buffer);
 	}
 
-	public override unsafe void BeginRenderPass(in RenderPass desc)
+	public override unsafe void BeginRenderPass(in RenderPass passDescriptor)
 	{
 		if (_pass != null)
 		{
 			throw new InvalidOperationException("A render pass is already active.");
 		}
 
-		if (desc.Target is not VulkanRenderTarget target)
+		if (passDescriptor.Target is not VulkanRenderTarget target)
 		{
-			throw new ArgumentException("Target belongs to a different backend.", nameof(desc));
+			throw new ArgumentException("Target belongs to a different backend.", nameof(passDescriptor));
 		}
 
 		Transition(target, VkImageLayout.ColorAttachmentOptimal);
@@ -50,11 +50,11 @@ internal sealed class VulkanCommandList : CommandList
 		{
 			imageView = target.View,
 			imageLayout = VkImageLayout.ColorAttachmentOptimal,
-			loadOp = desc.Clear is null ? VkAttachmentLoadOp.Load : VkAttachmentLoadOp.Clear,
+			loadOp = passDescriptor.Clear is null ? VkAttachmentLoadOp.Load : VkAttachmentLoadOp.Clear,
 			storeOp = VkAttachmentStoreOp.Store,
 		};
 
-		if (desc.Clear is { } color)
+		if (passDescriptor.Clear is { } color)
 		{
 			attachment.clearValue = new VkClearValue
 			{
@@ -70,6 +70,18 @@ internal sealed class VulkanCommandList : CommandList
 			pColorAttachments = &attachment,
 		};
 
+		VkViewport viewport = new()
+		{
+			x = 0, y = target.Extent.height,
+			width = target.Extent.width,
+			// negative height: Y-up NDC
+			height = -(float)target.Extent.height,
+			minDepth = 0, maxDepth = 1,
+		};
+		VkRect2D scissor = new(new VkOffset2D(0, 0), target.Extent);
+		_api.vkCmdSetViewport(Buffer, 0, 1, &viewport);
+		_api.vkCmdSetScissor(Buffer, 0, 1, &scissor);
+
 		_api.vkCmdBeginRendering(Buffer, &info);
 		_pass = target;
 	}
@@ -83,6 +95,31 @@ internal sealed class VulkanCommandList : CommandList
 
 		_api.vkCmdEndRendering(Buffer);
 		_pass = null;
+	}
+
+	public override void SetPipeline(Pipeline pipeline)
+	{
+		if (pipeline is not VulkanPipeline vkPipeline)
+		{
+			throw new ArgumentException("Pipeline must be a Vulkan pipeline.", nameof(pipeline));
+		}
+		Debug.Assert(_pass != null, "SetPipeline outside a render pass.");
+		Debug.Assert(vkPipeline.ColorFormat == _pass.Format.ToPixelFormat(), "Pipeline color format does not match the render target.");
+
+		_api.vkCmdBindPipeline(Buffer, VkPipelineBindPoint.Graphics, vkPipeline.Handle);
+	}
+
+	public override unsafe void SetVertexBuffer(uint slot, Buffer buffer, ulong offset = 0)
+	{
+		Debug.Assert(buffer is VulkanBuffer);
+
+		VkBuffer handle = ((VulkanBuffer)buffer).Handle;
+		_api.vkCmdBindVertexBuffers(Buffer, slot, 1, &handle, &offset);
+	}
+
+	public override void Draw(uint vertexCount, uint instanceCount = 1, uint firstVertex = 0, uint firstInstance = 0)
+	{
+		_api.vkCmdDraw(Buffer, vertexCount, instanceCount, firstVertex, firstInstance);
 	}
 
 	public unsafe void Transition(VulkanRenderTarget target, VkImageLayout newLayout)

@@ -33,4 +33,19 @@ public static class FormatExtensions
 			};
 		}
 	}
+
+	extension(VertexFormat format)
+	{
+		public VkFormat ToVkFormat()
+		{
+			return format switch
+			{
+				VertexFormat.Float32 => VkFormat.R32Sfloat,
+				VertexFormat.Float32x2 => VkFormat.R32G32Sfloat,
+				VertexFormat.Float32x3 => VkFormat.R32G32B32Sfloat,
+				VertexFormat.Float32x4 => VkFormat.R32G32B32A32Sfloat,
+				_ => throw new NotSupportedException($"Vertex format {format} not supported."),
+			};
+		}
+	}
 }

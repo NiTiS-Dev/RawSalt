@@ -3,7 +3,7 @@ using RawSalt.Graphics.Drawing;
 
 namespace RawSalt.Graphics.Rendering;
 
-public abstract class Renderer : IDisposable
+public abstract class Renderer : Disposable
 {
 	public abstract PixelFormat BackBufferFormat { get; }
 
@@ -19,17 +19,4 @@ public abstract class Renderer : IDisposable
 	/// Finishes recording, submits and presents frame.
 	/// </summary>
 	public abstract void EndFrame(RenderFrame frame);
-
-	public void Dispose()
-	{
-		Dispose(true);
-		GC.SuppressFinalize(this);
-	}
-
-	protected abstract void Dispose(bool disposing);
-
-	~Renderer()
-	{
-		Dispose(false);
-	}
 }

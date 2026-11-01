@@ -1,17 +1,5 @@
 namespace RawSalt.Graphics;
 
-public abstract class ShaderModule : IDisposable
+public abstract class ShaderModule : Disposable
 {
-	protected abstract void Dispose(bool disposing);
-
-	public void Dispose()
-	{
-		GC.SuppressFinalize(this);
-		Dispose(true);
-	}
-
-	~ShaderModule()
-	{
-		Dispose(false);
-	}
 }

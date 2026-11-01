@@ -3,7 +3,7 @@ using RawSalt.Platforms;
 
 namespace RawSalt.Graphics;
 
-public abstract class GraphicsBackend : IDisposable
+public abstract class GraphicsBackend : Disposable
 {
 	public virtual WellKnownGraphicsApi Api => WellKnownGraphicsApi.Unknown;
 	public Application Application { get; }
@@ -22,17 +22,4 @@ public abstract class GraphicsBackend : IDisposable
 	public abstract GraphicsDevice CreateDevice(Adapter? device, RenderSurface renderSurface);
 
 	public abstract RenderSurface CreateSurface(View view);
-
-	public void Dispose()
-	{
-		Dispose(true);
-		GC.SuppressFinalize(this);
-	}
-
-	protected abstract void Dispose(bool disposing);
-
-	~GraphicsBackend()
-	{
-		Dispose(false);
-	}
 }

@@ -70,6 +70,8 @@ public sealed class VulkanSwapchain : Swapchain
 
 	public override bool TryAcquire()
 	{
+		ThrowIfDisposed();
+
 		if (_recreateRequested)
 		{
 			// Clear first: a Resize() racing with this call re-sets the flag.
@@ -115,6 +117,8 @@ public sealed class VulkanSwapchain : Swapchain
 
 	public override unsafe void Present()
 	{
+		ThrowIfDisposed();
+
 		VkSemaphore waitSemaphore = _renderFinished[CurrentImageIndex];
 		VkSwapchainKHR swapchain = Swapchain;
 		uint imageIndex = CurrentImageIndex;

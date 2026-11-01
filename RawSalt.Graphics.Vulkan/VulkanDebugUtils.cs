@@ -3,11 +3,10 @@ using RawSalt.Logging;
 
 namespace RawSalt.Graphics.Vulkan;
 
-internal sealed unsafe class VulkanDebugUtils : IDisposable
+internal sealed unsafe class VulkanDebugUtils : Disposable
 {
 	private readonly VkInstanceApi _instanceApi;
 	private VkDebugUtilsMessengerEXT _messenger;
-	private bool _disposed;
 
 	private VulkanDebugUtils(VkInstanceApi instanceApi, VkDebugUtilsMessengerEXT messenger)
 	{
@@ -82,15 +81,8 @@ internal sealed unsafe class VulkanDebugUtils : IDisposable
 		return 0;
 	}
 
-	public void Dispose()
+	protected override void Dispose(bool disposing)
 	{
-		if (_disposed)
-		{
-			return;
-		}
-
-		_disposed = true;
-
 		if (_messenger.IsNotNull)
 		{
 			_instanceApi.vkDestroyDebugUtilsMessengerEXT(_messenger);

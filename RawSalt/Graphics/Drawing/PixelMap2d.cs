@@ -1,5 +1,4 @@
 using System.Buffers;
-using System.Diagnostics;
 using System.Runtime.InteropServices;
 using CommunityToolkit.Diagnostics;
 using NiTiS.Mathematics;
@@ -7,17 +6,12 @@ using StbImageSharp;
 
 namespace RawSalt.Graphics.Drawing;
 
-public abstract class PixelMap2d : IDisposable
+public abstract class PixelMap2d : Disposable
 {
 	public abstract PixelFormat Format { get; }
 	public abstract int Width { get; }
 	public abstract int Height { get; }
 	public Region2<int> Region => new(Vec2i.Zero, new(Width, Height));
-
-	public virtual void Dispose()
-	{
-		GC.SuppressFinalize(this);
-	}
 
 	public abstract void FlipX();
 	public abstract void FlipY();
@@ -82,6 +76,7 @@ public class PixelMap2d<TPixel> : PixelMap2d
 
 	public Span<TPixel> GetRow(int row)
 	{
+		ThrowIfDisposed();
 		Guard.IsGreaterThan(row, 0);
 		Guard.IsLessThan(row, Height);
 
@@ -91,6 +86,7 @@ public class PixelMap2d<TPixel> : PixelMap2d
 
 	public override void FlipX()
 	{
+		ThrowIfDisposed();
 		for (int y = 0; y < Height; y++)
 		{
 			Span<TPixel> row = GetRow(y);
@@ -100,6 +96,7 @@ public class PixelMap2d<TPixel> : PixelMap2d
 
 	public override void FlipY()
 	{
+		ThrowIfDisposed();
 		Span<TPixel> tmp = stackalloc TPixel[Width];
 		for (int y = 0; y < Height / 2; y++)
 		{
@@ -113,6 +110,7 @@ public class PixelMap2d<TPixel> : PixelMap2d
 
 	public override void Invert()
 	{
+		ThrowIfDisposed();
 		for (int i = 0; i < Length; i++)
 		{
 			_pixels.Memory.Span[i] = _pixels.Memory.Span[i].InvertColors();
@@ -121,6 +119,7 @@ public class PixelMap2d<TPixel> : PixelMap2d
 
 	public override void Fill(byte[] source)
 	{
+		ThrowIfDisposed();
 		Guard.IsNotNull(source);
 		if (source.Length != Length)
 		{
@@ -139,12 +138,15 @@ public class PixelMap2d<TPixel> : PixelMap2d
 	/// <inheritdoc cref="Fill(Color4)"/>
 	public void Fill(TPixel color)
 	{
+		ThrowIfDisposed();
 		_pixels.Memory.Span[..(Width * Height)].Fill(color);
 	}
 
-	public override void Dispose()
+	protected override void Dispose(bool disposing)
 	{
-		base.Dispose();
-		_pixels.Dispose();
+		if (disposing)
+		{
+			_pixels.Dispose();
+		}
 	}
 }

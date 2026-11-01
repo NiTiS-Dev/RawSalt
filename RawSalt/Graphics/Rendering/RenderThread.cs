@@ -1,4 +1,6 @@
 using System.Diagnostics;
+using System.Numerics;
+using System.Runtime.InteropServices;
 using RawSalt.Graphics.Drawing;
 using RawSalt.Logging;
 using RawSalt.Platforms;
@@ -48,6 +50,24 @@ internal sealed class RenderThread
 			using GraphicsDevice device = _backend.CreateDevice(null, _surface);
 			using Swapchain swapchain = device.CreateSwapchain(_surface);
 			using Renderer renderer = device.CreateRenderer(swapchain);
+			using ShaderModule vs = device.CreateShader(ShaderModuleStage.Vertex, File.ReadAllBytes("triangle.vert.spv"));
+			using ShaderModule fs = device.CreateShader(ShaderModuleStage.Fragment, File.ReadAllBytes("triangle.frag.spv"));
+			using Pipeline pipeline = device.CreatePipeline(new PipelineDescriptor
+			{
+				VertexShader = vs,
+				FragmentShader = fs,
+				VertexLayout = Vertex.Layout,
+				ColorFormat = renderer.BackBufferFormat,
+				CullMode = CullMode.None,
+			});
+
+			ReadOnlySpan<Vertex> triangle =
+			[
+				new() { X = 0.0f,  Y = 0.6f,  R = 1, G = 0, B = 0 },
+				new() { X = -0.6f, Y = -0.6f, R = 0, G = 1, B = 0 },
+				new() { X = 0.6f,  Y = -0.6f, R = 0, G = 0, B = 1 }
+			];
+			using Buffer vertices = device.CreateBuffer(BufferUsage.Vertex, triangle);
 
 			void OnSizeChanged(SizeChangedEventArgs args)
 			{
@@ -70,7 +90,11 @@ internal sealed class RenderThread
 					CommandList cmd = frame.Commands;
 					deg += 0.15f;
 					cmd.BeginRenderPass(new RenderPass(frame.BackBuffer, new Color4(0.3f, 0.3f, 0.2f).ShiftHue(deg)));
-
+					{
+						cmd.SetPipeline(pipeline);
+						cmd.SetVertexBuffer(0, vertices);
+						cmd.Draw(3);
+					}
 					cmd.EndRenderPass();
 
 					renderer.EndFrame(frame);
@@ -93,4 +117,16 @@ internal sealed class RenderThread
 			Log.Error(ex, "Render thread crashed.");
 		}
 	}
+}
+
+[StructLayout(LayoutKind.Sequential)]
+file struct Vertex
+{
+	public float X, Y, R, G, B;
+
+	public static readonly VertexLayout Layout = new(20,
+	[
+		new VertexAttribute(0, VertexFormat.Float32x2, 0),
+		new VertexAttribute(1, VertexFormat.Float32x3, 8),
+	]);
 }

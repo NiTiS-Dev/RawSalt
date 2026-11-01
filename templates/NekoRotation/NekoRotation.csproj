@@ -11,6 +11,12 @@
     <ItemGroup>
       <ProjectReference Include="..\..\RawSalt\RawSalt.csproj" />
     </ItemGroup>
+
+    <ItemGroup>
+      <None Update="*.spv">
+        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      </None>
+    </ItemGroup>
     
     <Import Project="../../RawSalt/build/RawSalt.targets" />
 </Project>

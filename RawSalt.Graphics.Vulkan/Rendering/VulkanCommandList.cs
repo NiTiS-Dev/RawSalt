@@ -58,7 +58,7 @@ internal sealed class VulkanCommandList : CommandList
 		{
 			attachment.clearValue = new VkClearValue
 			{
-				color = new VkClearColorValue(color.Red, color.Blue, color.Green, color.Alpha)
+				color = new VkClearColorValue(color.Red, color.Green, color.Blue, color.Alpha)
 			};
 		}
 
@@ -76,7 +76,8 @@ internal sealed class VulkanCommandList : CommandList
 			width = target.Extent.width,
 			// negative height: Y-up NDC
 			height = -(float)target.Extent.height,
-			minDepth = 0, maxDepth = 1,
+			minDepth = 0,
+			maxDepth = 1,
 		};
 		VkRect2D scissor = new(new VkOffset2D(0, 0), target.Extent);
 		_api.vkCmdSetViewport(Buffer, 0, 1, &viewport);

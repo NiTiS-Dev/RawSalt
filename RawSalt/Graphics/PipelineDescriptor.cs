@@ -11,4 +11,5 @@ public sealed record PipelineDescriptor
 	public VertexLayout? VertexLayout { get; init; }
 	public Topology Topology { get; init; } = Topology.TriangleList;
 	public CullMode CullMode { get; init; } = CullMode.Back;
+	public FrontFace FrontFace { get; init; } = FrontFace.CounterClockWise;
 }

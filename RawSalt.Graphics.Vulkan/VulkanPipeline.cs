@@ -96,7 +96,9 @@ public sealed class VulkanPipeline : Pipeline
 		{
 			polygonMode = VkPolygonMode.Fill,
 			cullMode = cull,
-			frontFace = VkFrontFace.CounterClockwise,
+			frontFace = descriptor.FrontFace == FrontFace.CounterClockWise
+				? VkFrontFace.CounterClockwise
+				: VkFrontFace.Clockwise,
 			lineWidth = 1f,
 		};
 
@@ -108,10 +110,7 @@ public sealed class VulkanPipeline : Pipeline
 		VkPipelineColorBlendAttachmentState blendAttachment = new()
 		{
 			blendEnable = false,
-			colorWriteMask = VkColorComponentFlags.R |
-			                 VkColorComponentFlags.G |
-			                 VkColorComponentFlags.B |
-			                 VkColorComponentFlags.A,
+			colorWriteMask = VkColorComponentFlags.All
 		};
 		VkPipelineColorBlendStateCreateInfo blend = new()
 		{

@@ -58,16 +58,21 @@ internal sealed class RenderThread
 				FragmentShader = fs,
 				VertexLayout = Vertex.Layout,
 				ColorFormat = renderer.BackBufferFormat,
-				CullMode = CullMode.None,
+				CullMode = CullMode.Back,
+				FrontFace = FrontFace.CounterClockWise,
 			});
 
-			ReadOnlySpan<Vertex> triangle =
+			ReadOnlySpan<Vertex> square =
 			[
-				new() { X = 0.0f,  Y = 0.6f,  R = 1, G = 0, B = 0 },
-				new() { X = -0.6f, Y = -0.6f, R = 0, G = 1, B = 0 },
-				new() { X = 0.6f,  Y = -0.6f, R = 0, G = 0, B = 1 }
+				new() { X = -0.6f, Y = +0.6f,  R = 1, G = 0, B = 0 }, // tl
+				new() { X = -0.6f, Y = -0.6f,  R = 1, G = 1, B = 0 }, // bl
+				new() { X = +0.6f, Y = +0.6f,  R = 0, G = 1, B = 1 }, // tr
+
+				new() { X = -0.6f, Y = -0.6f,  R = 1, G = 1, B = 0 }, // bl
+				new() { X = +0.6f, Y = -0.6f,  R = 0, G = 1, B = 1 }, // br
+				new() { X = +0.6f, Y = +0.6f,  R = 0, G = 1, B = 1 }, // tr
 			];
-			using Buffer vertices = device.CreateBuffer(BufferUsage.Vertex, triangle);
+			using Buffer vertices = device.CreateBuffer(BufferUsage.Vertex, square);
 
 			void OnSizeChanged(SizeChangedEventArgs args)
 			{
@@ -93,7 +98,7 @@ internal sealed class RenderThread
 					{
 						cmd.SetPipeline(pipeline);
 						cmd.SetVertexBuffer(0, vertices);
-						cmd.Draw(3);
+						cmd.Draw(6);
 					}
 					cmd.EndRenderPass();
 

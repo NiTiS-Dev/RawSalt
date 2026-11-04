@@ -73,8 +73,10 @@ internal sealed class RenderThread
 			using GraphicsDevice device = _backend.CreateDevice(null, _surface);
 			using Swapchain swapchain = device.CreateSwapchain(_surface);
 			using Renderer renderer = device.CreateRenderer(swapchain);
-			using ShaderModule vs = device.CreateShader(ShaderModuleStage.Vertex, File.ReadAllBytes("triangle.vert.spv"));
-			using ShaderModule fs = device.CreateShader(ShaderModuleStage.Fragment, File.ReadAllBytes("triangle.frag.spv"));
+			using ShaderModule vs =
+				device.CreateShader(ShaderModuleStage.Vertex, File.ReadAllBytes("triangle.vert.spv"));
+			using ShaderModule fs =
+				device.CreateShader(ShaderModuleStage.Fragment, File.ReadAllBytes("triangle.frag.spv"));
 			using Pipeline pipeline = device.CreatePipeline(new PipelineDescriptor
 			{
 				VertexShader = vs,
@@ -87,13 +89,13 @@ internal sealed class RenderThread
 
 			ReadOnlySpan<Vertex> square =
 			[
-				new() { X = -0.6f, Y = +0.6f,  R = 1, G = 0, B = 0 }, // tl
-				new() { X = -0.6f, Y = -0.6f,  R = 1, G = 1, B = 0 }, // bl
-				new() { X = +0.6f, Y = +0.6f,  R = 0, G = 1, B = 1 }, // tr
+				new() { X = -0.6f, Y = +0.6f, R = 1, G = 0, B = 0 }, // tl
+				new() { X = -0.6f, Y = -0.6f, R = 1, G = 1, B = 0 }, // bl
+				new() { X = +0.6f, Y = +0.6f, R = 0, G = 1, B = 1 }, // tr
 
-				new() { X = -0.6f, Y = -0.6f,  R = 1, G = 1, B = 0 }, // bl
-				new() { X = +0.6f, Y = -0.6f,  R = 0, G = 1, B = 1 }, // br
-				new() { X = +0.6f, Y = +0.6f,  R = 0, G = 1, B = 1 }, // tr
+				new() { X = -0.6f, Y = -0.6f, R = 1, G = 1, B = 0 }, // bl
+				new() { X = +0.6f, Y = -0.6f, R = 0, G = 1, B = 1 }, // br
+				new() { X = +0.6f, Y = +0.6f, R = 0, G = 1, B = 1 }, // tr
 			];
 			using Buffer vertices = device.CreateBuffer(BufferUsage.Vertex, square);
 
@@ -144,6 +146,10 @@ internal sealed class RenderThread
 			{
 				device.WaitIdle();
 			}
+		}
+		catch (OperationCanceledException)
+		{
+			Log.Debug("RenderThread is closed.");
 		}
 		catch (Exception ex)
 		{

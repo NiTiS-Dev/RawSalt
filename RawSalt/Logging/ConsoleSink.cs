@@ -45,39 +45,60 @@ public class ConsoleSink : ILoggerSink
 	private static void RenderTemplate(StringBuilder sb, string t, object?[] args, string baseColor)
 	{
 		sb.Append(baseColor);
-		int arg = 0;
-		for (int i = 0; i < t.Length; i++)
+
+		for (int i = 0; i < t.Length;)
 		{
 			if (t[i] == '{' && i + 1 < t.Length && t[i + 1] == '{')
 			{
 				sb.Append('{');
-				i++;
+				i += 2;
+				continue;
+			}
+
+			if (t[i] == '}' && i + 1 < t.Length && t[i + 1] == '}')
+			{
+				sb.Append('}');
+				i += 2;
 				continue;
 			}
 
 			if (t[i] == '{')
 			{
-				int end = t.IndexOf('}', i);
+				int end = t.IndexOf('}', i + 1);
 
-				if (end < 0)
+				if (end > i)
 				{
-					sb.Append(t, i, t.Length - i);
-					break;
+					string placeholder = t.Substring(i + 1, end - i - 1);
+					int colon = placeholder.IndexOf(':');
+					string indexText = colon < 0 ? placeholder : placeholder[..colon];
+					string? format = colon < 0 ? null : placeholder[(colon + 1)..];
+
+					if (int.TryParse(indexText, NumberStyles.None, CultureInfo.InvariantCulture, out int index)
+						&& (uint)index < (uint)args.Length)
+					{
+						object? v = args[index];
+						(string text, string col) = v switch
+						{
+							null => ("null", Gray),
+							string s => (s, Cyan),
+							bool b => (b.ToString(), Green),
+							IFormattable f when v.GetType().IsPrimitive => (f.ToString(format, CultureInfo.InvariantCulture), Green),
+							IFormattable f when format != null => (f.ToString(format, CultureInfo.InvariantCulture), Cyan),
+							_ => (v.ToString() ?? "", Cyan),
+						};
+						sb.Append(col).Append(text).Append(baseColor);
+						i = end + 1;
+						continue;
+					}
 				}
 
-				object? v = arg < args.Length ? args[arg++] : null;
-				(string text, string col) = v switch
-				{
-					null => ("null", Gray),
-					string s => (s, Cyan),
-					bool b => (b.ToString(), Green),
-					IFormattable f when v.GetType().IsPrimitive => (f.ToString(null, CultureInfo.InvariantCulture), Green),
-					_ => (v.ToString() ?? "", Cyan),
-				};
-				sb.Append(col).Append(text).Append(baseColor);
-				i = end;
+				sb.Append('{');
+				i++;
+				continue;
 			}
-			else sb.Append(t[i]);
+
+			sb.Append(t[i]);
+			i++;
 		}
 	}
 

@@ -6,11 +6,9 @@ internal sealed class FramePacer
 {
 	private readonly BlockingCollection<RenderSnapshot> _free;
 	private readonly BlockingCollection<RenderSnapshot> _ready;
-	private readonly CancellationToken _stoppingToken;
 
-	public FramePacer(int count = 2, CancellationToken stoppingToken = default)
+	public FramePacer(int count = 2)
 	{
-		_stoppingToken = stoppingToken;
 		_free = new BlockingCollection<RenderSnapshot>(new ConcurrentQueue<RenderSnapshot>(), count);
 		_ready = new BlockingCollection<RenderSnapshot>(new ConcurrentQueue<RenderSnapshot>(), count);
 
@@ -18,14 +16,13 @@ internal sealed class FramePacer
 		{
 			_free.Add(new RenderSnapshot());
 		}
-		_stoppingToken.ThrowIfCancellationRequested();
 	}
 
-	public RenderSnapshot? AcquireForUpdate(TimeSpan timeout)
+	public RenderSnapshot? AcquireForUpdate(TimeSpan timeout, CancellationToken cancellationToken = default)
 	{
 		try
 		{
-			return _free.TryTake(out var s, timeout.Milliseconds, _stoppingToken) ? s : null;
+			return _free.TryTake(out var s, timeout.Milliseconds, cancellationToken) ? s : null;
 		}
 		catch (OperationCanceledException)
 		{
@@ -33,16 +30,16 @@ internal sealed class FramePacer
 		}
 	}
 
-	public void Submit(RenderSnapshot s)
+	public void Submit(RenderSnapshot s, CancellationToken cancellationToken = default)
 	{
-		_ready.Add(s, _stoppingToken);
+		_ready.Add(s, cancellationToken);
 	}
 
-	public RenderSnapshot? AcquireForRender(TimeSpan timeout)
+	public RenderSnapshot? AcquireForRender(TimeSpan timeout, CancellationToken cancellationToken = default)
 	{
 		try
 		{
-			return _ready.TryTake(out var s, timeout.Milliseconds, _stoppingToken) ? s : null;
+			return _ready.TryTake(out var s, timeout.Milliseconds, cancellationToken) ? s : null;
 		}
 		catch (OperationCanceledException)
 		{
@@ -50,9 +47,9 @@ internal sealed class FramePacer
 		}
 	}
 
-	public void Release(RenderSnapshot s)
+	public void Release(RenderSnapshot s, CancellationToken cancellationToken = default)
 	{
 		s.Reset();
-		_free.Add(s, _stoppingToken);
+		_free.Add(s, cancellationToken);
 	}
 }

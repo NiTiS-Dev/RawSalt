@@ -21,6 +21,9 @@ public class Application
 
 	}
 
+	protected virtual void Update(ulong updateId, float deltaTime)
+	{ }
+
 	protected bool Launch(LaunchConfiguration config)
 	{
 		try
@@ -65,17 +68,27 @@ public class Application
 	private void AppLoop(FramePacer pacer, RenderThread renderThread, View view)
 	{
 		long last = Stopwatch.GetTimestamp();
+
 		RateStatistics statistics = new();
 		statistics.Start();
-		while (view.ShouldUpdate)
+
+		bool firstFrame = true;
+		ulong updateId = 0;
+		while (view.ShouldUpdate && renderThread.IsValid)
 		{
 			view.PumpEvents();
+			if (firstFrame && renderThread.FirstFramePresented)
+			{
+				firstFrame = false;
+				(view as Window)?.Show();
+			}
 
 			// At least update @10Hz
 			RenderSnapshot? snapshot = pacer.AcquireForUpdate(TimeSpan.FromMilliseconds(100));
 
 			long now = Stopwatch.GetTimestamp();
 			float deltaTime = (now - last) / (float)Stopwatch.Frequency;
+			Update(updateId++, deltaTime);
 			statistics.Update();
 			last = now;
 

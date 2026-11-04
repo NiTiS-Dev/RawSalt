@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using System.Numerics;
+using System.Runtime.ExceptionServices;
 using System.Runtime.InteropServices;
 using RawSalt.Graphics.Drawing;
 using RawSalt.Logging;
@@ -7,17 +8,27 @@ using RawSalt.Platforms;
 
 namespace RawSalt.Graphics.Rendering;
 
+// TODO: Clean and rework this clas
 internal sealed class RenderThread
 {
+	private const int SleepMs = 50;
+
 	private readonly Thread _thread;
 	private readonly FramePacer _pacer;
 	private readonly GraphicsBackend _backend;
 	private readonly RenderSurface _surface;
-	//private readonly Channel<RenderMessage> _messages = Channel.CreateUnbounded<RenderMessage>(new() { SingleReader = true });
-	private volatile bool _stop;
-	private Exception? _failure;
 
-	public RenderThread(FramePacer pacer, GraphicsBackend backend, RenderSurface surface)
+	//private readonly Channel<RenderMessage> _messages = Channel.CreateUnbounded<RenderMessage>(new() { SingleReader = true });
+	private readonly AutoResetEvent _wake = new(false);
+	private readonly ManualResetEventSlim _firstFramePresented = new(false);
+
+	private Exception? _failure;
+	private readonly CancellationTokenSource _cts;
+
+	public bool FirstFramePresented => _firstFramePresented.IsSet;
+	public bool IsValid => _failure == null;
+
+	public RenderThread(FramePacer pacer, GraphicsBackend backend, RenderSurface surface, CancellationToken cancellationToken = default)
 	{
 		Debug.Assert(pacer != null);
 		Debug.Assert(backend != null);
@@ -26,6 +37,10 @@ internal sealed class RenderThread
 		_pacer = pacer;
 		_backend = backend;
 		_surface = surface;
+
+		// Wrap cancellationToken, so we can cancel operation both from outside and inside the thread.
+		_cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+
 		_thread = new Thread(Run)
 		{
 			Name = "RawSalt/RenderThread",
@@ -39,17 +54,20 @@ internal sealed class RenderThread
 
 	public void Stop()
 	{
-		_stop = true;
+		_cts.Cancel();
+		_wake.Set();
 		_thread.Join();
+		_cts.Dispose();
 
 		if (_failure != null)
 		{
-			throw new AggregateException(_failure);
+			ExceptionDispatchInfo.Capture(_failure).Throw();
 		}
 	}
 
 	private void Run()
 	{
+		CancellationToken cancellationToken = _cts.Token;
 		try
 		{
 			using GraphicsDevice device = _backend.CreateDevice(null, _surface);
@@ -81,16 +99,16 @@ internal sealed class RenderThread
 
 			try
 			{
-				bool firstFrame = true;
 				float deg = 0;
-				while (!_stop)
+				while (!cancellationToken.IsCancellationRequested)
 				{
-					RenderSnapshot? snapshot = _pacer.AcquireForRender(TimeSpan.FromMilliseconds(50));
+					RenderSnapshot? snapshot = _pacer.AcquireForRender(TimeSpan.FromMilliseconds(SleepMs));
 					if (snapshot == null) continue;
 
 					if (!renderer.TryBeginFrame(out RenderFrame? frame))
 					{
-						_pacer.Release(snapshot);
+						_pacer.Release(snapshot, cancellationToken);
+						_wake.WaitOne(SleepMs);
 						continue;
 					}
 
@@ -105,12 +123,8 @@ internal sealed class RenderThread
 					cmd.EndRenderPass();
 
 					renderer.EndFrame(frame);
-					_pacer.Release(snapshot);
-					if (firstFrame)
-					{
-						firstFrame = false;
-						(_surface.View as Window)?.Show();
-					}
+					_firstFramePresented.Set();
+					_pacer.Release(snapshot, cancellationToken);
 				}
 			}
 			finally

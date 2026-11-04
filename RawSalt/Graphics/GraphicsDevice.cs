@@ -10,7 +10,8 @@ public abstract class GraphicsDevice : Disposable
 	public abstract Renderer CreateRenderer(Swapchain swapchain);
 
 	public abstract Buffer CreateBuffer(in BufferDescriptor descriptor, ReadOnlySpan<byte> initialData);
-	public abstract ShaderModule CreateShader(ShaderModuleStage stage, ReadOnlySpan<byte> code);
+	public abstract ShaderModule CreateShader(ShaderStages stage, ReadOnlySpan<byte> code);
+	public abstract BindingLayout CreateBindingLayout(params ReadOnlySpan<BindingEntry> bindings);
 	public abstract Pipeline CreatePipeline(PipelineDescriptor descriptor);
 
 	public Buffer CreateBuffer<T>(BufferUsage usage, ReadOnlySpan<T> data) where T : unmanaged

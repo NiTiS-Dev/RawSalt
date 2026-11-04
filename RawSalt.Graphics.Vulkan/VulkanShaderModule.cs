@@ -6,9 +6,9 @@ public sealed class VulkanShaderModule : ShaderModule
 {
 	private readonly VulkanDevice _device;
 	public VkShaderModule Module { get; }
-	public override ShaderModuleStage Stage { get; }
+	public override ShaderStages Stage { get; }
 
-	public unsafe VulkanShaderModule(VulkanDevice device, ShaderModuleStage stage, ReadOnlySpan<byte> code)
+	public unsafe VulkanShaderModule(VulkanDevice device, ShaderStages stage, ReadOnlySpan<byte> code)
 	{
 		if (code.Length == 0 || code.Length % 4 != 0)
 		{

@@ -60,9 +60,14 @@ public sealed class VulkanDevice : GraphicsDevice
 		return new VulkanBuffer(this, descriptor, data);
 	}
 
-	public override ShaderModule CreateShader(ShaderModuleStage stage, ReadOnlySpan<byte> code)
+	public override ShaderModule CreateShader(ShaderStages stage, ReadOnlySpan<byte> code)
 	{
 		return new VulkanShaderModule(this, stage, code);
+	}
+
+	public override BindingLayout CreateBindingLayout(params ReadOnlySpan<BindingEntry> bindings)
+	{
+		return new VulkanBindingLayout(this, bindings);
 	}
 
 	public override Pipeline CreatePipeline(PipelineDescriptor descriptor)

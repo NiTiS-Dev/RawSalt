@@ -1,4 +1,7 @@
 using System.Diagnostics;
+using System.Net;
+using System.Numerics;
+using System.Runtime.CompilerServices;
 using System.Runtime.ExceptionServices;
 using System.Runtime.InteropServices;
 using RawSalt.Graphics.Drawing;
@@ -42,8 +45,7 @@ internal sealed class RenderThread
 		_thread = new Thread(Run)
 		{
 			Name = "RawSalt/RenderThread",
-			IsBackground = true,
-			Priority = ThreadPriority.Highest
+			IsBackground = true
 		};
 	}
 
@@ -72,13 +74,18 @@ internal sealed class RenderThread
 			using Swapchain swapchain = device.CreateSwapchain(_surface);
 			using Renderer renderer = device.CreateRenderer(swapchain);
 			using ShaderModule vs =
-				device.CreateShader(ShaderModuleStage.Vertex, File.ReadAllBytes("triangle.vert.spv"));
+				device.CreateShader(ShaderStages.Vertex, File.ReadAllBytes("triangle.vert.spv"));
 			using ShaderModule fs =
-				device.CreateShader(ShaderModuleStage.Fragment, File.ReadAllBytes("triangle.frag.spv"));
+				device.CreateShader(ShaderStages.Fragment, File.ReadAllBytes("triangle.frag.spv"));
+			using BindingLayout bindingLayout = device.CreateBindingLayout([
+				new BindingEntry(0, BindingType.UniformBuffer, ShaderStages.Vertex, (uint)Unsafe.SizeOf<CameraData>()),
+				new BindingEntry(1, BindingType.UniformBuffer, ShaderStages.Vertex, (uint)Unsafe.SizeOf<Matrix4x4>()),
+			]);
 			using Pipeline pipeline = device.CreatePipeline(new PipelineDescriptor
 			{
 				VertexShader = vs,
 				FragmentShader = fs,
+				BindingLayout = bindingLayout,
 				VertexLayout = Vertex.Layout,
 				ColorFormat = renderer.BackBufferFormat,
 				CullMode = CullMode.Back,

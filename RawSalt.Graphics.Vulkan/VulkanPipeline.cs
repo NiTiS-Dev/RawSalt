@@ -1,12 +1,14 @@
 using System.Diagnostics;
 using RawSalt.Graphics.Drawing;
 using RawSalt.Graphics.Rendering;
+using RawSalt.Graphics.Vulkan.Rendering;
 
 namespace RawSalt.Graphics.Vulkan;
 
 public sealed class VulkanPipeline : Pipeline
 {
 	private readonly VulkanDevice _device;
+	public VulkanBindingLayout? BindingLayout { get; }
 	private readonly VkPipelineLayout _layout;
 
 	public VkPipeline Handle { get; }
@@ -24,7 +26,19 @@ public sealed class VulkanPipeline : Pipeline
 		Debug.Assert(fs != null);
 
 		VkPipelineLayoutCreateInfo layoutInfo = new();
-		api.vkCreatePipelineLayout(&layoutInfo, out _layout);
+		if (descriptor.BindingLayout is { } bindingLayout)
+		{
+			if (bindingLayout is not VulkanBindingLayout vkLayout)
+			{
+				throw new ArgumentException("BindingLayout was created by a different backend.", nameof(descriptor));
+			}
+
+			BindingLayout = vkLayout;
+			VkDescriptorSetLayout setLayoutHandle = vkLayout.Handle;
+			layoutInfo.setLayoutCount = 1;
+			layoutInfo.pSetLayouts = &setLayoutHandle;
+		}
+		api.vkCreatePipelineLayout(&layoutInfo, out _layout).CheckResult();
 
 		VkVertexInputAttributeDescription[] attributes;
 		if (descriptor.VertexLayout is { } vl)
@@ -163,6 +177,7 @@ public sealed class VulkanPipeline : Pipeline
 			VkResult result = api.vkCreateGraphicsPipelines(VkPipelineCache.Null, 1, &info, &pipeline);
 			if (result != VkResult.Success)
 			{
+				api.vkDestroyPipelineLayout(_layout);
 				throw new VkException(result, "Failed to create pipeline");
 			}
 

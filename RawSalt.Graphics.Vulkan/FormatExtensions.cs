@@ -1,4 +1,5 @@
 using RawSalt.Graphics.Drawing;
+using RawSalt.Graphics.Rendering;
 
 namespace RawSalt.Graphics.Vulkan;
 
@@ -45,6 +46,39 @@ public static class FormatExtensions
 				VertexFormat.Float32x3 => VkFormat.R32G32B32Sfloat,
 				VertexFormat.Float32x4 => VkFormat.R32G32B32A32Sfloat,
 				_ => throw new NotSupportedException($"Vertex format {format} not supported."),
+			};
+		}
+	}
+
+	extension(ShaderStages stages)
+	{
+		public VkShaderStageFlags ToVkFlags()
+		{
+			VkShaderStageFlags result = 0;
+
+			if (stages.HasFlag(ShaderStages.Vertex)) result |= VkShaderStageFlags.Vertex;
+			if (stages.HasFlag(ShaderStages.Fragment)) result |= VkShaderStageFlags.Fragment;
+
+			return result;
+		}
+
+		public VkShaderStageFlags ToVk()
+		{
+			return stages switch
+			{
+				ShaderStages.Vertex => VkShaderStageFlags.Vertex,
+				_ => VkShaderStageFlags.Fragment
+			};
+		}
+	}
+
+	extension(BindingType bindingType)
+	{
+		public VkDescriptorType ToVk()
+		{
+			return bindingType switch
+			{
+				_ => VkDescriptorType.UniformBufferDynamic,
 			};
 		}
 	}

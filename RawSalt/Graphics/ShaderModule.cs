@@ -2,5 +2,5 @@ namespace RawSalt.Graphics;
 
 public abstract class ShaderModule : Disposable
 {
-	public abstract ShaderModuleStage Stage { get; }
+	public abstract ShaderStages Stage { get; }
 }

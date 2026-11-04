@@ -1,10 +1,8 @@
 using System.Diagnostics;
-using System.Numerics;
 using System.Runtime.ExceptionServices;
 using System.Runtime.InteropServices;
 using RawSalt.Graphics.Drawing;
 using RawSalt.Logging;
-using RawSalt.Platforms;
 
 namespace RawSalt.Graphics.Rendering;
 

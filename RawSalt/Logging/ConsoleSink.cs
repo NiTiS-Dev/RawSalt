@@ -44,6 +44,7 @@ public class ConsoleSink : ILoggerSink
 
 	private static void RenderTemplate(StringBuilder sb, string t, object?[] args, string baseColor)
 	{
+		sb.Append(baseColor);
 		int arg = 0;
 		for (int i = 0; i < t.Length; i++)
 		{
@@ -68,7 +69,7 @@ public class ConsoleSink : ILoggerSink
 				(string text, string col) = v switch
 				{
 					null => ("null", Gray),
-					string s => ($"\"{s}\"", Cyan),
+					string s => (s, Cyan),
 					bool b => (b.ToString(), Green),
 					IFormattable f when v.GetType().IsPrimitive => (f.ToString(null, CultureInfo.InvariantCulture), Green),
 					_ => (v.ToString() ?? "", Cyan),

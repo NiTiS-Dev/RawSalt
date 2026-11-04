@@ -105,6 +105,19 @@ internal sealed class RenderThread
 					RenderSnapshot? snapshot = _pacer.AcquireForRender(TimeSpan.FromMilliseconds(SleepMs));
 					if (snapshot == null) continue;
 
+					Vec2i size = snapshot.Size;
+					if (size.X == 0 || size.Y == 0)
+					{
+						_pacer.Release(snapshot, cancellationToken);
+						_wake.WaitOne(SleepMs);
+						continue;
+					}
+
+					if (swapchain.SurfaceSize != size)
+					{
+						swapchain.Resize(size);
+					}
+
 					if (!renderer.TryBeginFrame(out RenderFrame? frame))
 					{
 						_pacer.Release(snapshot, cancellationToken);

@@ -1,5 +1,4 @@
 using NiTiS.Mathematics;
-using RawSalt.Logging;
 
 namespace RawSalt.Graphics.Vulkan;
 
@@ -12,6 +11,7 @@ public sealed class VulkanSwapchain : Swapchain
 
 	public VkSwapchainKHR Swapchain { get; private set; } = VkSwapchainKHR.Null;
 	public VkExtent2D Extent { get; private set; }
+	public override Vector2<int> SurfaceSize => new((int)Extent.width, (int)Extent.height);
 	public uint ImageCount => (uint)_images.Length;
 
 	public uint FramesInFlight { get; }

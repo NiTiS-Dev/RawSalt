@@ -94,7 +94,7 @@ public class Application
 
 			if (snapshot != null)
 			{
-				snapshot.Size = view.Size;
+				snapshot.Size = view.SurfaceSize;
 				pacer.Submit(snapshot);
 			}
 		}

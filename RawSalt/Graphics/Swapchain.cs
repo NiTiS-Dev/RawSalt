@@ -5,6 +5,8 @@ public abstract class Swapchain : Disposable
 	public abstract bool TryAcquire();
 	public abstract void Present();
 
+	public abstract Vec2i SurfaceSize { get; }
+
 	/// <summary>
 	/// Call when the view's framebuffer size changes.
 	/// </summary>

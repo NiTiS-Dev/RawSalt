@@ -118,9 +118,22 @@ internal sealed class VulkanCommandList : CommandList
 		_api.vkCmdBindVertexBuffers(Buffer, slot, 1, &handle, &offset);
 	}
 
+	public override void SetIndexBuffer(Buffer buffer, ulong offset = 0)
+	{
+		Debug.Assert(buffer is VulkanBuffer);
+
+		VkBuffer handle = ((VulkanBuffer)buffer).Handle;
+		_api.vkCmdBindIndexBuffer(Buffer, handle, offset, VkIndexType.Uint32);
+	}
+
 	public override void Draw(uint vertexCount, uint instanceCount = 1, uint firstVertex = 0, uint firstInstance = 0)
 	{
 		_api.vkCmdDraw(Buffer, vertexCount, instanceCount, firstVertex, firstInstance);
+	}
+
+	public override void DrawIndexed(uint indexesCount, uint instanceCount = 1, uint firstIndex = 0, int vertexOffset = 0, uint firstInstance = 0)
+	{
+		_api.vkCmdDrawIndexed(Buffer, indexesCount, instanceCount, firstIndex, vertexOffset, firstInstance);
 	}
 
 	public unsafe void Transition(VulkanRenderTarget target, VkImageLayout newLayout)

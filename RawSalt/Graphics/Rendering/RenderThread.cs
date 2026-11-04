@@ -87,15 +87,15 @@ internal sealed class RenderThread
 
 			ReadOnlySpan<Vertex> square =
 			[
-				new() { X = -0.6f, Y = +0.6f, R = 1, G = 0, B = 0 }, // tl
+				new() { X = -0.6f, Y = +0.6f, R = 1, G = 1, B = 1 }, // tl
 				new() { X = -0.6f, Y = -0.6f, R = 1, G = 1, B = 0 }, // bl
 				new() { X = +0.6f, Y = +0.6f, R = 0, G = 1, B = 1 }, // tr
-
-				new() { X = -0.6f, Y = -0.6f, R = 1, G = 1, B = 0 }, // bl
 				new() { X = +0.6f, Y = -0.6f, R = 0, G = 1, B = 1 }, // br
-				new() { X = +0.6f, Y = +0.6f, R = 0, G = 1, B = 1 }, // tr
 			];
 			using Buffer vertices = device.CreateBuffer(BufferUsage.Vertex, square);
+			ReadOnlySpan<uint> squareIndexes = [ 0, 1, 2, 2, 1, 3 ];
+			using Buffer indexes = device.CreateBuffer(BufferUsage.Index, squareIndexes);
+
 
 			try
 			{
@@ -131,7 +131,8 @@ internal sealed class RenderThread
 					{
 						cmd.SetPipeline(pipeline);
 						cmd.SetVertexBuffer(0, vertices);
-						cmd.Draw(6);
+						cmd.SetIndexBuffer(indexes);
+						cmd.DrawIndexed(6);
 					}
 					cmd.EndRenderPass();
 

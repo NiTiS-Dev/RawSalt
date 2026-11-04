@@ -10,22 +10,27 @@ namespace RawSalt.Graphics.Rendering;
 internal sealed class RenderThread
 {
 	private readonly Thread _thread;
+	private readonly FramePacer _pacer;
 	private readonly GraphicsBackend _backend;
 	private readonly RenderSurface _surface;
 	//private readonly Channel<RenderMessage> _messages = Channel.CreateUnbounded<RenderMessage>(new() { SingleReader = true });
 	private volatile bool _stop;
 	private Exception? _failure;
 
-	public RenderThread(GraphicsBackend backend, RenderSurface surface)
+	public RenderThread(FramePacer pacer, GraphicsBackend backend, RenderSurface surface)
 	{
+		Debug.Assert(pacer != null);
 		Debug.Assert(backend != null);
 		Debug.Assert(surface != null);
 
+		_pacer = pacer;
 		_backend = backend;
 		_surface = surface;
 		_thread = new Thread(Run)
 		{
-			Name = "RawSalt/RenderThread"
+			Name = "RawSalt/RenderThread",
+			IsBackground = true,
+			Priority = ThreadPriority.Highest
 		};
 	}
 
@@ -74,26 +79,23 @@ internal sealed class RenderThread
 			];
 			using Buffer vertices = device.CreateBuffer(BufferUsage.Vertex, square);
 
-			void OnSizeChanged(SizeChangedEventArgs args)
-			{
-				swapchain.Resize(args.SurfaceSize);
-			}
-			_surface.View.SizeChanged += OnSizeChanged;
-
 			try
 			{
 				bool firstFrame = true;
 				float deg = 0;
 				while (!_stop)
 				{
+					RenderSnapshot? snapshot = _pacer.AcquireForRender(TimeSpan.FromMilliseconds(50));
+					if (snapshot == null) continue;
+
 					if (!renderer.TryBeginFrame(out RenderFrame? frame))
 					{
-						Thread.Sleep(1);
+						_pacer.Release(snapshot);
 						continue;
 					}
 
 					CommandList cmd = frame.Commands;
-					deg += 0.15f;
+					deg += 0.65f;
 					cmd.BeginRenderPass(new RenderPass(frame.BackBuffer, new Color4(0.3f, 0.3f, 0.2f).ShiftHue(deg)));
 					{
 						cmd.SetPipeline(pipeline);
@@ -103,6 +105,7 @@ internal sealed class RenderThread
 					cmd.EndRenderPass();
 
 					renderer.EndFrame(frame);
+					_pacer.Release(snapshot);
 					if (firstFrame)
 					{
 						firstFrame = false;
@@ -112,7 +115,6 @@ internal sealed class RenderThread
 			}
 			finally
 			{
-				_surface.View.SizeChanged -= OnSizeChanged;
 				device.WaitIdle();
 			}
 		}

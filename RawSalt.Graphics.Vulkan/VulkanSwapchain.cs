@@ -334,15 +334,17 @@ public sealed class VulkanSwapchain : Swapchain
 
 	private unsafe VkPresentModeKHR ChoosePresentMode(VkPhysicalDevice physical)
 	{
+		const VkPresentModeKHR target = VkPresentModeKHR.Fifo;
+
 		InstanceApi.vkGetPhysicalDeviceSurfacePresentModesKHR(physical, Surface.Surface, out uint count);
 		VkPresentModeKHR* modes = stackalloc VkPresentModeKHR[(int)count];
 		InstanceApi.vkGetPhysicalDeviceSurfacePresentModesKHR(physical, Surface.Surface, &count, modes);
 
 		for (int i = 0; i < count; i++)
 		{
-			if (modes[i] == VkPresentModeKHR.Fifo)
+			if (modes[i] == target)
 			{
-				return VkPresentModeKHR.Fifo;
+				return target;
 			}
 		}
 

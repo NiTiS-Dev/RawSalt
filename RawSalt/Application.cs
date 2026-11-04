@@ -1,5 +1,8 @@
 using System.Collections.Immutable;
+using System.Diagnostics;
+using RawSalt.Diagnostics;
 using RawSalt.Graphics;
+using RawSalt.Graphics.Drawing;
 using RawSalt.Graphics.Rendering;
 using RawSalt.Logging;
 using RawSalt.Platforms;
@@ -24,6 +27,7 @@ public class Application
 		{
 			Log.Info("Launch application.");
 
+			// TODO: Add headless launch configuration
 			// TODO: allow user to configure force candidate (parse program cli arguments)
 			Platform = SelectBestPlatform(config.Platforms.Select(t => t(this)).ToList());
 
@@ -39,10 +43,11 @@ public class Application
 			GraphicsBackend = SelectBestGraphicsBackend(config.GraphicsBackends.Select(t => t(this)).ToList());
 			MainSurface = GraphicsBackend.CreateSurface(MainView);
 
-			RenderThread renderThread = new(GraphicsBackend, MainSurface);
+			FramePacer pacer = new();
+			RenderThread renderThread = new(pacer, GraphicsBackend, MainSurface);
 			renderThread.Start();
 
-			AppLoop(renderThread, MainView);
+			AppLoop(pacer, renderThread, MainView);
 
 			renderThread.Stop();
 			Platform.ReleaseView(MainView);
@@ -57,11 +62,28 @@ public class Application
 		return true;
 	}
 
-	private void AppLoop(RenderThread renderThread, View view)
+	private void AppLoop(FramePacer pacer, RenderThread renderThread, View view)
 	{
+		long last = Stopwatch.GetTimestamp();
+		RateStatistics statistics = new();
+		statistics.Start();
 		while (view.ShouldUpdate)
 		{
 			view.PumpEvents();
+
+			// At least update @10Hz
+			RenderSnapshot? snapshot = pacer.AcquireForUpdate(TimeSpan.FromMilliseconds(100));
+
+			long now = Stopwatch.GetTimestamp();
+			float deltaTime = (now - last) / (float)Stopwatch.Frequency;
+			statistics.Update();
+			last = now;
+
+			if (snapshot != null)
+			{
+				snapshot.Size = view.Size;
+				pacer.Submit(snapshot);
+			}
 		}
 	}
 

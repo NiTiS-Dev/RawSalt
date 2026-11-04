@@ -37,6 +37,7 @@ public partial class Win32Platform
 				param.cbSize = (uint)sizeof(WNDCLASSEXW);
 				param.hInstance = HInstance;
 				param.hbrBackground = (HBRUSH)(nint)PInvoke.GetStockObject(GET_STOCK_OBJECT_FLAGS.BLACK_BRUSH);
+				param.hCursor = PInvoke.LoadCursor(default, PInvoke.IDC_ARROW);
 				param.lpszClassName = pClassName;
 				param.lpfnWndProc = _wndproc;
 

@@ -33,6 +33,8 @@ DwmSetWindowAttribute
 GetStockObject
 LoadIcon
 IDI_APPLICATION
+LoadCursor
+IDC_ARROW
 
 GetMessage
 PeekMessage

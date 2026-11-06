@@ -77,15 +77,17 @@ internal sealed class RenderThread
 				device.CreateShader(ShaderStages.Vertex, File.ReadAllBytes("triangle.vert.spv"));
 			using ShaderModule fs =
 				device.CreateShader(ShaderStages.Fragment, File.ReadAllBytes("triangle.frag.spv"));
-			using BindingLayout bindingLayout = device.CreateBindingLayout([
-				new BindingEntry(0, BindingType.UniformBuffer, ShaderStages.Vertex, (uint)Unsafe.SizeOf<CameraData>()),
-				new BindingEntry(1, BindingType.UniformBuffer, ShaderStages.Vertex, (uint)Unsafe.SizeOf<Matrix4x4>()),
-			]);
+			using BindGroupLayout bindCameraGroupLayout = device.CreateBindGroupLayout(
+				new BindingEntry(0, BindingType.UniformBuffer, ShaderStages.Vertex, (uint)Unsafe.SizeOf<CameraData>())
+			);
+			using BindGroupLayout bindModelGroupLayout = device.CreateBindGroupLayout(
+				new BindingEntry(0, BindingType.UniformBuffer, ShaderStages.Vertex, (uint)Unsafe.SizeOf<Matrix4x4>())
+			);
 			using Pipeline pipeline = device.CreatePipeline(new PipelineDescriptor
 			{
 				VertexShader = vs,
 				FragmentShader = fs,
-				BindingLayout = bindingLayout,
+				BindGroupLayout = [bindCameraGroupLayout, bindModelGroupLayout],
 				VertexLayout = Vertex.Layout,
 				ColorFormat = renderer.BackBufferFormat,
 				CullMode = CullMode.Back,
@@ -136,10 +138,10 @@ internal sealed class RenderThread
 					deg += 0.65f;
 					cmd.BeginRenderPass(new RenderPass(frame.BackBuffer, new Color4(0.3f, 0.3f, 0.2f).ShiftHue(deg)));
 					{
-						cmd.SetPipeline(pipeline);
-						cmd.SetVertexBuffer(0, vertices);
-						cmd.SetIndexBuffer(indexes);
-						cmd.DrawIndexed(6);
+						// cmd.SetPipeline(pipeline);
+						// cmd.SetVertexBuffer(0, vertices);
+						// cmd.SetIndexBuffer(indexes);
+						// cmd.DrawIndexed(6);
 					}
 					cmd.EndRenderPass();
 

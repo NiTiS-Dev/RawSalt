@@ -5,7 +5,7 @@ layout(std140, row_major, set = 0, binding = 0) uniform Camera {
     mat4 projection;
 } camera;
 
-layout(std140, row_major, set = 0, binding = 1) uniform Draw {
+layout(std140, row_major, set = 1, binding = 0) uniform Draw {
     mat4 model;
 } draw;
 

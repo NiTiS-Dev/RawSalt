@@ -8,7 +8,7 @@ namespace RawSalt.Graphics.Vulkan;
 public sealed class VulkanPipeline : Pipeline
 {
 	private readonly VulkanDevice _device;
-	public VulkanBindingLayout? BindingLayout { get; }
+	public VulkanBindGroupLayout[]? BindingLayout { get; }
 	private readonly VkPipelineLayout _layout;
 
 	public VkPipeline Handle { get; }
@@ -26,17 +26,24 @@ public sealed class VulkanPipeline : Pipeline
 		Debug.Assert(fs != null);
 
 		VkPipelineLayoutCreateInfo layoutInfo = new();
-		if (descriptor.BindingLayout is { } bindingLayout)
+		VkDescriptorSetLayout* pDescriptorSetLayouts = stackalloc VkDescriptorSetLayout[descriptor.BindGroupLayout.Length];
+		if (!descriptor.BindGroupLayout.IsDefaultOrEmpty)
 		{
-			if (bindingLayout is not VulkanBindingLayout vkLayout)
+			BindingLayout = new VulkanBindGroupLayout[descriptor.BindGroupLayout.Length];
+			for (int i = 0; i < descriptor.BindGroupLayout.Length; i++)
 			{
-				throw new ArgumentException("BindingLayout was created by a different backend.", nameof(descriptor));
+				BindGroupLayout bindingLayout = descriptor.BindGroupLayout[i];
+				if (bindingLayout is not VulkanBindGroupLayout vkLayout)
+				{
+					throw new ArgumentException("BindingLayout was created by a different backend.", nameof(descriptor));
+				}
+
+				BindingLayout[i] = vkLayout;
+				pDescriptorSetLayouts[i] = vkLayout.Handle;
 			}
 
-			BindingLayout = vkLayout;
-			VkDescriptorSetLayout setLayoutHandle = vkLayout.Handle;
-			layoutInfo.setLayoutCount = 1;
-			layoutInfo.pSetLayouts = &setLayoutHandle;
+			layoutInfo.setLayoutCount = (uint)descriptor.BindGroupLayout.Length;
+			layoutInfo.pSetLayouts = pDescriptorSetLayouts;
 		}
 		api.vkCreatePipelineLayout(&layoutInfo, out _layout).CheckResult();
 

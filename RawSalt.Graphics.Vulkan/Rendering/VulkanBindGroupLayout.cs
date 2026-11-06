@@ -1,13 +1,14 @@
+using System.Diagnostics;
 using RawSalt.Graphics.Rendering;
 
 namespace RawSalt.Graphics.Vulkan.Rendering;
 
-public sealed class VulkanBindingLayout : BindingLayout
+public sealed class VulkanBindGroupLayout : BindGroupLayout
 {
 	public VulkanDevice Device { get; }
 	public VkDescriptorSetLayout Handle { get; }
 
-	public unsafe VulkanBindingLayout(VulkanDevice device, ReadOnlySpan<BindingEntry> entries)
+	public unsafe VulkanBindGroupLayout(VulkanDevice device, ReadOnlySpan<BindingEntry> entries)
 		: base(entries)
 	{
 		Device = device;
@@ -17,12 +18,14 @@ public sealed class VulkanBindingLayout : BindingLayout
 		for (int i = 0; i < bindings.Length; i++)
 		{
 			BindingEntry entry = bindings[i];
+			Debug.Assert(entry.Count > 0);
+
 			pBindings[i] = new()
 			{
 				binding = entry.Binding,
 				stageFlags = entry.Stages.ToVkFlags(),
 				descriptorType = entry.Type.ToVk(),
-				descriptorCount = 1,
+				descriptorCount = entry.Count,
 			};
 		}
 

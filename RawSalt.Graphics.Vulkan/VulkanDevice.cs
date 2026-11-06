@@ -65,9 +65,9 @@ public sealed class VulkanDevice : GraphicsDevice
 		return new VulkanShaderModule(this, stage, code);
 	}
 
-	public override BindingLayout CreateBindingLayout(params ReadOnlySpan<BindingEntry> bindings)
+	public override BindGroupLayout CreateBindGroupLayout(params ReadOnlySpan<BindingEntry> bindings)
 	{
-		return new VulkanBindingLayout(this, bindings);
+		return new VulkanBindGroupLayout(this, bindings);
 	}
 
 	public override Pipeline CreatePipeline(PipelineDescriptor descriptor)

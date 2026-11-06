@@ -8,8 +8,8 @@ namespace RawSalt.Graphics.Vulkan;
 public sealed class VulkanPipeline : Pipeline
 {
 	private readonly VulkanDevice _device;
-	public VulkanBindGroupLayout[]? BindingLayout { get; }
-	private readonly VkPipelineLayout _layout;
+	public VulkanBindGroupLayout[] BindGroupLayouts { get; }
+	public VkPipelineLayout Layout { get; }
 
 	public VkPipeline Handle { get; }
 	public PixelFormat ColorFormat { get; }
@@ -29,7 +29,7 @@ public sealed class VulkanPipeline : Pipeline
 		VkDescriptorSetLayout* pDescriptorSetLayouts = stackalloc VkDescriptorSetLayout[descriptor.BindGroupLayout.Length];
 		if (!descriptor.BindGroupLayout.IsDefaultOrEmpty)
 		{
-			BindingLayout = new VulkanBindGroupLayout[descriptor.BindGroupLayout.Length];
+			BindGroupLayouts = new VulkanBindGroupLayout[descriptor.BindGroupLayout.Length];
 			for (int i = 0; i < descriptor.BindGroupLayout.Length; i++)
 			{
 				BindGroupLayout bindingLayout = descriptor.BindGroupLayout[i];
@@ -38,14 +38,19 @@ public sealed class VulkanPipeline : Pipeline
 					throw new ArgumentException("BindingLayout was created by a different backend.", nameof(descriptor));
 				}
 
-				BindingLayout[i] = vkLayout;
+				BindGroupLayouts[i] = vkLayout;
 				pDescriptorSetLayouts[i] = vkLayout.Handle;
 			}
 
 			layoutInfo.setLayoutCount = (uint)descriptor.BindGroupLayout.Length;
 			layoutInfo.pSetLayouts = pDescriptorSetLayouts;
 		}
-		api.vkCreatePipelineLayout(&layoutInfo, out _layout).CheckResult();
+		else
+		{
+			BindGroupLayouts = [];
+		}
+		api.vkCreatePipelineLayout(&layoutInfo, out VkPipelineLayout layout).CheckResult();
+		Layout = layout;
 
 		VkVertexInputAttributeDescription[] attributes;
 		if (descriptor.VertexLayout is { } vl)
@@ -176,7 +181,7 @@ public sealed class VulkanPipeline : Pipeline
 				pMultisampleState = &multisample,
 				pColorBlendState = &blend,
 				pDynamicState = &dynamicState,
-				layout = _layout,
+				layout = Layout,
 				renderPass = VkRenderPass.Null // VK_KHR_dynamic_rendering is included in Vulkan core 1.3
 			};
 
@@ -184,7 +189,7 @@ public sealed class VulkanPipeline : Pipeline
 			VkResult result = api.vkCreateGraphicsPipelines(VkPipelineCache.Null, 1, &info, &pipeline);
 			if (result != VkResult.Success)
 			{
-				api.vkDestroyPipelineLayout(_layout);
+				api.vkDestroyPipelineLayout(Layout);
 				throw new VkException(result, "Failed to create pipeline");
 			}
 
@@ -195,6 +200,6 @@ public sealed class VulkanPipeline : Pipeline
 	protected override void Dispose(bool disposing)
 	{
 		_device.DeviceApi.vkDestroyPipeline(Handle);
-		_device.DeviceApi.vkDestroyPipelineLayout(_layout);
+		_device.DeviceApi.vkDestroyPipelineLayout(Layout);
 	}
 }

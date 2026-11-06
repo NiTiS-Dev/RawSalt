@@ -3,7 +3,7 @@ namespace RawSalt.Graphics.Rendering;
 /// <remarks>
 /// Must outlive every pipeline created from it.
 /// </remarks>
-public abstract class BindGroupLayout : Disposable
+public abstract class BindGroupLayout : Disposable // TODO: Rename to something fucking readable
 {
 	// Binding numbers of all dynamic-offset bindings, sorted ascending.
 	// Vulkan expects the dynamic offsets array in exactly this order.

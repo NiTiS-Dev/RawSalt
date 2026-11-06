@@ -61,7 +61,7 @@ internal sealed class RenderThread
 
 		if (_failure != null)
 		{
-			ExceptionDispatchInfo.Capture(_failure).Throw();
+			ExceptionDispatchInfo.Capture(new RenderThreadException(_failure)).Throw();
 		}
 	}
 
@@ -138,10 +138,12 @@ internal sealed class RenderThread
 					deg += 0.65f;
 					cmd.BeginRenderPass(new RenderPass(frame.BackBuffer, new Color4(0.3f, 0.3f, 0.2f).ShiftHue(deg)));
 					{
-						// cmd.SetPipeline(pipeline);
-						// cmd.SetVertexBuffer(0, vertices);
-						// cmd.SetIndexBuffer(indexes);
-						// cmd.DrawIndexed(6);
+						cmd.SetPipeline(pipeline);
+						cmd.SetUniform(0, 0, new CameraData { View = Matrix4x4.Identity, Projection = Matrix4x4.Identity });
+						cmd.SetUniform(1, 0, Matrix4x4.Identity * Matrix4x4.CreateRotationZ(deg / 10));
+						cmd.SetVertexBuffer(0, vertices);
+						cmd.SetIndexBuffer(indexes);
+						cmd.DrawIndexed(6);
 					}
 					cmd.EndRenderPass();
 

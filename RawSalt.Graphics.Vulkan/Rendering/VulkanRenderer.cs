@@ -46,7 +46,7 @@ public sealed class VulkanRenderer : Renderer
 		for (int i = 0; i < count; i++)
 		{
 			Api.vkCreateFence(&fenceInfo, out VkFence fence);
-			_frames[i] = new VulkanRenderFrame(fence, new VulkanCommandList(Api, buffers[i]));
+			_frames[i] = new VulkanRenderFrame(fence, new VulkanCommandList(Api, buffers[i], device.UploadHeap.CreateArena(i, 256)));
 		}
 	}
 

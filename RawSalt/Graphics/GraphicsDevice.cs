@@ -6,6 +6,8 @@ namespace RawSalt.Graphics;
 
 public abstract class GraphicsDevice : Disposable
 {
+	public abstract Adapter Adapter { get; }
+
 	public abstract Swapchain CreateSwapchain(RenderSurface surface);
 	public abstract Renderer CreateRenderer(Swapchain swapchain);
 

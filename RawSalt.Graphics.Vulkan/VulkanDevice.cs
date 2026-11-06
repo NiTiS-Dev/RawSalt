@@ -7,7 +7,7 @@ namespace RawSalt.Graphics.Vulkan;
 
 public sealed class VulkanDevice : GraphicsDevice
 {
-	public VulkanAdapter Adapter { get; }
+	public override VulkanAdapter Adapter { get; }
 	public VkPhysicalDevice PhysicalDevice => Adapter.PhysicalDevice;
 	public VkPhysicalDeviceMemoryProperties MemoryProperties { get; }
 	public VkDevice Device { get; }
@@ -17,8 +17,10 @@ public sealed class VulkanDevice : GraphicsDevice
 	public VkQueue GraphicsQueue { get; }
 	public uint PresentQueueFamily { get; }
 	public VkQueue PresentQueue { get; }
+	public VkDescriptorPool DescriptorPool { get; }
+	internal VulkanUploadHeap UploadHeap { get; }
 
-	internal VulkanDevice(VulkanAdapter adapter, VkDevice device, VkInstanceApi instanceApi, VkDeviceApi deviceApi,
+	internal unsafe VulkanDevice(VulkanAdapter adapter, VkDevice device, VkInstanceApi instanceApi, VkDeviceApi deviceApi,
 		uint graphicsQueueFamily, VkQueue graphicsQueue,
 		uint presentQueueFamily, VkQueue presentQueue)
 	{
@@ -33,6 +35,21 @@ public sealed class VulkanDevice : GraphicsDevice
 
 		InstanceApi.vkGetPhysicalDeviceMemoryProperties(PhysicalDevice, out VkPhysicalDeviceMemoryProperties properties);
 		MemoryProperties = properties;
+
+		VkDescriptorPoolSize poolSize = new()
+		{
+			type = VkDescriptorType.UniformBufferDynamic,
+			descriptorCount = 64
+		};
+		VkDescriptorPoolCreateInfo poolInfo = new()
+		{
+			maxSets = 64,
+			poolSizeCount = 1,
+			pPoolSizes = &poolSize
+		};
+		DeviceApi.vkCreateDescriptorPool(&poolInfo, out VkDescriptorPool pool).CheckResult();
+		DescriptorPool = pool;
+		UploadHeap = new(this, 1024);
 	}
 
 	public override Swapchain CreateSwapchain(RenderSurface surface)
@@ -101,6 +118,8 @@ public sealed class VulkanDevice : GraphicsDevice
 	protected override void Dispose(bool disposing)
 	{
 		WaitIdle();
+		DeviceApi.vkDestroyDescriptorPool(DescriptorPool);
+		UploadHeap.Dispose();
 		DeviceApi.vkDestroyDevice();
 	}
 }

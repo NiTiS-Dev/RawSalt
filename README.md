@@ -13,9 +13,9 @@
 
 ### Graphical API support
 
-|   API   |    Requirements    |
-|:-------:|:------------------:|
-| Vulkan  |        1.3+        |
-| DirectX | Not supported yet. |
-|  Metal  | Not supported yet. |
-| OpenGL  |    Not planned.    |
+|   API   |    Requirements    |      Supported OS       |
+|:-------:|:------------------:|:-----------------------:|
+| Vulkan  |        1.3+        | Windows, Linux, Android |
+| DirectX | Not supported yet. |      Only Windows       |
+|  Metal  | Not supported yet. |       Only MacOS        |
+| OpenGL  |    Not planned.    |                         |

@@ -1,5 +1,6 @@
 using System.Collections.Immutable;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using RawSalt.Diagnostics;
 using RawSalt.Graphics;
 using RawSalt.Graphics.Drawing;
@@ -11,14 +12,35 @@ namespace RawSalt;
 
 public class Application
 {
-	public Platform Platform { get; private set; } = null!;
-	public View MainView { get; private set; } = null!;
-	public RenderSurface MainSurface { get; private set; } = null!;
-	public GraphicsBackend GraphicsBackend { get; private set; } = null!;
+	public bool Headless { get; }
 
-	protected Application()
+	[MemberNotNullWhen(false, nameof(Headless))]
+	[NotNullIfNotNull(nameof(MainView))]
+	[NotNullIfNotNull(nameof(MainSurface))]
+	[NotNullIfNotNull(nameof(GraphicsBackend))]
+	public Platform? Platform { get; private set; }
+
+	[MemberNotNullWhen(false, nameof(Headless))]
+	[NotNullIfNotNull(nameof(Platform))]
+	[NotNullIfNotNull(nameof(MainSurface))]
+	[NotNullIfNotNull(nameof(GraphicsBackend))]
+	public View? MainView { get; private set; }
+
+	[MemberNotNullWhen(false, nameof(Headless))]
+	[NotNullIfNotNull(nameof(Platform))]
+	[NotNullIfNotNull(nameof(MainView))]
+	[NotNullIfNotNull(nameof(GraphicsBackend))]
+	public RenderSurface? MainSurface { get; private set; }
+
+	[MemberNotNullWhen(false, nameof(Headless))]
+	[NotNullIfNotNull(nameof(Platform))]
+	[NotNullIfNotNull(nameof(MainView))]
+	[NotNullIfNotNull(nameof(MainSurface))]
+	public GraphicsBackend? GraphicsBackend { get; private set; }
+
+	protected Application(bool headless = false)
 	{
-
+		Headless = headless;
 	}
 
 	protected virtual void Update(ulong updateId, float deltaTime)
@@ -26,6 +48,11 @@ public class Application
 
 	protected bool Launch(LaunchConfiguration config)
 	{
+		if (Headless)
+		{
+			throw new NotImplementedException("Headless applications is not implemented yet.");
+		}
+
 		try
 		{
 			Log.Info("Launch application.");

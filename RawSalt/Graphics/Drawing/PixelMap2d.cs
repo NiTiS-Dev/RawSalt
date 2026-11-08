@@ -1,8 +1,10 @@
 using System.Buffers;
 using System.Runtime.InteropServices;
+using System.Xml.Linq;
 using CommunityToolkit.Diagnostics;
 using NiTiS.Mathematics;
-using StbImageSharp;
+using StbImageNext;
+using StbImageNext.Encoders;
 
 namespace RawSalt.Graphics.Drawing;
 
@@ -47,6 +49,22 @@ public abstract class PixelMap2d : Disposable
 		pixels.Fill(pixelData);
 		return pixels;
 	}
+
+	/// <summary>
+	/// Saves current pixel map as an image into provided <paramref name="stream"/>.
+	/// </summary>
+	/// <param name="stream">Writing stream to save current image into.</param>
+	/// <param name="format">Image format.</param>
+	/// <exception cref="NotSupportedException ">Stream does not support writing.</exception>
+	/// <exception cref="PixelFormatNotSupportedException">Pixel format is not supported for requested image format.</exception>
+	public abstract void Save(Stream stream, ImageFormat format);
+
+	public enum ImageFormat
+	{
+		Png,
+		Jpg,
+		Bmp,
+	}
 }
 
 public class PixelMap2d<TPixel> : PixelMap2d
@@ -72,6 +90,14 @@ public class PixelMap2d<TPixel> : PixelMap2d
 		Guard.IsGreaterThan(height, 0);
 
 		_pixels = MemoryPool<TPixel>.Shared.Rent(width * height);
+	}
+
+	protected override void Dispose(bool disposing)
+	{
+		if (disposing)
+		{
+			_pixels.Dispose();
+		}
 	}
 
 	public Span<TPixel> GetRow(int row)
@@ -142,11 +168,25 @@ public class PixelMap2d<TPixel> : PixelMap2d
 		_pixels.Memory.Span[..(Width * Height)].Fill(color);
 	}
 
-	protected override void Dispose(bool disposing)
+	public override void Save(Stream stream, ImageFormat format)
 	{
-		if (disposing)
+		// TODO: Add support for Rgb24
+		byte[] data = [.. MemoryMarshal.Cast<TPixel, byte>(_pixels.Memory.Span)];
+		switch (format)
 		{
-			_pixels.Dispose();
+			case ImageFormat.Png:
+			{
+				if (Format == PixelFormat.Rgba32UNorm)
+				{
+					PngEncoder.EncodeToStream(stream, data, Width, Height, ColorComponents.RedGreenBlueAlpha);
+				}
+				else
+				{
+					throw new PixelFormatNotSupportedException();
+				}
+			} break;
+			default:
+				throw new NotImplementedException();
 		}
 	}
 }

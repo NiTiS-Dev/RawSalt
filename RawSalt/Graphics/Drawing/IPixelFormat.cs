@@ -7,6 +7,8 @@ public interface IPixelFormat<TSelf>
 {
 	static abstract PixelFormat Format { get; }
 
+	static abstract int ByteWidth { get; }
+
 	static abstract TSelf FromColor(Color4 color);
 
 	/// <summary>

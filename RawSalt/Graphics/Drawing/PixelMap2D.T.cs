@@ -1,73 +1,13 @@
 using System.Buffers;
+using System.Diagnostics;
 using System.Runtime.InteropServices;
-using System.Xml.Linq;
 using CommunityToolkit.Diagnostics;
-using NiTiS.Mathematics;
 using StbImageNext;
 using StbImageNext.Encoders;
 
 namespace RawSalt.Graphics.Drawing;
 
-public abstract class PixelMap2d : Disposable
-{
-	public abstract PixelFormat Format { get; }
-	public abstract int Width { get; }
-	public abstract int Height { get; }
-	public Region2<int> Region => new(Vec2i.Zero, new(Width, Height));
-
-	public abstract void FlipX();
-	public abstract void FlipY();
-
-	public abstract void Invert();
-
-	public abstract void Fill(byte[] source);
-
-	/// <summary>
-	/// Fills pixel map with provided <paramref name="color"/>.
-	/// </summary>
-	/// <param name="color">The operation color.</param>
-	public abstract void Fill(Color4 color);
-
-	public static PixelMap2d FromImageBytes(byte[] bytes)
-	{
-		ImageResult image = ImageResult.FromMemory(bytes, ColorComponents.RedGreenBlueAlpha);
-		return FromImageResult(image);
-	}
-
-	public static PixelMap2d FromImageStream(Stream stream)
-	{
-		ImageResult image = ImageResult.FromStream(stream, ColorComponents.RedGreenBlueAlpha);
-		return FromImageResult(image);
-	}
-
-	private static PixelMap2d FromImageResult(ImageResult image)
-	{
-		int width = image.Width;
-		int height = image.Height;
-		byte[] pixelData = image.Data;
-		PixelMap2d<Rgba32> pixels = new(width, height);
-		pixels.Fill(pixelData);
-		return pixels;
-	}
-
-	/// <summary>
-	/// Saves current pixel map as an image into provided <paramref name="stream"/>.
-	/// </summary>
-	/// <param name="stream">Writing stream to save current image into.</param>
-	/// <param name="format">Image format.</param>
-	/// <exception cref="NotSupportedException ">Stream does not support writing.</exception>
-	/// <exception cref="PixelFormatNotSupportedException">Pixel format is not supported for requested image format.</exception>
-	public abstract void Save(Stream stream, ImageFormat format);
-
-	public enum ImageFormat
-	{
-		Png,
-		Jpg,
-		Bmp,
-	}
-}
-
-public class PixelMap2d<TPixel> : PixelMap2d
+public class PixelMap2D<TPixel> : PixelMap2D
 	where TPixel : unmanaged, IPixelFormat<TPixel>
 {
 	public override PixelFormat Format => TPixel.Format;
@@ -76,13 +16,18 @@ public class PixelMap2d<TPixel> : PixelMap2d
 	public int Length => Width * Height;
 	private readonly IMemoryOwner<TPixel> _pixels;
 
+	static PixelMap2D()
+	{
+		Debug.Assert(TPixel.ByteWidth == TPixel.Format.GetBytesPerPixel());
+	}
+
 	/// <summary>
 	/// Initialize pixel map of provided size.
 	/// </summary>
 	/// <param name="width">Width of pixel map in pixels.</param>
 	/// <param name="height">Height of pixel map in pixels.</param>
 	/// <exception cref="ArgumentOutOfRangeException">Provided width or height is zero or negative.</exception>
-	public PixelMap2d(int width, int height)
+	public PixelMap2D(int width, int height)
 	{
 		Width = width;
 		Height = height;
@@ -143,6 +88,12 @@ public class PixelMap2d<TPixel> : PixelMap2d
 		}
 	}
 
+	public override ReadOnlySpan<byte> GetBytes()
+	{
+		ThrowIfDisposed();
+		return MemoryMarshal.AsBytes(_pixels.Memory.Span[..Length]);
+	}
+
 	public override void Fill(byte[] source)
 	{
 		ThrowIfDisposed();
@@ -150,6 +101,17 @@ public class PixelMap2d<TPixel> : PixelMap2d
 		if (source.Length != Length)
 		{
 			ThrowHelper.ThrowArgumentException(nameof(source), "Source array is not same size of pixel map.");
+		}
+
+		source.CopyTo(MemoryMarshal.Cast<TPixel, byte>(_pixels.Memory.Span));
+	}
+
+	public override void Fill(ReadOnlySpan<byte> source)
+	{
+		ThrowIfDisposed();
+		if (source.Length != Length * TPixel.ByteWidth)
+		{
+			ThrowHelper.ThrowArgumentException(nameof(source), "Source span is not same size of pixel map.");
 		}
 
 		source.CopyTo(MemoryMarshal.Cast<TPixel, byte>(_pixels.Memory.Span));

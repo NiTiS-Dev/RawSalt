@@ -9,3 +9,16 @@ public enum PixelFormat
 	Bgra32UNorm,
 	Bgra32Srgb,
 }
+
+public static class PixelFormatExtensions
+{
+	public static int GetBytesPerPixel(this PixelFormat format)
+	{
+		return format switch
+		{
+			PixelFormat.Rgba32UNorm or PixelFormat.Rgba32Srgb or
+				PixelFormat.Bgra32UNorm or PixelFormat.Bgra32Srgb => Rgba32.ByteWidth,
+			_ => throw new PixelFormatNotSupportedException(format),
+		};
+	}
+}

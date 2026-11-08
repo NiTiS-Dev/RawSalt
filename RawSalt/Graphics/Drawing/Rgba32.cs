@@ -12,6 +12,7 @@ namespace RawSalt.Graphics.Drawing;
 public struct Rgba32 : IPixelFormat<Rgba32>, IEquatable<Rgba32>
 {
 	public static PixelFormat Format => PixelFormat.Rgba32UNorm;
+	public static int ByteWidth => 4;
 
 	public byte Red, Green, Blue, Alpha;
 

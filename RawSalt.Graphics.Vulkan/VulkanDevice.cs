@@ -78,6 +78,11 @@ public sealed class VulkanDevice : GraphicsDevice
 		return new VulkanBuffer(this, descriptor, data);
 	}
 
+	public override Texture2D CreateTexture(in Texture2DDescriptor descriptor, ReadOnlySpan<byte> data)
+	{
+		return new VulkanTexture2D(this, descriptor, data);
+	}
+
 	public override ShaderModule CreateShader(ShaderStages stage, ReadOnlySpan<byte> code)
 	{
 		return new VulkanShaderModule(this, stage, code);
@@ -105,6 +110,44 @@ public sealed class VulkanDevice : GraphicsDevice
 		}
 
 		throw new InvalidOperationException("No suitable memory type.");
+	}
+
+	// shortcut: immediate submits wait for the queue, batch them when transfers become hot.
+	internal unsafe void RunOnce(Action<VkCommandBuffer> record)
+	{
+		VkDeviceApi api = DeviceApi;
+		VkCommandPoolCreateInfo poolInfo = new()
+		{
+			queueFamilyIndex = GraphicsQueueFamily,
+		};
+		api.vkCreateCommandPool(&poolInfo, out VkCommandPool pool).CheckResult();
+
+		VkCommandBufferAllocateInfo allocInfo = new()
+		{
+			commandPool = pool,
+			level = VkCommandBufferLevel.Primary,
+			commandBufferCount = 1,
+		};
+		VkCommandBuffer buffer;
+		api.vkAllocateCommandBuffers(&allocInfo, &buffer).CheckResult();
+
+		VkCommandBufferBeginInfo beginInfo = new()
+		{
+			flags = VkCommandBufferUsageFlags.OneTimeSubmit,
+		};
+		api.vkBeginCommandBuffer(buffer, &beginInfo).CheckResult();
+		record(buffer);
+		api.vkEndCommandBuffer(buffer).CheckResult();
+
+		VkSubmitInfo submitInfo = new()
+		{
+			commandBufferCount = 1,
+			pCommandBuffers = &buffer,
+		};
+		api.vkQueueSubmit(GraphicsQueue, 1, &submitInfo, VkFence.Null).CheckResult();
+		api.vkQueueWaitIdle(GraphicsQueue).CheckResult();
+
+		api.vkDestroyCommandPool(pool);
 	}
 
 	public override void WaitIdle()

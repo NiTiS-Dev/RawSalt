@@ -79,7 +79,21 @@ public static class FormatExtensions
 		{
 			return bindingType switch
 			{
+				BindingType.CombinedImageSampler => VkDescriptorType.CombinedImageSampler,
 				_ => VkDescriptorType.UniformBufferDynamic,
+			};
+		}
+	}
+
+	extension(Sampling sampling)
+	{
+		public VkSamplerAddressMode ToVk()
+		{
+			return sampling switch
+			{
+				Sampling.ClampToBorder => VkSamplerAddressMode.ClampToBorder,
+				Sampling.MirrorRepeat => VkSamplerAddressMode.MirroredRepeat,
+				_ => VkSamplerAddressMode.Repeat,
 			};
 		}
 	}

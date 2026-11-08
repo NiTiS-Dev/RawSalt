@@ -1,6 +1,12 @@
 # RawSalt Engine
 
-## Requirements
+## Graphics
+
+### UV Coordinates
+Raw Salt Engine uses top-left corner as texture origin.
+Texture coordinates are normalized float values from 0f to 1f, and are not clamped.
+
+## Application Requirements
 
 ### Operating system support
 

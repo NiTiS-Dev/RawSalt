@@ -82,7 +82,8 @@ internal sealed class RenderThread
 				new BindingEntry(0, BindingType.UniformBuffer, ShaderStages.Vertex, (uint)Unsafe.SizeOf<CameraData>())
 			);
 			using BindGroupLayout bindModelGroupLayout = device.CreateBindGroupLayout(
-				new BindingEntry(0, BindingType.UniformBuffer, ShaderStages.Vertex, (uint)Unsafe.SizeOf<Matrix4x4>())
+				new BindingEntry(0, BindingType.UniformBuffer, ShaderStages.Vertex, (uint)Unsafe.SizeOf<Matrix4x4>()),
+				new BindingEntry(1, BindingType.CombinedImageSampler, ShaderStages.Fragment)
 			);
 			using Pipeline pipeline = device.CreatePipeline(new PipelineDescriptor
 			{
@@ -100,15 +101,52 @@ internal sealed class RenderThread
 
 			ReadOnlySpan<Vertex> square =
 			[
-				new() { X = -0.6f, Y = +0.6f, R = 1, G = 1, B = 1 }, // tl
-				new() { X = -0.6f, Y = -0.6f, R = 1, G = 1, B = 0 }, // bl
-				new() { X = +0.6f, Y = +0.6f, R = 0, G = 1, B = 1 }, // tr
-				new() { X = +0.6f, Y = -0.6f, R = 0, G = 1, B = 1 }, // br
+				// Front
+				new() { X = -1f, Y = +1f, Z = +1f, U = 0, V = 0 },
+				new() { X = -1f, Y = -1f, Z = +1f, U = 0, V = 1 },
+				new() { X = +1f, Y = +1f, Z = +1f, U = 1, V = 0 },
+				new() { X = +1f, Y = -1f, Z = +1f, U = 1, V = 1 },
+
+				// Back
+				new() { X = +1f, Y = +1f, Z = -1f, U = 0, V = 0 },
+				new() { X = +1f, Y = -1f, Z = -1f, U = 0, V = 1 },
+				new() { X = -1f, Y = +1f, Z = -1f, U = 1, V = 0 },
+				new() { X = -1f, Y = -1f, Z = -1f, U = 1, V = 1 },
+
+				// Top
+				new() { X = -1f, Y = +1f, Z = -1f, U = 0, V = 0 },
+				new() { X = -1f, Y = +1f, Z = +1f, U = 0, V = 1 },
+				new() { X = +1f, Y = +1f, Z = -1f, U = 1, V = 0 },
+				new() { X = +1f, Y = +1f, Z = +1f, U = 1, V = 1 },
+
+				// Bottom
+				new() { X = -1f, Y = -1f, Z = +1f, U = 0, V = 0 },
+				new() { X = -1f, Y = -1f, Z = -1f, U = 0, V = 1 },
+				new() { X = +1f, Y = -1f, Z = +1f, U = 1, V = 0 },
+				new() { X = +1f, Y = -1f, Z = -1f, U = 1, V = 1 },
+
+				// Left
+				new() { X = -1f, Y = +1f, Z = -1f, U = 0, V = 0 },
+				new() { X = -1f, Y = -1f, Z = -1f, U = 0, V = 1 },
+				new() { X = -1f, Y = +1f, Z = +1f, U = 1, V = 0 },
+				new() { X = -1f, Y = -1f, Z = +1f, U = 1, V = 1 },
+
+				// Right
+				new() { X = +1f, Y = +1f, Z = +1f, U = 0, V = 0 },
+				new() { X = +1f, Y = -1f, Z = +1f, U = 0, V = 1 },
+				new() { X = +1f, Y = +1f, Z = -1f, U = 1, V = 0 },
+				new() { X = +1f, Y = -1f, Z = -1f, U = 1, V = 1 },
 			];
 			using Buffer vertices = device.CreateBuffer(BufferUsage.Vertex, square);
-			ReadOnlySpan<uint> squareIndexes = [ 0, 1, 2, 2, 1, 3 ];
+			ReadOnlySpan<uint> squareIndexes = [
+				0, 1, 2, 2, 1, 3,
+				4, 5, 6, 6, 5, 7,
+				8, 9, 10, 10, 9, 11,
+				12, 13, 14, 14, 13, 15,
+				16, 17, 18, 18, 17, 19,
+				20, 21, 22, 22, 21, 23
+			];
 			using Buffer indexes = device.CreateBuffer(BufferUsage.Index, squareIndexes);
-
 
 			try
 			{
@@ -140,14 +178,23 @@ internal sealed class RenderThread
 
 					CommandList cmd = frame.Commands;
 					deg += 0.65f;
+					Vector3 cameraPosition = new Vector3(0f, 0f, 2f);
+					Vector3 cameraTarget = Vector3.Zero;
+					Vector3 upVector = +Vector3.UnitY;
+					float aspect = (float)size.X / size.Y;
+					float fieldOfView = MathF.PI / 4f;
+
+					Matrix4x4 view = Matrix4x4.CreateLookAt(cameraPosition, cameraTarget, upVector);
+					Matrix4x4 projection = Matrix4x4.CreatePerspectiveFieldOfView(fieldOfView, aspect, 0.001f, 100f);
 					cmd.BeginRenderPass(new RenderPass(frame.BackBuffer, new Color4(0.3f, 0.3f, 0.2f).ShiftHue(deg)));
 					{
 						cmd.SetPipeline(pipeline);
-						cmd.SetUniform(0, 0, new CameraData { View = Matrix4x4.Identity, Projection = Matrix4x4.Identity });
-						cmd.SetUniform(1, 0, Matrix4x4.Identity * Matrix4x4.CreateRotationZ(deg / 10));
+						cmd.SetUniform(0, 0, new CameraData { View = view, Projection = projection });
+						cmd.SetUniform(1, 0, Matrix4x4.CreateScale(0.5f) * Matrix4x4.CreateRotationY(deg / 120) * Matrix4x4.CreateRotationZ(deg / 310));
+						bindModelGroupLayout.SetTexture(1, catTexture);
 						cmd.SetVertexBuffer(0, vertices);
 						cmd.SetIndexBuffer(indexes);
-						cmd.DrawIndexed(6);
+						cmd.DrawIndexed((uint)squareIndexes.Length);
 					}
 					cmd.EndRenderPass();
 
@@ -174,13 +221,16 @@ internal sealed class RenderThread
 }
 
 [StructLayout(LayoutKind.Sequential)]
-file struct Vertex
+file struct Vertex()
 {
-	public float X, Y, R, G, B;
+	public float X, Y, Z;
+	public float R = 1f, G = 1f, B = 1f;
+	public float U, V;
 
-	public static readonly VertexLayout Layout = new(20,
+	public static readonly VertexLayout Layout = new(12 + 12 + 8,
 	[
-		new VertexAttribute(0, VertexFormat.Float32x2, 0),
-		new VertexAttribute(1, VertexFormat.Float32x3, 8),
+		new VertexAttribute(0, VertexFormat.Float32x3, 0),
+		new VertexAttribute(1, VertexFormat.Float32x3, 12),
+		new VertexAttribute(2, VertexFormat.Float32x2, 12 + 12),
 	]);
 }

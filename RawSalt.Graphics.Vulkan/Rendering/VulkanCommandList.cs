@@ -239,6 +239,7 @@ internal sealed class VulkanCommandList : CommandList
 		{
 			uint required = (1u << layouts[g].DynamicOffsetCount) - 1;
 			Debug.Assert(_setMasks[g] == required, $"Bind group {g}: not all uniform buffers were set before drawing.");
+			Debug.Assert(!layouts[g].HasUnsetImages, $"Bind group {g}: not all image samplers were set before drawing.");
 		}
 	}
 

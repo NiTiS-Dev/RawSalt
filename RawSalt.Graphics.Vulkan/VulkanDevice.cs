@@ -37,16 +37,22 @@ public sealed class VulkanDevice : GraphicsDevice
 		InstanceApi.vkGetPhysicalDeviceMemoryProperties(PhysicalDevice, out VkPhysicalDeviceMemoryProperties properties);
 		MemoryProperties = properties;
 
-		VkDescriptorPoolSize poolSize = new()
+		VkDescriptorPoolSize* poolSizes = stackalloc VkDescriptorPoolSize[2];
+		poolSizes[0] = new()
 		{
 			type = VkDescriptorType.UniformBufferDynamic,
+			descriptorCount = 64
+		};
+		poolSizes[1] = new()
+		{
+			type = VkDescriptorType.CombinedImageSampler,
 			descriptorCount = 64
 		};
 		VkDescriptorPoolCreateInfo poolInfo = new()
 		{
 			maxSets = 64,
-			poolSizeCount = 1,
-			pPoolSizes = &poolSize
+			poolSizeCount = 2,
+			pPoolSizes = poolSizes
 		};
 		DeviceApi.vkCreateDescriptorPool(&poolInfo, out VkDescriptorPool pool).CheckResult();
 		DescriptorPool = pool;

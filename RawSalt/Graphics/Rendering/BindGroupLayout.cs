@@ -35,6 +35,11 @@ public abstract class BindGroupLayout : Disposable // TODO: Rename to something 
 		return index;
 	}
 
+	/// <summary>
+	/// Binds <paramref name="texture"/> to a <see cref="BindingType.CombinedImageSampler"/> binding.
+	/// </summary>
+	public abstract void SetTexture(uint binding, Texture2D texture);
+
 	private static bool IsDynamic(in BindingEntry entry)
 	{
 		return entry.Type == BindingType.UniformBuffer;

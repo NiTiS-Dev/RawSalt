@@ -11,8 +11,10 @@ public sealed class VulkanTexture2D : Texture2D
 
 	public override PixelFormat Format { get; }
 	public override Vector2<int> Size { get; }
+	public VulkanDevice Device => _device;
 	public VkImage Image { get; }
 	public VkImageView View { get; }
+	public VkSampler Sampler { get; }
 
 	public unsafe VulkanTexture2D(VulkanDevice device, in Texture2DDescriptor descriptor, ReadOnlySpan<byte> initialData)
 	{
@@ -40,7 +42,7 @@ public sealed class VulkanTexture2D : Texture2D
 			mipLevels = 1,
 			arrayLayers = 1,
 			samples = VkSampleCountFlags.Count1,
-			tiling = VkImageTiling.Linear,
+			tiling = VkImageTiling.Optimal,
 			usage = VkImageUsageFlags.Sampled | VkImageUsageFlags.TransferDst | VkImageUsageFlags.TransferSrc,
 			sharingMode = VkSharingMode.Exclusive,
 			initialLayout = _layout = VkImageLayout.Undefined,
@@ -67,7 +69,27 @@ public sealed class VulkanTexture2D : Texture2D
 		api.vkCreateImageView(&viewInfo, out VkImageView view).CheckResult();
 		View = view;
 
-		if (!initialData.IsEmpty)
+		VkSamplerCreateInfo samplerInfo = new()
+		{
+			magFilter = VkFilter.Linear,
+			minFilter = VkFilter.Linear,
+			mipmapMode = VkSamplerMipmapMode.Nearest,
+			addressModeU = descriptor.Sampling.ToVk(),
+			addressModeV = descriptor.Sampling.ToVk(),
+			addressModeW = descriptor.Sampling.ToVk(),
+			compareOp = VkCompareOp.Never,
+			minLod = 0,
+			maxLod = 0,
+		};
+		api.vkCreateSampler(&samplerInfo, out VkSampler sampler).CheckResult();
+		Sampler = sampler;
+
+		if (initialData.IsEmpty)
+		{
+			// Sampling descriptors declare ShaderReadOnlyOptimal, so the image must actually be in it.
+			_device.RunOnce(cmd => Transition(cmd, VkImageLayout.ShaderReadOnlyOptimal));
+		}
+		else
 		{
 			Update(initialData);
 		}
@@ -223,6 +245,7 @@ public sealed class VulkanTexture2D : Texture2D
 	protected override void Dispose(bool disposing)
 	{
 		_device.WaitIdle();
+		_device.DeviceApi.vkDestroySampler(Sampler);
 		_device.DeviceApi.vkDestroyImageView(View);
 		_device.DeviceApi.vkDestroyImage(Image);
 		_device.DeviceApi.vkFreeMemory(_memory);

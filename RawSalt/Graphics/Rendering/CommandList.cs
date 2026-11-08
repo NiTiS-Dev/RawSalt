@@ -1,3 +1,5 @@
+using RawSalt.Graphics.Pipelines;
+
 namespace RawSalt.Graphics.Rendering;
 
 public abstract class CommandList

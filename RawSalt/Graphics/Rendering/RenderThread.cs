@@ -5,6 +5,7 @@ using System.Runtime.CompilerServices;
 using System.Runtime.ExceptionServices;
 using System.Runtime.InteropServices;
 using RawSalt.Graphics.Drawing;
+using RawSalt.Graphics.Pipelines;
 using RawSalt.Logging;
 
 namespace RawSalt.Graphics.Rendering;

@@ -1,4 +1,4 @@
-namespace RawSalt.Graphics;
+namespace RawSalt.Graphics.Pipelines;
 
 public abstract class ShaderModule : Disposable
 {

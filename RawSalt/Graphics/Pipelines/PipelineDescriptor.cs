@@ -2,7 +2,7 @@ using System.Collections.Immutable;
 using RawSalt.Graphics.Drawing;
 using RawSalt.Graphics.Rendering;
 
-namespace RawSalt.Graphics;
+namespace RawSalt.Graphics.Pipelines;
 
 public sealed record PipelineDescriptor
 {

@@ -1,4 +1,5 @@
 using System.Runtime.InteropServices;
+using RawSalt.Graphics.Pipelines;
 
 namespace RawSalt.Graphics.Vulkan;
 

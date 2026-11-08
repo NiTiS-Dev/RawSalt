@@ -1,4 +1,5 @@
 using RawSalt.Graphics.Drawing;
+using RawSalt.Graphics.Pipelines;
 using RawSalt.Graphics.Rendering;
 
 namespace RawSalt.Graphics.Vulkan;

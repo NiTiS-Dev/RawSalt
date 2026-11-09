@@ -182,6 +182,12 @@ public partial class Win32Platform : Platform
 		return true;
 	}
 
+	public override bool TryCreateErrorMessage(string message)
+	{
+		_ = PInvoke.MessageBox(HWND.Null, message, null, MESSAGEBOX_STYLE.MB_OK | MESSAGEBOX_STYLE.MB_ICONWARNING);
+		return true;
+	}
+
 	private LRESULT WndProc(HWND hWnd, uint msg, WPARAM wParam, LPARAM lParam)
 	{
 		if (msg == PInvoke.WM_DESTROY)

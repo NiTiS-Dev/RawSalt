@@ -85,6 +85,7 @@ public class Application
 		catch (Exception ex)
 		{
 			Log.Error(ex, "Error during application launch.");
+			Platform?.TryCreateErrorMessage(ex.Message + "\n" + ex.StackTrace);
 			return false;
 		}
 

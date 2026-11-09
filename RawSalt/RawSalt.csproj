@@ -16,6 +16,8 @@
         <PackageReference Include="CommunityToolkit.Diagnostics" Version="8.4.2" />
         <PackageReference Include="NiTiS.Mathematics" Version="4.0.0" />
         <PackageReference Include="StbImageNext" Version="1.1.0" />
+        <!-- TODO: Move this to a separate package for lightweight headless distribution (like game mods or tools) -->
+        <PackageReference Include="SlangShaderSharp" Version="2026.8.0.1" />
     </ItemGroup>
 
     <ItemGroup>

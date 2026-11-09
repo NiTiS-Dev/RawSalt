@@ -46,6 +46,10 @@ public static class FormatExtensions
 				VertexFormat.Float32x2 => VkFormat.R32G32Sfloat,
 				VertexFormat.Float32x3 => VkFormat.R32G32B32Sfloat,
 				VertexFormat.Float32x4 => VkFormat.R32G32B32A32Sfloat,
+				VertexFormat.UInt32 => VkFormat.R32Uint,
+				VertexFormat.UInt32x2 => VkFormat.R32G32Uint,
+				VertexFormat.UInt32x3 => VkFormat.R32G32B32Uint,
+				VertexFormat.UInt32x4 => VkFormat.R32G32B32A32Uint,
 				_ => throw new NotSupportedException($"Vertex format {format} not supported."),
 			};
 		}

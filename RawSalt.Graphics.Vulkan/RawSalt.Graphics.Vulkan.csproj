@@ -15,8 +15,4 @@
       <ProjectReference Include="..\RawSalt\RawSalt.csproj" />
     </ItemGroup>
 
-    <ItemGroup>
-      <EmbeddedResource Include="Shaders\*.spv" />
-    </ItemGroup>
-
 </Project>

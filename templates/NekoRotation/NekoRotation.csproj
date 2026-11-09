@@ -6,6 +6,7 @@
         <TargetFramework>net10.0</TargetFramework>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
+        <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
     </PropertyGroup>
 
     <ItemGroup>
@@ -13,7 +14,7 @@
     </ItemGroup>
 
     <ItemGroup>
-        <None Update="*.spv">
+        <None Update="*.slang">
             <CopyToOutputDirectory>Always</CopyToOutputDirectory>
         </None>
         <None Update="*.png">

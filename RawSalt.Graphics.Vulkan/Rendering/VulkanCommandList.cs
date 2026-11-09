@@ -151,24 +151,32 @@ internal sealed class VulkanCommandList : CommandList
 		_api.vkCmdBindPipeline(Buffer, VkPipelineBindPoint.Graphics, vkPipeline.Handle);
 	}
 
-	public override void SetUniform<T>(uint set, uint bind, in T data)
+	public override void SetUniform<T>(string name, in T data)
 	{
-		SetUniform(set, bind, _uploadMapArena.Allocate(in data));
+		SetUniform(name, _uploadMapArena.Allocate(in data));
 	}
 
-	public void SetUniform(uint set, uint bind, in UniformRef buffer)
+	private void SetUniform(string name, in UniformRef buffer)
 	{
 		Debug.Assert(_pipeline != null, "SetPipeline must be called before setting uniforms.");
-		Debug.Assert(set < _pipeline.BindGroupLayouts.Length, $"The pipeline has no bind group {set}.");
 
-		VulkanBindGroupLayout layout = _pipeline.BindGroupLayouts[set];
-		int index = layout.GetDynamicOffsetIndex(bind);
+		ShaderResource resource = _pipeline.GetResource(name, BindingType.UniformBuffer);
+		VulkanBindGroupLayout layout = _pipeline.BindGroupLayouts[resource.Set];
+		int index = layout.GetDynamicOffsetIndex(resource.Binding);
 		Debug.Assert(index < MaxDynamicPerGroup);
-		Debug.Assert(buffer.Size >= Array.Find(layout.Bindings, e => e.Binding == bind).Size, "Uniform data is smaller than the block declared in the layout.");
+		Debug.Assert(buffer.Size >= resource.Size, "Uniform data is smaller than the block declared in the shader.");
 
-		_dynamicOffsets[set * MaxDynamicPerGroup + index] = buffer.Offset;
-		_setMasks[set] |= 1u << index;
-		_dirtyGroups |= 1u << (int)set;
+		_dynamicOffsets[resource.Set * MaxDynamicPerGroup + index] = buffer.Offset;
+		_setMasks[resource.Set] |= 1u << index;
+		_dirtyGroups |= 1u << (int)resource.Set;
+	}
+
+	public override void SetTexture(string name, Texture2D texture)
+	{
+		Debug.Assert(_pipeline != null, "SetPipeline must be called before setting textures.");
+
+		ShaderResource resource = _pipeline.GetResource(name, BindingType.CombinedImageSampler);
+		_pipeline.BindGroupLayouts[resource.Set].SetTexture(resource.Binding, texture);
 	}
 
 	public override unsafe void SetVertexBuffer(uint slot, Buffer buffer, ulong offset = 0)

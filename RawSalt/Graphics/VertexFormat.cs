@@ -1,4 +1,4 @@
-namespace RawSalt;
+namespace RawSalt.Graphics;
 
 public enum VertexFormat
 {

@@ -1,7 +1,6 @@
 using System.Diagnostics;
 using System.Net;
 using System.Numerics;
-using System.Runtime.CompilerServices;
 using System.Runtime.ExceptionServices;
 using System.Runtime.InteropServices;
 using RawSalt.Graphics.Drawing;
@@ -74,23 +73,10 @@ internal sealed class RenderThread
 			using GraphicsDevice device = _backend.CreateDevice(null, _surface);
 			using Swapchain swapchain = device.CreateSwapchain(_surface);
 			using Renderer renderer = device.CreateRenderer(swapchain);
-			using ShaderModule vs =
-				device.CreateShader(ShaderStages.Vertex, File.ReadAllBytes("triangle.vert.spv"));
-			using ShaderModule fs =
-				device.CreateShader(ShaderStages.Fragment, File.ReadAllBytes("triangle.frag.spv"));
-			using BindGroupLayout bindCameraGroupLayout = device.CreateBindGroupLayout(
-				new BindingEntry(0, BindingType.UniformBuffer, ShaderStages.Vertex, (uint)Unsafe.SizeOf<CameraData>())
-			);
-			using BindGroupLayout bindModelGroupLayout = device.CreateBindGroupLayout(
-				new BindingEntry(0, BindingType.UniformBuffer, ShaderStages.Vertex, (uint)Unsafe.SizeOf<Matrix4x4>()),
-				new BindingEntry(1, BindingType.CombinedImageSampler, ShaderStages.Fragment)
-			);
+			SlangCompiler compiler = new();
 			using Pipeline pipeline = device.CreatePipeline(new PipelineDescriptor
 			{
-				VertexShader = vs,
-				FragmentShader = fs,
-				BindGroupLayout = [bindCameraGroupLayout, bindModelGroupLayout],
-				VertexLayout = Vertex.Layout,
+				Anatomy = new PipelineAnatomy(compiler, File.ReadAllText("triangle.slang")),
 				ColorFormat = renderer.BackBufferFormat,
 				CullMode = CullMode.Back,
 				FrontFace = FrontFace.CounterClockWise,
@@ -189,9 +175,9 @@ internal sealed class RenderThread
 					cmd.BeginRenderPass(new RenderPass(frame.BackBuffer, new Color4(0.3f, 0.3f, 0.2f).ShiftHue(deg)));
 					{
 						cmd.SetPipeline(pipeline);
-						cmd.SetUniform(0, 0, new CameraData { View = view, Projection = projection });
-						cmd.SetUniform(1, 0, Matrix4x4.CreateScale(0.5f) * Matrix4x4.CreateRotationY(deg / 120) * Matrix4x4.CreateRotationZ(deg / 310));
-						bindModelGroupLayout.SetTexture(1, catTexture);
+						cmd.SetUniform("camera", new CameraData { View = view, Projection = projection });
+						cmd.SetUniform("draw", Matrix4x4.CreateScale(0.5f) * Matrix4x4.CreateRotationY(deg / 120) * Matrix4x4.CreateRotationZ(deg / 310));
+						cmd.SetTexture("tex", catTexture);
 						cmd.SetVertexBuffer(0, vertices);
 						cmd.SetIndexBuffer(indexes);
 						cmd.DrawIndexed((uint)squareIndexes.Length);
@@ -226,11 +212,4 @@ file struct Vertex()
 	public float X, Y, Z;
 	public float R = 1f, G = 1f, B = 1f;
 	public float U, V;
-
-	public static readonly VertexLayout Layout = new(12 + 12 + 8,
-	[
-		new VertexAttribute(0, VertexFormat.Float32x3, 0),
-		new VertexAttribute(1, VertexFormat.Float32x3, 12),
-		new VertexAttribute(2, VertexFormat.Float32x2, 12 + 12),
-	]);
 }

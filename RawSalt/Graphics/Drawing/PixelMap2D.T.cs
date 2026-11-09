@@ -138,7 +138,7 @@ public class PixelMap2D<TPixel> : PixelMap2D
 		{
 			case ImageFormat.Png:
 			{
-				if (Format == PixelFormat.Rgba32UNorm)
+				if (Format is PixelFormat.Rgba32UNorm or PixelFormat.Rgba32Srgb)
 				{
 					PngEncoder.EncodeToStream(stream, data, Width, Height, ColorComponents.RedGreenBlueAlpha);
 				}

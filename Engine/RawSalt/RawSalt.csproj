@@ -1,0 +1,21 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <!-- Expose internals to a specific assembly -->
+    <ItemGroup>
+        <InternalsVisibleTo Include="RawSalt.Windowing.Win32" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <PackageReference Include="CommunityToolkit.Diagnostics" />
+        <PackageReference Include="NiTiS.Mathematics" />
+        
+        <PackageReference Include="StbImageNext" />
+        <!-- TODO: Move this to a separate package for lightweight headless distribution (like game mods or tools) -->
+        <PackageReference Include="SlangShaderSharp" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\Sdk\RawSalt.SourceGenerator\RawSalt.SourceGenerator.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
+    </ItemGroup>
+
+</Project>

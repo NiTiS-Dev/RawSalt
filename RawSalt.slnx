@@ -1,12 +1,22 @@
 <Solution>
-  <Folder Name="/Root/">
-      <File Path="README.md" />
-      <File Path=".editorconfig" />
-      <File Path=".gitignore" />
+  <Folder Name="/Engine/">
+    <File Path="Engine/Directory.Build.props" />
+    <Project Path="Engine/RawSalt.Graphics.Vulkan/RawSalt.Graphics.Vulkan.csproj" />
+    <Project Path="Engine/RawSalt.Platforms.Win32/RawSalt.Platforms.Win32.csproj" />
+    <Project Path="Engine/RawSalt/RawSalt.csproj" />
   </Folder>
-  <Project Path="RawSalt.Graphics.Vulkan/RawSalt.Graphics.Vulkan.csproj" />
-  <Project Path="RawSalt.Platforms.Win32/RawSalt.Platforms.Win32.csproj" />
-  <Project Path="RawSalt.SourceGenerator/RawSalt.SourceGenerator.csproj" />
-  <Project Path="RawSalt/RawSalt.csproj" />
-  <Project Path="templates/NekoRotation/NekoRotation.csproj" />
+  <Folder Name="/Root/">
+  	<File Path="README.md" />
+    <File Path="../../../../Projects/RawSalt/Directory.Build.props" />
+    <File Path="../../../../Projects/RawSalt/Directory.Build.targets" />
+    <File Path="../../../../Projects/RawSalt/Directory.Packages.props" />
+  	<File Path=".editorconfig" />
+  	<File Path=".gitignore" />
+  </Folder>
+  <Folder Name="/Sdk/">
+  	<Project Path="Sdk/RawSalt.SourceGenerator/RawSalt.SourceGenerator.csproj" />
+  </Folder>
+  <Folder Name="/Examples/">
+  	<Project Path="Examples/NekoRotation/NekoRotation.csproj" />
+  </Folder>
 </Solution>

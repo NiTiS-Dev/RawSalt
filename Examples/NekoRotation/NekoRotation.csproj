@@ -8,9 +8,9 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\..\RawSalt.Graphics.Vulkan\RawSalt.Graphics.Vulkan.csproj" />
-        <ProjectReference Include="..\..\RawSalt.Platforms.Win32\RawSalt.Platforms.Win32.csproj" />
-        <ProjectReference Include="..\..\RawSalt\RawSalt.csproj" />
+        <ProjectReference Include="../../Engine/RawSalt.Graphics.Vulkan/RawSalt.Graphics.Vulkan.csproj" />
+        <ProjectReference Include="../../Engine/RawSalt.Platforms.Win32/RawSalt.Platforms.Win32.csproj" />
+        <ProjectReference Include="../../Engine/RawSalt/RawSalt.csproj" />
     </ItemGroup>
 
     <ItemGroup>

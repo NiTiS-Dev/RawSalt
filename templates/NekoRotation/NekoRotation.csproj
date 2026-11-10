@@ -2,7 +2,8 @@
     <Import Project="../../RawSalt/build/RawSalt.props" />
     
     <PropertyGroup>
-        <OutputType>WinExe</OutputType>
+        <OutputType Condition="$([MSBuild]::IsOSPlatform('Windows'))">WinExe</OutputType>
+        <OutputType Condition="!$([MSBuild]::IsOSPlatform('Windows'))">Exe</OutputType>
         <TargetFramework>net10.0</TargetFramework>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>

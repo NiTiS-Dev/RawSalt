@@ -11,6 +11,10 @@
 
         <RawSaltPlatform Condition="'$(RawSaltPlatform)' == '' and '$(_RawSaltIsWindows)' == 'true'">Win32</RawSaltPlatform>
         <RawSaltPlatform Condition="'$(RawSaltPlatform)' == '' and '$(_RawSaltIsLinux)' == 'true'">Xlib</RawSaltPlatform>
+
+        <DefineConstants Condition="'$(RawSaltPlatform)' == 'Win32'">$(DefineConstants);RAWSALT_WIN32</DefineConstants>
+        <DefineConstants Condition="'$(RawSaltPlatform)' == 'Xlib'">$(DefineConstants);RAWSALT_XLIB</DefineConstants>
+        <DefineConstants Condition="'$(RawSaltPlatform)' == 'Wayland'">$(DefineConstants);RAWSALT_WAYLAND</DefineConstants>
     </PropertyGroup>
 
     <ItemGroup>
@@ -24,7 +28,7 @@
 
     <ItemGroup Condition="'$(RawSaltUsePackages)' == 'true'">
         <PackageReference Include="RawSalt.Platforms.$(RawSaltPlatform)" Version="$(RawSaltVersion)" />
-        <PackageReference Include="@(RawSaltBackend->'RawSalt.Graphics.%(Identity)')" Version="$(RawSaltVersion)" />
+        <PackageReference Include="@(_RawSaltBackend->'RawSalt.Graphics.%(Identity)')" Version="$(RawSaltVersion)" />
     </ItemGroup>
 
     <Target Name="RawSaltValidate" BeforeTargets="BeforeBuild;ResolveProjectReferences">

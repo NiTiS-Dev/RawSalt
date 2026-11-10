@@ -3,10 +3,12 @@ using RawSalt.Graphics.Vulkan;
 using RawSalt.Logging;
 #if RAWSALT_WIN32
 using RawSalt.Windowing.Win32;
-#elif RAWSALT_XLIB
-using RawSalt.Windowing.Xlib;
-#elif RAWSALT_WAYLAND
+#endif
+#if RAWSALT_WAYLAND
 using RawSalt.Windowing.Wayland;
+#endif
+#if RAWSALT_XLIB
+using RawSalt.Windowing.Xlib;
 #endif
 
 namespace NekoRotation;
@@ -22,10 +24,12 @@ internal sealed class App : Application
         var config = LaunchConfiguration.CreateBuilder()
 #if RAWSALT_WIN32
 	        .AddWin32Platform()
-#elif RAWSALT_XLIB
-	        .AddXlibPlatform()
-#elif RAWSALT_WAYLAND
+#endif
+#if RAWSALT_WAYLAND
 	        .AddWaylandPlatform()
+#endif
+#if RAWSALT_XLIB
+	        .AddXlibPlatform()
 #endif
 	        .AddVulkanBackend()
 	        .Build();

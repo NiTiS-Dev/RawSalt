@@ -1,6 +1,8 @@
 using NWayland;
 using NWayland.Interop;
+using NWayland.Protocols.CursorShapeV1;
 using NWayland.Protocols.FractionalScaleV1;
+using NWayland.Protocols.TextInputUnstableV3;
 using NWayland.Protocols.Viewporter;
 using NWayland.Protocols.Wayland;
 using NWayland.Protocols.XdgDecorationUnstableV1;
@@ -22,6 +24,8 @@ public sealed class WaylandPlatform : Platform
 	internal ZxdgDecorationManagerV1? DecorationManager { get; private set; }
 	internal WpViewporter? Viewporter { get; private set; }
 	internal WpFractionalScaleManagerV1? FractionalScaleManager { get; private set; }
+	internal ZwpTextInputManagerV3? TextInputManager { get; private set; }
+	internal WpCursorShapeManagerV1? CursorShapeManager { get; private set; }
 
 	private readonly WlDisplay _display;
 	private readonly WlRegistry _registry;
@@ -31,6 +35,10 @@ public sealed class WaylandPlatform : Platform
 	private readonly ZxdgDecorationManagerV1.Listener.Relay _decorationListener = new();
 	private readonly WpViewporter.Listener.Relay _viewporterListener = new();
 	private readonly WpFractionalScaleManagerV1.Listener.Relay _fractionalScaleManagerListener = new();
+	private readonly ZwpTextInputManagerV3.Listener.Relay _textInputManagerListener = new();
+	private readonly ZwpTextInputV3.Listener.Relay _textInputListener;
+	private readonly WpCursorShapeManagerV1.Listener.Relay _cursorShapeManagerListener = new();
+	private readonly WpCursorShapeDeviceV1.Listener.Relay _cursorShapeDeviceListener = new();
 	private readonly Dictionary<WlOutput, WaylandDisplay> _outputs = [];
 	private readonly Dictionary<nint, WaylandWindow> _windows = [];
 	private readonly int _displayFd;
@@ -41,10 +49,21 @@ public sealed class WaylandPlatform : Platform
 	private WlSeat? _seat;
 	private WlKeyboard? _keyboard;
 	private WlPointer? _pointer;
+	private ZwpTextInputV3? _textInput;
+	private WpCursorShapeDeviceV1? _cursorShapeDevice;
 	private WlSurface? _keyboardFocus;
 	private WlSurface? _pointerFocus;
+	private WlSurface? _textInputSurface;
 	private KeyModifiers _modifiers;
 	private Vector2<int> _pointerPosition;
+	private CursorShape _cursorShape = CursorShape.Default;
+	private uint _pointerSerial;
+	private bool _textInputEnabled;
+	private string _pendingText = string.Empty;
+	private string _pendingPreedit = string.Empty;
+	private int _pendingPreeditBegin;
+	private int _pendingPreeditEnd;
+	private bool _hasPendingPreedit;
 	private double _scrollX;
 	private double _scrollY;
 
@@ -79,6 +98,15 @@ public sealed class WaylandPlatform : Platform
 			OnButton = OnPointerButton,
 			OnAxis = OnPointerAxis,
 			OnFrame = OnPointerFrame
+		};
+
+		_textInputListener = new ZwpTextInputV3.Listener.Relay
+		{
+			OnEnter = OnTextInputEnter,
+			OnLeave = OnTextInputLeave,
+			OnPreeditString = OnTextInputPreeditString,
+			OnCommitString = OnTextInputCommitString,
+			OnDone = OnTextInputDone
 		};
 
 		_registryListener = new WlRegistry.Listener.Relay
@@ -119,6 +147,7 @@ public sealed class WaylandPlatform : Platform
 
 			case "wl_seat":
 				_seat = WlSeat.Bind(registry, name, Math.Min(version, 5), _seatListener, null!);
+				EnsureTextInput();
 				break;
 
 			case "zxdg_decoration_manager_v1":
@@ -134,6 +163,18 @@ public sealed class WaylandPlatform : Platform
 			case "wp_fractional_scale_manager_v1":
 				FractionalScaleManager = WpFractionalScaleManagerV1.Bind(registry, name,
 					Math.Min(version, 1), _fractionalScaleManagerListener, null!);
+				break;
+
+			case "zwp_text_input_manager_v3":
+				TextInputManager = ZwpTextInputManagerV3.Bind(registry, name, Math.Min(version, 1),
+					_textInputManagerListener, null!);
+				EnsureTextInput();
+				break;
+
+			case "wp_cursor_shape_manager_v1":
+				CursorShapeManager = WpCursorShapeManagerV1.Bind(registry, name, Math.Min(version, 1),
+					_cursorShapeManagerListener, null!);
+				EnsureCursorShapeDevice();
 				break;
 		}
 	}
@@ -160,6 +201,7 @@ public sealed class WaylandPlatform : Platform
 		if (hasKeyboard && _keyboard == null)
 		{
 			_keyboard = seat.GetKeyboard(_keyboardListener, null!);
+			EnsureTextInput();
 		}
 		else if (!hasKeyboard)
 		{
@@ -173,6 +215,7 @@ public sealed class WaylandPlatform : Platform
 		if (hasPointer && _pointer == null)
 		{
 			_pointer = seat.GetPointer(_pointerListener, null!);
+			EnsureCursorShapeDevice();
 		}
 		else if (!hasPointer)
 		{
@@ -182,6 +225,8 @@ public sealed class WaylandPlatform : Platform
 			}
 
 			_pointerFocus = null;
+			_cursorShapeDevice?.Dispose();
+			_cursorShapeDevice = null;
 			_pointer?.Dispose();
 			_pointer = null;
 		}
@@ -252,11 +297,14 @@ public sealed class WaylandPlatform : Platform
 		{
 			current.ProcessKeyboardFocus(true);
 		}
+
+		SyncTextInput();
 	}
 
 	private void OnPointerEnter(WlPointer pointer, uint serial, WlSurface? surface, WlFixed surfaceX,
 		WlFixed surfaceY)
 	{
+		_pointerSerial = serial;
 		_pointerFocus = surface;
 		_pointerPosition = new Vector2<int>(ToPixel(surfaceX), ToPixel(surfaceY));
 
@@ -264,6 +312,11 @@ public sealed class WaylandPlatform : Platform
 		{
 			window.ProcessMouseMove(_pointerPosition);
 			window.ProcessCursorEntered();
+			ApplyCursorShape(window.CursorShape);
+		}
+		else
+		{
+			ApplyCursorShape(CursorShape.Default);
 		}
 	}
 
@@ -295,6 +348,8 @@ public sealed class WaylandPlatform : Platform
 	private void OnPointerButton(WlPointer pointer, uint serial, uint time, uint button,
 		WlPointer.ButtonStateEnum state)
 	{
+		_pointerSerial = serial;
+
 		if (LinuxButtonMap.TryGetButton((int)button, out MouseButton mapped) is false)
 		{
 			return;
@@ -361,6 +416,180 @@ public sealed class WaylandPlatform : Platform
 		return (int)MathF.Round((float)(double)value);
 	}
 
+	private void EnsureTextInput()
+	{
+		if (_textInput != null || TextInputManager == null || _seat == null)
+		{
+			return;
+		}
+
+		_textInput = TextInputManager.GetTextInput(_seat, _textInputListener, null!);
+		SyncTextInput();
+	}
+
+	private void SyncTextInput()
+	{
+		if (_textInput == null)
+		{
+			return;
+		}
+
+		bool enable = FindWindow(_keyboardFocus) is WaylandWindow window && window.IsTextInputEnabled;
+		if (enable == _textInputEnabled)
+		{
+			return;
+		}
+
+		_textInputEnabled = enable;
+
+		if (enable)
+		{
+			_textInput.SetContentType(ZwpTextInputV3.ContentHintEnum.None,
+				ZwpTextInputV3.ContentPurposeEnum.Normal);
+			_textInput.Enable();
+		}
+		else
+		{
+			_textInput.Disable();
+		}
+
+		_textInput.Commit();
+
+		if (!enable)
+		{
+			ResetPendingTextInput();
+		}
+	}
+
+	private void OnTextInputEnter(ZwpTextInputV3 textInput, WlSurface? surface)
+	{
+		_textInputSurface = surface;
+	}
+
+	private void OnTextInputLeave(ZwpTextInputV3 textInput, WlSurface? surface)
+	{
+		if (!ReferenceEquals(_textInputSurface, surface))
+		{
+			return;
+		}
+
+		if (_hasPendingPreedit && FindWindow(surface) is WaylandWindow window)
+		{
+			window.ProcessPreedit(string.Empty, 0, 0);
+		}
+
+		ResetPendingTextInput();
+		_textInputSurface = null;
+	}
+
+	private void OnTextInputPreeditString(ZwpTextInputV3 textInput, string? text, int cursorBegin,
+		int cursorEnd)
+	{
+		_pendingPreedit = text ?? string.Empty;
+		_pendingPreeditBegin = cursorBegin;
+		_pendingPreeditEnd = cursorEnd;
+		_hasPendingPreedit = true;
+	}
+
+	private void OnTextInputCommitString(ZwpTextInputV3 textInput, string? text)
+	{
+		_pendingText += text ?? string.Empty;
+	}
+
+	private void OnTextInputDone(ZwpTextInputV3 textInput, uint serial)
+	{
+		WaylandWindow? window = FindWindow(_textInputSurface) ?? FindWindow(_keyboardFocus);
+
+		if (_hasPendingPreedit)
+		{
+			window?.ProcessPreedit(_pendingPreedit, _pendingPreeditBegin, _pendingPreeditEnd);
+			_hasPendingPreedit = false;
+		}
+
+		if (_pendingText.Length != 0)
+		{
+			window?.ProcessTextInput(_pendingText);
+			_pendingText = string.Empty;
+		}
+	}
+
+	private void ResetPendingTextInput()
+	{
+		_pendingText = string.Empty;
+		_pendingPreedit = string.Empty;
+		_pendingPreeditBegin = 0;
+		_pendingPreeditEnd = 0;
+		_hasPendingPreedit = false;
+	}
+
+	private void EnsureCursorShapeDevice()
+	{
+		if (_cursorShapeDevice != null || CursorShapeManager == null || _pointer == null)
+		{
+			return;
+		}
+
+		_cursorShapeDevice = CursorShapeManager.GetPointer(_pointer, _cursorShapeDeviceListener, null!);
+		ApplyCursorShape(_cursorShape);
+	}
+
+	private void ApplyWindowCursorShape(WaylandWindow window)
+	{
+		if (FindWindow(_pointerFocus) == window)
+		{
+			ApplyCursorShape(window.CursorShape);
+		}
+	}
+
+	private void ApplyCursorShape(CursorShape shape)
+	{
+		_cursorShape = shape;
+		_cursorShapeDevice?.SetShape(_pointerSerial, ToCursorShape(shape));
+	}
+
+	private static WpCursorShapeDeviceV1.ShapeEnum ToCursorShape(CursorShape shape)
+	{
+		return shape switch
+		{
+			CursorShape.ContextMenu => WpCursorShapeDeviceV1.ShapeEnum.ContextMenu,
+			CursorShape.Help => WpCursorShapeDeviceV1.ShapeEnum.Help,
+			CursorShape.Pointer => WpCursorShapeDeviceV1.ShapeEnum.Pointer,
+			CursorShape.Progress => WpCursorShapeDeviceV1.ShapeEnum.Progress,
+			CursorShape.Wait => WpCursorShapeDeviceV1.ShapeEnum.Wait,
+			CursorShape.Cell => WpCursorShapeDeviceV1.ShapeEnum.Cell,
+			CursorShape.Crosshair => WpCursorShapeDeviceV1.ShapeEnum.Crosshair,
+			CursorShape.Text => WpCursorShapeDeviceV1.ShapeEnum.Text,
+			CursorShape.VerticalText => WpCursorShapeDeviceV1.ShapeEnum.VerticalText,
+			CursorShape.Alias => WpCursorShapeDeviceV1.ShapeEnum.Alias,
+			CursorShape.Copy => WpCursorShapeDeviceV1.ShapeEnum.Copy,
+			CursorShape.Move => WpCursorShapeDeviceV1.ShapeEnum.Move,
+			CursorShape.NoDrop => WpCursorShapeDeviceV1.ShapeEnum.NoDrop,
+			CursorShape.NotAllowed => WpCursorShapeDeviceV1.ShapeEnum.NotAllowed,
+			CursorShape.Grab => WpCursorShapeDeviceV1.ShapeEnum.Grab,
+			CursorShape.Grabbing => WpCursorShapeDeviceV1.ShapeEnum.Grabbing,
+			CursorShape.ResizeEast => WpCursorShapeDeviceV1.ShapeEnum.EResize,
+			CursorShape.ResizeNorth => WpCursorShapeDeviceV1.ShapeEnum.NResize,
+			CursorShape.ResizeNorthEast => WpCursorShapeDeviceV1.ShapeEnum.NeResize,
+			CursorShape.ResizeNorthWest => WpCursorShapeDeviceV1.ShapeEnum.NwResize,
+			CursorShape.ResizeSouth => WpCursorShapeDeviceV1.ShapeEnum.SResize,
+			CursorShape.ResizeSouthEast => WpCursorShapeDeviceV1.ShapeEnum.SeResize,
+			CursorShape.ResizeSouthWest => WpCursorShapeDeviceV1.ShapeEnum.SwResize,
+			CursorShape.ResizeWest => WpCursorShapeDeviceV1.ShapeEnum.WResize,
+			CursorShape.ResizeEastWest => WpCursorShapeDeviceV1.ShapeEnum.EwResize,
+			CursorShape.ResizeNorthSouth => WpCursorShapeDeviceV1.ShapeEnum.NsResize,
+			CursorShape.ResizeNorthEastSouthWest => WpCursorShapeDeviceV1.ShapeEnum.NeswResize,
+			CursorShape.ResizeNorthWestSouthEast => WpCursorShapeDeviceV1.ShapeEnum.NwseResize,
+			CursorShape.ResizeColumn => WpCursorShapeDeviceV1.ShapeEnum.ColResize,
+			CursorShape.ResizeRow => WpCursorShapeDeviceV1.ShapeEnum.RowResize,
+			CursorShape.AllScroll => WpCursorShapeDeviceV1.ShapeEnum.AllScroll,
+			CursorShape.ZoomIn => WpCursorShapeDeviceV1.ShapeEnum.ZoomIn,
+			CursorShape.ZoomOut => WpCursorShapeDeviceV1.ShapeEnum.ZoomOut,
+			CursorShape.DragAndDropAsk => WpCursorShapeDeviceV1.ShapeEnum.DndAsk,
+			CursorShape.AllResize => WpCursorShapeDeviceV1.ShapeEnum.AllResize,
+			_ => WpCursorShapeDeviceV1.ShapeEnum.Default,
+		};
+	}
+
 	public static bool IsAvailable()
 	{
 		if (string.IsNullOrEmpty(Environment.GetEnvironmentVariable("WAYLAND_DISPLAY")))
@@ -404,6 +633,11 @@ public sealed class WaylandPlatform : Platform
 
 		_windows.Clear();
 
+		_textInput?.Dispose();
+		_textInput = null;
+		_cursorShapeDevice?.Dispose();
+		_cursorShapeDevice = null;
+
 		_keyboard?.Dispose();
 		_keyboard = null;
 		_pointer?.Dispose();
@@ -424,6 +658,10 @@ public sealed class WaylandPlatform : Platform
 		FractionalScaleManager = null;
 		Viewporter?.Dispose();
 		Viewporter = null;
+		TextInputManager?.Dispose();
+		TextInputManager = null;
+		CursorShapeManager?.Dispose();
+		CursorShapeManager = null;
 		WmBase?.Dispose();
 		WmBase = null!;
 		Compositor?.Dispose();
@@ -441,6 +679,8 @@ public sealed class WaylandPlatform : Platform
 	{
 		WaylandWindow window = new(this, configuration.Size, configuration.Title);
 		_windows.Add(window.Surface.Handle, window);
+		window.CursorShapeChanged += _ => ApplyWindowCursorShape(window);
+		window.TextInputEnabledChanged += _ => SyncTextInput();
 		return window;
 	}
 
@@ -508,6 +748,13 @@ public sealed class WaylandPlatform : Platform
 			_pointerFocus = null;
 		}
 
+		if (_textInputSurface != null && _textInputSurface.Handle == handle)
+		{
+			_textInputSurface = null;
+			ResetPendingTextInput();
+		}
+
+		SyncTextInput();
 		_windows.Remove(handle);
 	}
 }

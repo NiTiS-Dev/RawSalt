@@ -245,6 +245,16 @@ public sealed class WaylandWindow : Window, INativeWindow
 		OnCursorLeft();
 	}
 
+	internal void ProcessTextInput(string text)
+	{
+		OnTextInput(new TextInputEventArgs(text));
+	}
+
+	internal void ProcessPreedit(string text, int cursorBegin, int cursorEnd)
+	{
+		OnPreeditChanged(new PreeditEventArgs(text, cursorBegin, cursorEnd));
+	}
+
 	private void UpdateLogicalSize(int width, int height)
 	{
 		Vector2<int> previousSize = Size;

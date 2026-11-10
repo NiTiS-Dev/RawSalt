@@ -3,9 +3,11 @@ using System.Runtime.InteropServices;
 using RawSalt.Graphics.Drawing;
 using RawSalt.Graphics.Pipelines;
 using RawSalt.Graphics.Rendering;
+using RawSalt.Threading;
 
 namespace RawSalt.Graphics;
 
+[ThreadSafety(AllowedThread.Render)]
 public abstract class GraphicsDevice : Disposable
 {
 	public abstract Adapter Adapter { get; }

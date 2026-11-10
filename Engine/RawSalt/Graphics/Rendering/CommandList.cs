@@ -1,7 +1,9 @@
 using RawSalt.Graphics.Pipelines;
+using RawSalt.Threading;
 
 namespace RawSalt.Graphics.Rendering;
 
+[ThreadSafety(AllowedThread.Render)]
 public abstract class CommandList
 {
 	public abstract void BeginRenderPass(in RenderPass passDescriptor);

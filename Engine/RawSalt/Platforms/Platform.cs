@@ -1,5 +1,8 @@
+using RawSalt.Threading;
+
 namespace RawSalt.Platforms;
 
+[ThreadSafety(AllowedThread.Main)]
 public abstract class Platform : Disposable
 {
 	public virtual WellKnownPlatformApi Api => WellKnownPlatformApi.Unknown;

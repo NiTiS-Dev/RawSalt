@@ -1,5 +1,4 @@
 using System.Diagnostics;
-using System.Net;
 using System.Numerics;
 using System.Runtime.ExceptionServices;
 using System.Runtime.InteropServices;
@@ -7,10 +6,12 @@ using System.Threading.Channels;
 using RawSalt.Graphics.Drawing;
 using RawSalt.Graphics.Pipelines;
 using RawSalt.Logging;
+using RawSalt.Threading;
 
 namespace RawSalt.Graphics.Rendering;
 
 // TODO: Clean and rework this clas
+[ThreadSafety(AllowedThread.Main | AllowedThread.Render)]
 internal sealed class RenderThread
 {
 	private const int SleepMs = 50;
@@ -27,7 +28,9 @@ internal sealed class RenderThread
 	private Exception? _failure;
 	private readonly CancellationTokenSource _cts;
 
+	[ThreadSafety(AllowedThread.Main)]
 	public bool FirstFramePresented => _firstFramePresented.IsSet;
+	[ThreadSafety(AllowedThread.Main)]
 	public bool IsValid => _failure == null;
 
 	public RenderThread(FramePacer pacer, GraphicsBackend backend, RenderSurface surface, CancellationToken cancellationToken = default)
@@ -50,13 +53,16 @@ internal sealed class RenderThread
 		};
 	}
 
+	[ThreadSafety(AllowedThread.Main)]
 	public void Start() => _thread.Start();
 
+	[ThreadSafety(AllowedThread.Main)]
 	public void Post(Action<GraphicsDevice> action)
 	{
 		_messages.Writer.TryWrite(action);
 	}
 
+	[ThreadSafety(AllowedThread.Main)]
 	public void Stop()
 	{
 		_cts.Cancel();
@@ -70,6 +76,7 @@ internal sealed class RenderThread
 		}
 	}
 
+	[ThreadSafety(AllowedThread.Render)]
 	private void Run()
 	{
 		CancellationToken cancellationToken = _cts.Token;

@@ -1,8 +1,10 @@
 using System.Diagnostics.CodeAnalysis;
 using RawSalt.Graphics.Drawing;
+using RawSalt.Threading;
 
 namespace RawSalt.Graphics.Rendering;
 
+[ThreadSafety(AllowedThread.Render)]
 public abstract class Renderer : Disposable
 {
 	public abstract PixelFormat BackBufferFormat { get; }

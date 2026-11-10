@@ -31,6 +31,7 @@ public sealed class XlibPlatform : Platform
 		}
 
 		RootWindow = XlibNative.XDefaultRootWindow(DisplayHandle);
+		XlibNative.XkbSetDetectableAutoRepeat(DisplayHandle, 1, out _);
 		WmProtocolsAtom = InternAtom("WM_PROTOCOLS");
 		WmDeleteWindowAtom = InternAtom("WM_DELETE_WINDOW");
 		_netWmNameAtom = InternAtom("_NET_WM_NAME");

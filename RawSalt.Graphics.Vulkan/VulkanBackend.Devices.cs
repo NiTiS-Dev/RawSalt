@@ -50,6 +50,7 @@ public partial class VulkanBackend
 			throw new NotSupportedException($"Adapter \"{adapter.Name}\" does not expose any queue families.");
 		}
 
+		uint? combined = null;
 		uint? graphics = null;
 		uint? present = null;
 
@@ -57,23 +58,36 @@ public partial class VulkanBackend
 		instanceApi.vkGetPhysicalDeviceQueueFamilyProperties(physicalDevice, queueFamilies);
 		for (uint i = 0; i < queueFamilies.Length; i++)
 		{
-			if (queueFamilies[i].queueFlags.HasFlag(VkQueueFlags.Graphics))
-			{
-				graphics = i;
-				continue;
-			}
+			bool supportsGraphics = queueFamilies[i].queueFlags.HasFlag(VkQueueFlags.Graphics);
 
+			// Present support must be checked for every family, including graphics one.
+			// On most Linux drivers a single family handles both graphics and presentation.
 			instanceApi.vkGetPhysicalDeviceSurfaceSupportKHR(physicalDevice, i, vulkanSurface.Surface, out VkBool32 supported);
-			if (supported)
+			bool supportsPresent = supported;
+
+			if (supportsGraphics && supportsPresent)
 			{
-				present = i;
-				continue;
+				combined ??= i;
+			}
+			else if (supportsGraphics)
+			{
+				graphics ??= i;
+			}
+			else if (supportsPresent)
+			{
+				present ??= i;
 			}
 		}
 
-		if (graphics != null && present != null)
+		// Prefer a single family that can do both.
+		if (combined is uint combinedFamily)
 		{
-			return CreateDevice(InstanceApi, adapter, graphics.Value, present.Value);
+			return CreateDevice(instanceApi, adapter, combinedFamily, combinedFamily);
+		}
+
+		if (graphics is uint graphicsFamily && present is uint presentFamily)
+		{
+			return CreateDevice(instanceApi, adapter, graphicsFamily, presentFamily);
 		}
 
 		throw new NotSupportedException($"Adapter \"{adapter.Name}\" does not support required operations.");
@@ -82,19 +96,25 @@ public partial class VulkanBackend
 	private static unsafe VulkanDevice CreateDevice(VkInstanceApi instanceApi, VulkanAdapter adapter, uint graphicsQueueFamilyIndex, uint presentQueueFamilyIndex)
 	{
 		float queuePriority = 1.0f;
-		VkDeviceQueueCreateInfo* queueCreateInfos = stackalloc VkDeviceQueueCreateInfo[2];
+		bool sameQueueFamily = graphicsQueueFamilyIndex == presentQueueFamilyIndex;
+		uint queueCreateInfoCount = sameQueueFamily ? 1U : 2U;
+		VkDeviceQueueCreateInfo* queueCreateInfos = stackalloc VkDeviceQueueCreateInfo[(int)queueCreateInfoCount];
 		queueCreateInfos[0] = new()
 		{
 			queueFamilyIndex = graphicsQueueFamilyIndex,
 			queueCount = 1,
 			pQueuePriorities = &queuePriority
 		};
-		queueCreateInfos[1] = new()
+
+		if (!sameQueueFamily)
 		{
-			queueFamilyIndex = presentQueueFamilyIndex,
-			queueCount = 1,
-			pQueuePriorities = &queuePriority
-		};
+			queueCreateInfos[1] = new()
+			{
+				queueFamilyIndex = presentQueueFamilyIndex,
+				queueCount = 1,
+				pQueuePriorities = &queuePriority
+			};
+		}
 
 		VkUtf8String[] extensionNames = [Vk.VK_KHR_SWAPCHAIN_EXTENSION_NAME];
 		using VkStringArray extensions = new(extensionNames);
@@ -106,7 +126,7 @@ public partial class VulkanBackend
 		VkDeviceCreateInfo createInfo = new()
 		{
 			pNext = &features13,
-			queueCreateInfoCount = 2,
+			queueCreateInfoCount = queueCreateInfoCount,
 			pQueueCreateInfos = queueCreateInfos,
 			enabledExtensionCount = extensions.Length,
 			ppEnabledExtensionNames = extensions
@@ -120,7 +140,7 @@ public partial class VulkanBackend
 
 		VkDeviceApi deviceApi = Vk.GetApi(instanceApi.Instance, device);
 		deviceApi.vkGetDeviceQueue(graphicsQueueFamilyIndex, 0, out VkQueue graphicsQueue);
-		deviceApi.vkGetDeviceQueue(graphicsQueueFamilyIndex, 0, out VkQueue presentQueue);
+		deviceApi.vkGetDeviceQueue(presentQueueFamilyIndex, 0, out VkQueue presentQueue);
 		return new VulkanDevice(adapter, device, instanceApi, deviceApi, graphicsQueueFamilyIndex, graphicsQueue, presentQueueFamilyIndex, presentQueue);
 	}
 

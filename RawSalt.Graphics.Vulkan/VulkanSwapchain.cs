@@ -309,6 +309,11 @@ public sealed class VulkanSwapchain : Swapchain
 	private unsafe VkSurfaceFormatKHR ChooseSurfaceFormat(VkPhysicalDevice physical)
 	{
 		InstanceApi.vkGetPhysicalDeviceSurfaceFormatsKHR(physical, Surface.Surface, out uint count);
+		if (count == 0)
+		{
+			throw new InvalidOperationException("Vulkan surface does not report any supported formats.");
+		}
+
 		VkSurfaceFormatKHR* formats = stackalloc VkSurfaceFormatKHR[(int)count];
 		InstanceApi.vkGetPhysicalDeviceSurfaceFormatsKHR(physical, Surface.Surface, &count, formats);
 
@@ -337,6 +342,11 @@ public sealed class VulkanSwapchain : Swapchain
 		const VkPresentModeKHR target = VkPresentModeKHR.Fifo;
 
 		InstanceApi.vkGetPhysicalDeviceSurfacePresentModesKHR(physical, Surface.Surface, out uint count);
+		if (count == 0)
+		{
+			throw new InvalidOperationException("Vulkan surface does not report any supported present modes.");
+		}
+
 		VkPresentModeKHR* modes = stackalloc VkPresentModeKHR[(int)count];
 		InstanceApi.vkGetPhysicalDeviceSurfacePresentModesKHR(physical, Surface.Surface, &count, modes);
 

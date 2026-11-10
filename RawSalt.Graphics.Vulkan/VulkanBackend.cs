@@ -77,6 +77,14 @@ public sealed partial class VulkanBackend : GraphicsBackend
 
 		using VkStringArray layers = GetRequiredLayers(enableValidationLayer);
 		using VkStringArray extensions = GetRequiredExtensions(Platform.Api, enableDebugUtils);
+
+		if (GetPlatformSurfaceExtension(Platform.Api) is VkUtf8String requiredExtension &&
+		    !IsInstanceExtensionSupported(requiredExtension))
+		{
+			throw new NotSupportedException(
+				$"Vulkan does not support {Platform.Api} surfaces: required instance extension is not available.");
+		}
+
 		VkInstanceCreateInfo createInfo = new()
 		{
 			pApplicationInfo = &applicationInfo,
@@ -125,27 +133,61 @@ public sealed partial class VulkanBackend : GraphicsBackend
 
 	public override VulkanSurface CreateSurface(View view)
 	{
-		if (view is IWin32Window win32Window)
+		if (view is not INativeWindow nativeWindow)
 		{
-			VkSurfaceKHR surface;
-			VkWin32SurfaceCreateInfoKHR createInfo = new()
-			{
-				hwnd = win32Window.Handle,
-				hinstance = win32Window.ModuleHandle
-			};
-
-			VkResult result = InstanceApi.vkCreateWin32SurfaceKHR(in createInfo, out surface);
-
-			if (result != VkResult.Success)
-			{
-				Log.Error("Failed to create Vulkan surface for Win32 window, reason: {0}", result);
-				throw new Exception("Failed to create Vulkan surface for Win32 window");
-			}
-
-			return new VulkanSurface(view, surface);
+			throw new NotSupportedException($"View \"{view.GetType().FullName}\" does not expose a native window handle.");
 		}
 
-		throw new NotImplementedException("VulkanBackend.CreateSurface only supports Win32 windows for now.");
+		NativeWindowHandle handle = nativeWindow.NativeHandle;
+		VkSurfaceKHR surface;
+		VkResult result;
+
+		switch (handle.Api)
+		{
+			case WellKnownPlatformApi.Win32:
+			{
+				VkWin32SurfaceCreateInfoKHR createInfo = new()
+				{
+					hinstance = handle.Connection,
+					hwnd = handle.Window
+				};
+				result = InstanceApi.vkCreateWin32SurfaceKHR(in createInfo, out surface);
+				break;
+			}
+
+			case WellKnownPlatformApi.Xlib:
+			{
+				VkXlibSurfaceCreateInfoKHR createInfo = new()
+				{
+					dpy = handle.Connection,
+					window = (ulong)(nuint)handle.Window
+				};
+				result = InstanceApi.vkCreateXlibSurfaceKHR(in createInfo, out surface);
+				break;
+			}
+
+			case WellKnownPlatformApi.Wayland:
+			{
+				VkWaylandSurfaceCreateInfoKHR createInfo = new()
+				{
+					display = handle.Connection,
+					surface = handle.Window
+				};
+				result = InstanceApi.vkCreateWaylandSurfaceKHR(in createInfo, out surface);
+				break;
+			}
+
+			default:
+				throw new NotSupportedException($"Vulkan surface creation for \"{handle.Api}\" is not supported.");
+		}
+
+		if (result != VkResult.Success)
+		{
+			Log.Error("Failed to create Vulkan surface for {0} window, reason: {1}", handle.Api, result);
+			throw new InvalidOperationException($"Failed to create Vulkan surface for {handle.Api} window, reason: {result}.");
+		}
+
+		return new VulkanSurface(view, InstanceApi, surface);
 	}
 
 
@@ -189,6 +231,21 @@ public sealed partial class VulkanBackend : GraphicsBackend
 		}
 
 		return new VkStringArray(strings);
+	}
+
+	/// <summary>
+	/// Returns the platform-specific instance extension required to create a surface for the given platform.
+	/// </summary>
+	private static VkUtf8String? GetPlatformSurfaceExtension(WellKnownPlatformApi platformApi)
+	{
+		return platformApi switch
+		{
+			WellKnownPlatformApi.Win32 => Vk.VK_KHR_WIN32_SURFACE_EXTENSION_NAME,
+			WellKnownPlatformApi.Wayland => Vk.VK_KHR_WAYLAND_SURFACE_EXTENSION_NAME,
+			WellKnownPlatformApi.Android => Vk.VK_KHR_ANDROID_SURFACE_EXTENSION_NAME,
+			WellKnownPlatformApi.Xlib => Vk.VK_KHR_XLIB_SURFACE_EXTENSION_NAME,
+			_ => null
+		};
 	}
 
 	private static unsafe bool IsInstanceExtensionSupported(VkUtf8String extensionName)

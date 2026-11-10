@@ -16,6 +16,8 @@ public static class FormatExtensions
 				VkFormat.R8G8B8A8Srgb => PixelFormat.Rgba32Srgb,
 				VkFormat.B8G8R8A8Unorm => PixelFormat.Bgra32UNorm,
 				VkFormat.B8G8R8A8Srgb => PixelFormat.Bgra32Srgb,
+				VkFormat.R8G8B8Unorm => PixelFormat.Rgb24UNorm,
+				VkFormat.R8G8B8Srgb => PixelFormat.Rgb24Srgb,
 				_ => PixelFormat.Unknown,
 			};
 		}
@@ -31,6 +33,8 @@ public static class FormatExtensions
 				PixelFormat.Rgba32Srgb => VkFormat.R8G8B8A8Srgb,
 				PixelFormat.Bgra32UNorm => VkFormat.B8G8R8A8Unorm,
 				PixelFormat.Bgra32Srgb => VkFormat.B8G8R8A8Srgb,
+				PixelFormat.Rgb24UNorm => VkFormat.R8G8B8Unorm,
+				PixelFormat.Rgb24Srgb => VkFormat.R8G8B8Srgb,
 				_ => VkFormat.Undefined,
 			};
 		}

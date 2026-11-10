@@ -132,19 +132,23 @@ public class PixelMap2D<TPixel> : PixelMap2D
 
 	public override void Save(Stream stream, ImageFormat format)
 	{
-		// TODO: Add support for Rgb24
 		byte[] data = [.. MemoryMarshal.Cast<TPixel, byte>(_pixels.Memory.Span)];
 		switch (format)
 		{
 			case ImageFormat.Png:
 			{
+				// TODO: Need redecode UNorm into sRGB format?
 				if (Format is PixelFormat.Rgba32UNorm or PixelFormat.Rgba32Srgb)
 				{
 					PngEncoder.EncodeToStream(stream, data, Width, Height, ColorComponents.RedGreenBlueAlpha);
 				}
+				else if (Format is PixelFormat.Rgb24UNorm or PixelFormat.Rgb24Srgb)
+				{
+					PngEncoder.EncodeToStream(stream, data, Width, Height, ColorComponents.RedGreenBlue);
+				}
 				else
 				{
-					throw new PixelFormatNotSupportedException();
+					throw new PixelFormatNotSupportedException(Format);
 				}
 			} break;
 			default:

@@ -50,8 +50,9 @@ public abstract class PixelMap2D : Disposable
 		int width = image.Width;
 		int height = image.Height;
 		byte[] pixelData = image.Data;
-		PixelMap2D<Rgba32> pixels = new(width, height);
-		pixels.Fill(pixelData.AsSpan()[..(width * height * Rgba32.ByteWidth)]);
+		// Decoded images are sRGB-encoded by default.
+		PixelMap2D<Rgba32sRgb> pixels = new(width, height);
+		pixels.Fill(pixelData.AsSpan()[..(width * height * Rgba32sRgb.ByteWidth)]);
 		return pixels;
 	}
 

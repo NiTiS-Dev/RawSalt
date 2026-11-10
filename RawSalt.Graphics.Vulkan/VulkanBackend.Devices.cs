@@ -50,6 +50,7 @@ public partial class VulkanBackend
 			throw new NotSupportedException($"Adapter \"{adapter.Name}\" does not expose any queue families.");
 		}
 
+		uint? combined = null;
 		uint? graphics = null;
 		uint? present = null;
 
@@ -57,18 +58,27 @@ public partial class VulkanBackend
 		instanceApi.vkGetPhysicalDeviceQueueFamilyProperties(physicalDevice, queueFamilies);
 		for (uint i = 0; i < queueFamilies.Length; i++)
 		{
-			if (queueFamilies[i].queueFlags.HasFlag(VkQueueFlags.Graphics))
-			{
-				graphics = i;
-				continue;
-			}
-
+			bool isGraphics = queueFamilies[i].queueFlags.HasFlag(VkQueueFlags.Graphics);
 			instanceApi.vkGetPhysicalDeviceSurfaceSupportKHR(physicalDevice, i, vulkanSurface.Surface, out VkBool32 supported);
-			if (supported)
+
+			// Prefer a single family for both graphics and present.
+			if (isGraphics && supported)
 			{
-				present = i;
-				continue;
+				combined ??= i;
 			}
+			else if (isGraphics)
+			{
+				graphics ??= i;
+			}
+			else if (supported)
+			{
+				present ??= i;
+			}
+		}
+
+		if (combined != null)
+		{
+			return CreateDevice(InstanceApi, adapter, combined.Value, combined.Value);
 		}
 
 		if (graphics != null && present != null)
@@ -82,6 +92,8 @@ public partial class VulkanBackend
 	private static unsafe VulkanDevice CreateDevice(VkInstanceApi instanceApi, VulkanAdapter adapter, uint graphicsQueueFamilyIndex, uint presentQueueFamilyIndex)
 	{
 		float queuePriority = 1.0f;
+		bool sharedFamily = graphicsQueueFamilyIndex == presentQueueFamilyIndex;
+		uint queueCreateInfoCount = sharedFamily ? 1u : 2u;
 		VkDeviceQueueCreateInfo* queueCreateInfos = stackalloc VkDeviceQueueCreateInfo[2];
 		queueCreateInfos[0] = new()
 		{
@@ -106,7 +118,7 @@ public partial class VulkanBackend
 		VkDeviceCreateInfo createInfo = new()
 		{
 			pNext = &features13,
-			queueCreateInfoCount = 2,
+			queueCreateInfoCount = queueCreateInfoCount,
 			pQueueCreateInfos = queueCreateInfos,
 			enabledExtensionCount = extensions.Length,
 			ppEnabledExtensionNames = extensions
@@ -120,7 +132,7 @@ public partial class VulkanBackend
 
 		VkDeviceApi deviceApi = Vk.GetApi(instanceApi.Instance, device);
 		deviceApi.vkGetDeviceQueue(graphicsQueueFamilyIndex, 0, out VkQueue graphicsQueue);
-		deviceApi.vkGetDeviceQueue(graphicsQueueFamilyIndex, 0, out VkQueue presentQueue);
+		deviceApi.vkGetDeviceQueue(presentQueueFamilyIndex, 0, out VkQueue presentQueue);
 		return new VulkanDevice(adapter, device, instanceApi, deviceApi, graphicsQueueFamilyIndex, graphicsQueue, presentQueueFamilyIndex, presentQueue);
 	}
 

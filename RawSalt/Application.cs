@@ -80,16 +80,36 @@ public class Application
 
 			renderThread.Stop();
 			Platform.ReleaseView(MainView);
-			MainView = null!;
+			MainView = null;
+			Shutdown();
 		}
 		catch (Exception ex)
 		{
 			Log.Error(ex, "Error during application launch.");
 			Platform?.TryCreateErrorMessage(ex.Message + "\n" + ex.StackTrace);
+			Shutdown();
 			return false;
 		}
 
 		return true;
+	}
+
+	private void Shutdown()
+	{
+		if (MainSurface is IDisposable surface)
+		{
+			surface.Dispose();
+		}
+
+		MainSurface = null;
+
+		GraphicsBackend?.Dispose();
+		GraphicsBackend = null;
+
+		Platform?.Dispose();
+		Platform = null;
+
+		MainView = null;
 	}
 
 	private void AppLoop(FramePacer pacer, RenderThread renderThread, View view)
@@ -103,6 +123,7 @@ public class Application
 		ulong updateId = 0;
 		while (view.ShouldUpdate && renderThread.IsValid)
 		{
+			Platform?.PumpEvents();
 			view.PumpEvents();
 			if (firstFrame && renderThread.FirstFramePresented)
 			{

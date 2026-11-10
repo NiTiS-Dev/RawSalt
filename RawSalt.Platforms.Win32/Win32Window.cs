@@ -8,7 +8,7 @@ using RawSalt.Platforms;
 
 namespace RawSalt.Windowing.Win32;
 
-public class Win32Window : Window, IWin32Window
+public class Win32Window : Window, IWin32Window, INativeWindow
 {
 	public override Win32Platform Platform { get; }
 
@@ -20,6 +20,9 @@ public class Win32Window : Window, IWin32Window
 
 	nint IWin32Window.Handle => Handle;
 	nint IWin32Window.ModuleHandle => Platform.HInstance;
+
+	NativeWindowHandle INativeWindow.NativeHandle =>
+		new(WellKnownPlatformApi.Win32, Platform.HInstance, Handle);
 
 	private bool _alive = true;
 	public override bool ShouldUpdate => _alive;

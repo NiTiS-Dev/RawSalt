@@ -21,6 +21,14 @@ public abstract class Platform : Disposable
 	public abstract bool ReleaseView(View view);
 
 	/// <summary>
+	/// Processes pending platform events that are not bound to a single view.
+	/// </summary>
+	/// <remarks>
+	/// Platforms with a shared event connection (Xlib, Wayland) pump all events here.
+	/// </remarks>
+	public virtual void PumpEvents() { }
+
+	/// <summary>
 	/// Try to create a window with error message.
 	/// </summary>
 	/// <param name="message">Error message.</param>

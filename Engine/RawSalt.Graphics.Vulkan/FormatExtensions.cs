@@ -4,7 +4,7 @@ using RawSalt.Graphics.Rendering;
 
 namespace RawSalt.Graphics.Vulkan;
 
-public static class FormatExtensions
+internal static class FormatExtensions
 {
 	extension(VkFormat format)
 	{

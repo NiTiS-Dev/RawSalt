@@ -1,5 +1,7 @@
 using NWayland;
 using NWayland.Interop;
+using NWayland.Protocols.FractionalScaleV1;
+using NWayland.Protocols.Viewporter;
 using NWayland.Protocols.Wayland;
 using NWayland.Protocols.XdgDecorationUnstableV1;
 using NWayland.Protocols.XdgShell;
@@ -18,6 +20,8 @@ public sealed class WaylandPlatform : Platform
 	internal WlCompositor Compositor { get; private set; } = null!;
 	internal XdgWmBase WmBase { get; private set; } = null!;
 	internal ZxdgDecorationManagerV1? DecorationManager { get; private set; }
+	internal WpViewporter? Viewporter { get; private set; }
+	internal WpFractionalScaleManagerV1? FractionalScaleManager { get; private set; }
 
 	private readonly WlDisplay _display;
 	private readonly WlRegistry _registry;
@@ -25,6 +29,8 @@ public sealed class WaylandPlatform : Platform
 	private readonly WlCompositor.Listener.Relay _compositorListener = new();
 	private readonly XdgWmBase.Listener.Relay _wmBaseListener;
 	private readonly ZxdgDecorationManagerV1.Listener.Relay _decorationListener = new();
+	private readonly WpViewporter.Listener.Relay _viewporterListener = new();
+	private readonly WpFractionalScaleManagerV1.Listener.Relay _fractionalScaleManagerListener = new();
 	private readonly Dictionary<WlOutput, WaylandDisplay> _outputs = [];
 	private readonly Dictionary<nint, WaylandWindow> _windows = [];
 	private readonly int _displayFd;
@@ -118,6 +124,16 @@ public sealed class WaylandPlatform : Platform
 			case "zxdg_decoration_manager_v1":
 				DecorationManager = ZxdgDecorationManagerV1.Bind(registry, name, Math.Min(version, 1),
 					_decorationListener, null!);
+				break;
+
+			case "wp_viewporter":
+				Viewporter = WpViewporter.Bind(registry, name, Math.Min(version, 1),
+					_viewporterListener, null!);
+				break;
+
+			case "wp_fractional_scale_manager_v1":
+				FractionalScaleManager = WpFractionalScaleManagerV1.Bind(registry, name,
+					Math.Min(version, 1), _fractionalScaleManagerListener, null!);
 				break;
 		}
 	}
@@ -368,6 +384,17 @@ public sealed class WaylandPlatform : Platform
 		return _outputs.TryGetValue(output, out WaylandDisplay? display) ? display.Scale : 1;
 	}
 
+	internal int GetMaximumOutputScale()
+	{
+		int scale = 1;
+		foreach (WaylandDisplay display in _outputs.Values)
+		{
+			scale = Math.Max(scale, display.Scale);
+		}
+
+		return scale;
+	}
+
 	protected override void Dispose(bool disposing)
 	{
 		foreach (WaylandWindow window in _windows.Values.ToArray())
@@ -393,6 +420,10 @@ public sealed class WaylandPlatform : Platform
 
 		DecorationManager?.Dispose();
 		DecorationManager = null;
+		FractionalScaleManager?.Dispose();
+		FractionalScaleManager = null;
+		Viewporter?.Dispose();
+		Viewporter = null;
 		WmBase?.Dispose();
 		WmBase = null!;
 		Compositor?.Dispose();

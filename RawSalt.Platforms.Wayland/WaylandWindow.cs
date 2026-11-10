@@ -1,4 +1,6 @@
 using NiTiS.Mathematics;
+using NWayland.Protocols.FractionalScaleV1;
+using NWayland.Protocols.Viewporter;
 using NWayland.Protocols.Wayland;
 using NWayland.Protocols.XdgDecorationUnstableV1;
 using NWayland.Protocols.XdgShell;
@@ -20,12 +22,17 @@ public sealed class WaylandWindow : Window, INativeWindow
 	private readonly XdgToplevel.Listener.Relay _toplevelListener;
 	private readonly ZxdgToplevelDecorationV1.Listener.Relay _decorationListener;
 	private readonly ZxdgToplevelDecorationV1? _decoration;
+	private readonly WpViewport.Listener.Relay _viewportListener = new();
+	private readonly WpFractionalScaleV1.Listener.Relay _fractionalScaleListener;
+	private readonly WpViewport? _viewport;
+	private readonly WpFractionalScaleV1? _fractionalScale;
 	private readonly HashSet<WlOutput> _outputs = [];
 
 	private int _width;
 	private int _height;
-	private int _scale = 1;
+	private double _scaleFactor = 1;
 	private int _preferredScale;
+	private bool _useFractionalScale;
 	private bool _configured;
 	private bool _alive = true;
 	private bool _destroyed;
@@ -36,8 +43,8 @@ public sealed class WaylandWindow : Window, INativeWindow
 	/// Wayland configures logical window sizes; the Vulkan surface is in physical pixels.
 	/// </summary>
 	public override Vector2<int> SurfaceSize =>
-		new(Math.Max(1, (int)MathF.Round(_width * _scale)),
-			Math.Max(1, (int)MathF.Round(_height * _scale)));
+		new(Math.Max(1, (int)Math.Round(_width * _scaleFactor)),
+			Math.Max(1, (int)Math.Round(_height * _scaleFactor)));
 
 	public override event Action<SizeChangedEventArgs>? SizeChanged;
 	public override event Action<CloseRequest>? CloseRequest;
@@ -52,6 +59,24 @@ public sealed class WaylandWindow : Window, INativeWindow
 		Platform = platform;
 		_width = Math.Max(1, requestedSize.X);
 		_height = Math.Max(1, requestedSize.Y);
+		_scaleFactor = Math.Max(1, platform.GetMaximumOutputScale());
+
+		_fractionalScaleListener = new WpFractionalScaleV1.Listener.Relay
+		{
+			OnPreferredScale = (_, scale) =>
+			{
+				if (scale == 0)
+				{
+					return;
+				}
+
+				Vector2<int> previousSize = Size;
+				Vector2<int> previousSurfaceSize = SurfaceSize;
+				_scaleFactor = scale / 120.0;
+				ApplySurfaceScale();
+				NotifySizeChanged(previousSize, previousSurfaceSize);
+			}
+		};
 
 		_surfaceListener = new WlSurface.Listener.Relay
 		{
@@ -103,6 +128,15 @@ public sealed class WaylandWindow : Window, INativeWindow
 		};
 
 		Surface = platform.Compositor.CreateSurface(_surfaceListener, null);
+
+		if (platform.Viewporter != null && platform.FractionalScaleManager != null)
+		{
+			_viewport = platform.Viewporter.GetViewport(Surface, _viewportListener, null);
+			_fractionalScale = platform.FractionalScaleManager.GetFractionalScale(Surface,
+				_fractionalScaleListener, null);
+			_useFractionalScale = true;
+		}
+
 		XdgSurface = platform.WmBase.GetXdgSurface(Surface, _xdgSurfaceListener, null);
 		Toplevel = XdgSurface.GetToplevel(_toplevelListener, null);
 		Toplevel.SetTitle(title);
@@ -114,6 +148,9 @@ public sealed class WaylandWindow : Window, INativeWindow
 			_decoration = platform.DecorationManager.GetToplevelDecoration(Toplevel, _decorationListener, null);
 			_decoration.SetMode(ZxdgToplevelDecorationV1.ModeEnum.ServerSide);
 		}
+
+		// Apply the initial buffer scale before the first commit.
+		ApplySurfaceScale();
 
 		// Ask the compositor for the initial configure.
 		Surface.Commit();
@@ -133,6 +170,8 @@ public sealed class WaylandWindow : Window, INativeWindow
 		Platform.RemoveWindow(this);
 
 		_decoration?.Dispose();
+		_fractionalScale?.Dispose();
+		_viewport?.Dispose();
 		Toplevel.Dispose();
 		XdgSurface.Dispose();
 		Surface.Dispose();
@@ -221,14 +260,22 @@ public sealed class WaylandWindow : Window, INativeWindow
 			_height = height;
 		}
 
-		if (Size != previousSize || SurfaceSize != previousSurfaceSize)
+		if (Size != previousSize)
 		{
-			SizeChanged?.Invoke(new SizeChangedEventArgs(Size, SurfaceSize));
+			ApplySurfaceScale();
 		}
+
+		NotifySizeChanged(previousSize, previousSurfaceSize);
 	}
 
 	private void UpdateScale()
 	{
+		if (_useFractionalScale)
+		{
+			// wp_fractional_scale_v1 reports the effective scale; integer source scales are irrelevant.
+			return;
+		}
+
 		Vector2<int> previousSize = Size;
 		Vector2<int> previousSurfaceSize = SurfaceSize;
 
@@ -238,8 +285,36 @@ public sealed class WaylandWindow : Window, INativeWindow
 			scale = Math.Max(scale, Platform.GetOutputScale(output));
 		}
 
-		_scale = Math.Max(1, scale);
+		double factor = Math.Max(1, scale);
+		if (Math.Abs(factor - _scaleFactor) < 0.0001)
+		{
+			return;
+		}
 
+		_scaleFactor = factor;
+		ApplySurfaceScale();
+		NotifySizeChanged(previousSize, previousSurfaceSize);
+	}
+
+	/// <summary>
+	/// Applies the buffer scale or viewport destination so that the physical buffer matches
+	/// <see cref="SurfaceSize"/> while the compositor displays <see cref="Size"/> logical pixels.
+	/// </summary>
+	private void ApplySurfaceScale()
+	{
+		if (_useFractionalScale)
+		{
+			// Viewporter requires buffer_scale 1 and maps the physical buffer onto the logical size.
+			Surface.SetBufferScale(1);
+			_viewport?.SetDestination(Size.X, Size.Y);
+			return;
+		}
+
+		Surface.SetBufferScale(Math.Max(1, (int)Math.Round(_scaleFactor)));
+	}
+
+	private void NotifySizeChanged(Vector2<int> previousSize, Vector2<int> previousSurfaceSize)
+	{
 		if (Size != previousSize || SurfaceSize != previousSurfaceSize)
 		{
 			SizeChanged?.Invoke(new SizeChangedEventArgs(Size, SurfaceSize));

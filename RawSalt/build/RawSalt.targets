@@ -9,30 +9,33 @@
         <_RawSaltIsLinux   Condition="'$(RuntimeIdentifier)' != '' and $(RuntimeIdentifier.StartsWith('linux'))">true</_RawSaltIsLinux>
         <_RawSaltIsLinux   Condition="'$(RuntimeIdentifier)' == '' and $([MSBuild]::IsOSPlatform('Linux'))">true</_RawSaltIsLinux>
 
-        <RawSaltPlatform Condition="'$(RawSaltPlatform)' == '' and '$(_RawSaltIsWindows)' == 'true'">Win32</RawSaltPlatform>
-        <RawSaltPlatform Condition="'$(RawSaltPlatform)' == '' and '$(_RawSaltIsLinux)' == 'true'">Xlib</RawSaltPlatform>
+        <!-- Platform project list. RawSaltPlatform is kept as a compatibility alias for single-platform builds. -->
+        <RawSaltPlatforms Condition="'$(RawSaltPlatforms)' == '' and '$(RawSaltPlatform)' != ''">$(RawSaltPlatform)</RawSaltPlatforms>
+        <RawSaltPlatforms Condition="'$(RawSaltPlatforms)' == '' and '$(_RawSaltIsWindows)' == 'true'">Win32</RawSaltPlatforms>
+        <RawSaltPlatforms Condition="'$(RawSaltPlatforms)' == '' and '$(_RawSaltIsLinux)' == 'true'">Wayland;Xlib</RawSaltPlatforms>
 
-        <DefineConstants Condition="'$(RawSaltPlatform)' == 'Win32'">$(DefineConstants);RAWSALT_WIN32</DefineConstants>
-        <DefineConstants Condition="'$(RawSaltPlatform)' == 'Xlib'">$(DefineConstants);RAWSALT_XLIB</DefineConstants>
-        <DefineConstants Condition="'$(RawSaltPlatform)' == 'Wayland'">$(DefineConstants);RAWSALT_WAYLAND</DefineConstants>
+        <DefineConstants Condition="$(RawSaltPlatforms.Contains('Win32'))">$(DefineConstants);RAWSALT_WIN32</DefineConstants>
+        <DefineConstants Condition="$(RawSaltPlatforms.Contains('Wayland'))">$(DefineConstants);RAWSALT_WAYLAND</DefineConstants>
+        <DefineConstants Condition="$(RawSaltPlatforms.Contains('Xlib'))">$(DefineConstants);RAWSALT_XLIB</DefineConstants>
     </PropertyGroup>
 
     <ItemGroup>
+        <_RawSaltPlatform Include="$(RawSaltPlatforms)" />
         <_RawSaltBackend Include="$(RawSaltGraphicsBackends)" />
     </ItemGroup>
 
     <ItemGroup Condition="'$(RawSaltUsePackages)' != 'true'">
-        <ProjectReference Include="$(RawSaltRoot)RawSalt.Platforms.$(RawSaltPlatform)/RawSalt.Platforms.$(RawSaltPlatform).csproj" />
+        <ProjectReference Include="@(_RawSaltPlatform->'$(RawSaltRoot)RawSalt.Platforms.%(Identity)/RawSalt.Platforms.%(Identity).csproj')" />
         <ProjectReference Include="@(_RawSaltBackend->'$(RawSaltRoot)RawSalt.Graphics.%(Identity)/RawSalt.Graphics.%(Identity).csproj')" />
     </ItemGroup>
 
     <ItemGroup Condition="'$(RawSaltUsePackages)' == 'true'">
-        <PackageReference Include="RawSalt.Platforms.$(RawSaltPlatform)" Version="$(RawSaltVersion)" />
+        <PackageReference Include="@(_RawSaltPlatform->'RawSalt.Platforms.%(Identity)')" Version="$(RawSaltVersion)" />
         <PackageReference Include="@(_RawSaltBackend->'RawSalt.Graphics.%(Identity)')" Version="$(RawSaltVersion)" />
     </ItemGroup>
 
     <Target Name="RawSaltValidate" BeforeTargets="BeforeBuild;ResolveProjectReferences">
-        <Error Condition="'$(RawSaltPlatform)' == ''"
-               Text="RawSalt: no platform project for this target OS. Set RawSaltPlatform explicitly." />
+        <Error Condition="'$(RawSaltPlatforms)' == ''"
+               Text="RawSalt: no platform project for this target OS. Set RawSaltPlatforms explicitly." />
     </Target>
 </Project>

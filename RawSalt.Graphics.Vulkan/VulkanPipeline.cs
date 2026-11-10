@@ -16,7 +16,7 @@ public sealed class VulkanPipeline : Pipeline
 	internal VulkanBindGroupLayout[] BindGroupLayouts { get; }
 	public VkPipelineLayout Layout { get; }
 
-	public VkPipeline Handle { get; }
+	public VkPipeline Handle { get; } // TODO: lazy initialize
 	public PixelFormat ColorFormat { get; }
 
 	public unsafe VulkanPipeline(VulkanDevice device, PipelineDescriptor descriptor)
@@ -77,6 +77,7 @@ public sealed class VulkanPipeline : Pipeline
 		{
 			colorAttachmentCount = 1,
 			pColorAttachmentFormats = &colorFormat,
+			depthAttachmentFormat = device.DepthFormat,
 		};
 
 		VkDynamicState* dynamic = stackalloc VkDynamicState[2]
@@ -92,7 +93,8 @@ public sealed class VulkanPipeline : Pipeline
 
 		VkPipelineViewportStateCreateInfo viewportState = new()
 		{
-			viewportCount = 1, scissorCount = 1
+			viewportCount = 1,
+			scissorCount = 1
 		};
 
 		VkPipelineInputAssemblyStateCreateInfo inputAssembly = new()
@@ -113,6 +115,15 @@ public sealed class VulkanPipeline : Pipeline
 		VkPipelineMultisampleStateCreateInfo multisample = new()
 		{
 			rasterizationSamples = VkSampleCountFlags.Count1
+		};
+
+		VkPipelineDepthStencilStateCreateInfo depthStencil = new()
+		{
+			depthTestEnable = true,
+			depthWriteEnable = true,
+			depthCompareOp = VkCompareOp.LessOrEqual,
+			minDepthBounds = 0.0f,
+			maxDepthBounds = 1.0f,
 		};
 
 		VkPipelineColorBlendAttachmentState blendAttachment = new()
@@ -162,6 +173,7 @@ public sealed class VulkanPipeline : Pipeline
 					pViewportState = &viewportState,
 					pRasterizationState = &raster,
 					pMultisampleState = &multisample,
+					pDepthStencilState = &depthStencil,
 					pColorBlendState = &blend,
 					pDynamicState = &dynamicState,
 					layout = Layout,
@@ -219,8 +231,7 @@ public sealed class VulkanPipeline : Pipeline
 		}
 	}
 
-	private static VulkanBindGroupLayout[] CreateBindGroupLayouts(VulkanDevice device,
-		ImmutableArray<ShaderResource> resources)
+	private static VulkanBindGroupLayout[] CreateBindGroupLayouts(VulkanDevice device, ImmutableArray<ShaderResource> resources)
 	{
 		if (resources.IsDefaultOrEmpty)
 		{

@@ -11,5 +11,9 @@ internal sealed class VulkanRenderTarget : RenderTarget
 	public VkImageLayout Layout;
 	public VkFormat Format;
 
+	public VkImage DepthImage;
+	public VkImageView DepthView;
+	public VkImageLayout DepthLayout;
+
 	public override Vector2<int> Size => new((int)Extent.width, (int)Extent.height);
 }

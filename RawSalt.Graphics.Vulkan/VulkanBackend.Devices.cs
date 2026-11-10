@@ -58,36 +58,32 @@ public partial class VulkanBackend
 		instanceApi.vkGetPhysicalDeviceQueueFamilyProperties(physicalDevice, queueFamilies);
 		for (uint i = 0; i < queueFamilies.Length; i++)
 		{
-			bool supportsGraphics = queueFamilies[i].queueFlags.HasFlag(VkQueueFlags.Graphics);
-
-			// Present support must be checked for every family, including graphics one.
-			// On most Linux drivers a single family handles both graphics and presentation.
+			bool isGraphics = queueFamilies[i].queueFlags.HasFlag(VkQueueFlags.Graphics);
 			instanceApi.vkGetPhysicalDeviceSurfaceSupportKHR(physicalDevice, i, vulkanSurface.Surface, out VkBool32 supported);
-			bool supportsPresent = supported;
 
-			if (supportsGraphics && supportsPresent)
+			// Prefer a single family for both graphics and present.
+			if (isGraphics && supported)
 			{
 				combined ??= i;
 			}
-			else if (supportsGraphics)
+			else if (isGraphics)
 			{
 				graphics ??= i;
 			}
-			else if (supportsPresent)
+			else if (supported)
 			{
 				present ??= i;
 			}
 		}
 
-		// Prefer a single family that can do both.
-		if (combined is uint combinedFamily)
+		if (combined != null)
 		{
-			return CreateDevice(instanceApi, adapter, combinedFamily, combinedFamily);
+			return CreateDevice(InstanceApi, adapter, combined.Value, combined.Value);
 		}
 
-		if (graphics is uint graphicsFamily && present is uint presentFamily)
+		if (graphics != null && present != null)
 		{
-			return CreateDevice(instanceApi, adapter, graphicsFamily, presentFamily);
+			return CreateDevice(InstanceApi, adapter, graphics.Value, present.Value);
 		}
 
 		throw new NotSupportedException($"Adapter \"{adapter.Name}\" does not support required operations.");

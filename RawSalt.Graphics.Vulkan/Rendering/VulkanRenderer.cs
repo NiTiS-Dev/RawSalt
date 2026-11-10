@@ -73,6 +73,10 @@ public sealed class VulkanRenderer : Renderer
 		f.Target.Extent = _swapchain.Extent;
 		f.Target.Layout = VkImageLayout.Undefined;
 		f.Target.Format = _swapchain.Format;
+		f.Target.DepthImage = _swapchain.CurrentDepthImage;
+		f.Target.DepthView = _swapchain.CurrentDepthView;
+		// Depth contents are discarded between frames, the first pass of the frame must clear them.
+		f.Target.DepthLayout = VkImageLayout.Undefined;
 		f.CommandList.Begin();
 
 		_active = f;
@@ -90,7 +94,7 @@ public sealed class VulkanRenderer : Renderer
 		VulkanRenderFrame f = _active;
 		_active = null;
 
-		f.CommandList.Transition(f.Target, VkImageLayout.PresentSrcKHR);
+		f.CommandList.TransitionColor(f.Target, VkImageLayout.PresentSrcKHR);
 		f.CommandList.End();
 
 		// Read these BEFORE Present(): it advances FrameIndex.

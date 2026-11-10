@@ -67,13 +67,9 @@ public sealed partial class VulkanBackend : GraphicsBackend
 			apiVersion = VkVersion.Version_1_3
 		};
 
-#if DEBUG
-		bool enableValidationLayer = IsInstanceLayerSupported(Vk.VK_LAYER_KHRONOS_VALIDATION_EXTENSION_NAME);
-		bool enableDebugUtils = IsInstanceExtensionSupported(Vk.VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
-#else
-		const bool enableValidationLayer = false;
-		const bool enableDebugUtils = false;
-#endif
+		bool enableDebugLayers = AreDebugLayersEnabled();
+		bool enableValidationLayer = enableDebugLayers && IsInstanceLayerSupported(Vk.VK_LAYER_KHRONOS_VALIDATION_EXTENSION_NAME);
+		bool enableDebugUtils = enableDebugLayers && IsInstanceExtensionSupported(Vk.VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
 
 		using VkStringArray layers = GetRequiredLayers(enableValidationLayer);
 		using VkStringArray extensions = GetRequiredExtensions(Platform.Api, enableDebugUtils);
@@ -102,7 +98,6 @@ public sealed partial class VulkanBackend : GraphicsBackend
 
 		VkInstanceApi instanceApi = Vk.GetApi(instance);
 
-#if DEBUG
 		if (enableDebugUtils)
 		{
 			try
@@ -114,9 +109,18 @@ public sealed partial class VulkanBackend : GraphicsBackend
 				Log.Error(ex, "Failed to initialize Vulkan debug utils.");
 			}
 		}
-#endif
 
 		return instanceApi;
+	}
+
+	private static bool AreDebugLayersEnabled()
+	{
+#if DEBUG
+		return true;
+#else
+		string? value = Environment.GetEnvironmentVariable("RAWSALT_ENABLE_DEBUG_LAYERS_VULKAN");
+		return !string.IsNullOrEmpty(value) && value.ToLowerInvariant() is not ("0" or "false");
+#endif
 	}
 
 	private void DestroyInstance()

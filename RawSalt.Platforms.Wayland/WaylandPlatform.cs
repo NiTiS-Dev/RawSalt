@@ -26,6 +26,7 @@ public sealed class WaylandPlatform : Platform
 	internal WpFractionalScaleManagerV1? FractionalScaleManager { get; private set; }
 	internal ZwpTextInputManagerV3? TextInputManager { get; private set; }
 	internal WpCursorShapeManagerV1? CursorShapeManager { get; private set; }
+	internal LibDecorContext? LibDecor { get; private set; }
 
 	private readonly WlDisplay _display;
 	private readonly WlRegistry _registry;
@@ -125,6 +126,12 @@ public sealed class WaylandPlatform : Platform
 
 		// Collect the initial state of the bound outputs.
 		_display.Roundtrip();
+
+		if (Environment.GetEnvironmentVariable("RAWSALT_WAYLAND_LIBDECOR") != "0")
+		{
+			LibDecor = LibDecorContext.TryCreate(_display);
+			LibDecor?.WaitUntilReady();
+		}
 	}
 
 	private void OnGlobal(WlRegistry registry, uint name, string @interface, uint version)
@@ -633,6 +640,9 @@ public sealed class WaylandPlatform : Platform
 
 		_windows.Clear();
 
+		LibDecor?.Dispose();
+		LibDecor = null;
+
 		_textInput?.Dispose();
 		_textInput = null;
 		_cursorShapeDevice?.Dispose();
@@ -677,6 +687,8 @@ public sealed class WaylandPlatform : Platform
 
 	public override WaylandWindow CreateView(in WindowConfiguration configuration)
 	{
+		LibDecor?.WaitUntilReady();
+
 		WaylandWindow window = new(this, configuration.Size, configuration.Title);
 		_windows.Add(window.Surface.Handle, window);
 		window.CursorShapeChanged += _ => ApplyWindowCursorShape(window);
@@ -699,6 +711,9 @@ public sealed class WaylandPlatform : Platform
 	{
 		try
 		{
+			// libdecor also processes non-Wayland events (GTK plugin), so dispatch it first.
+			LibDecor?.Dispatch(0);
+
 			// Non-blocking read cycle: prepare, poll, read (or cancel), then dispatch.
 			if (_display.PrepareRead() == 0)
 			{

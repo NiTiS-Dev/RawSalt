@@ -14,14 +14,15 @@ public sealed class WaylandWindow : Window, INativeWindow
 	public override WaylandPlatform Platform { get; }
 
 	internal WlSurface Surface { get; }
-	internal XdgSurface XdgSurface { get; }
-	internal XdgToplevel Toplevel { get; }
+	internal XdgSurface? XdgSurface { get; private set; }
+	internal XdgToplevel? Toplevel { get; private set; }
 
 	private readonly WlSurface.Listener.Relay _surfaceListener;
 	private readonly XdgSurface.Listener.Relay _xdgSurfaceListener;
 	private readonly XdgToplevel.Listener.Relay _toplevelListener;
 	private readonly ZxdgToplevelDecorationV1.Listener.Relay _decorationListener;
 	private readonly ZxdgToplevelDecorationV1? _decoration;
+	private LibDecorFrame? _libdecorFrame;
 	private readonly WpViewport.Listener.Relay _viewportListener = new();
 	private readonly WpFractionalScaleV1.Listener.Relay _fractionalScaleListener;
 	private readonly WpViewport? _viewport;
@@ -137,23 +138,35 @@ public sealed class WaylandWindow : Window, INativeWindow
 			_useFractionalScale = true;
 		}
 
-		XdgSurface = platform.WmBase.GetXdgSurface(Surface, _xdgSurfaceListener, null);
-		Toplevel = XdgSurface.GetToplevel(_toplevelListener, null);
-		Toplevel.SetTitle(title);
-		Toplevel.SetAppId("RawSalt");
-		Toplevel.SetMinSize(1, 1);
-
-		if (platform.DecorationManager != null)
-		{
-			_decoration = platform.DecorationManager.GetToplevelDecoration(Toplevel, _decorationListener, null);
-			_decoration.SetMode(ZxdgToplevelDecorationV1.ModeEnum.ServerSide);
-		}
-
 		// Apply the initial buffer scale before the first commit.
 		ApplySurfaceScale();
 
-		// Ask the compositor for the initial configure.
-		Surface.Commit();
+		// libdecor creates xdg_surface/xdg_toplevel itself and adds client-side decorations.
+		// Fall back to a bare xdg-shell toplevel when libdecor is unavailable or fails.
+		_libdecorFrame = platform.LibDecor?.Decorate(Surface, this, title, "RawSalt");
+
+		if (_libdecorFrame != null)
+		{
+			_libdecorFrame.Map();
+		}
+		else
+		{
+			XdgSurface = platform.WmBase.GetXdgSurface(Surface, _xdgSurfaceListener, null);
+			Toplevel = XdgSurface.GetToplevel(_toplevelListener, null);
+			Toplevel.SetTitle(title);
+			Toplevel.SetAppId("RawSalt");
+			Toplevel.SetMinSize(1, 1);
+
+			if (platform.DecorationManager != null)
+			{
+				_decoration = platform.DecorationManager.GetToplevelDecoration(Toplevel, _decorationListener,
+					null);
+				_decoration.SetMode(ZxdgToplevelDecorationV1.ModeEnum.ServerSide);
+			}
+
+			// Ask the compositor for the initial configure.
+			Surface.Commit();
+		}
 	}
 
 	public override void PumpEvents() => Platform.PumpEvents();
@@ -170,10 +183,11 @@ public sealed class WaylandWindow : Window, INativeWindow
 		Platform.RemoveWindow(this);
 
 		_decoration?.Dispose();
+		_libdecorFrame?.Dispose();
 		_fractionalScale?.Dispose();
 		_viewport?.Dispose();
-		Toplevel.Dispose();
-		XdgSurface.Dispose();
+		Toplevel?.Dispose();
+		XdgSurface?.Dispose();
 		Surface.Dispose();
 	}
 
@@ -253,6 +267,29 @@ public sealed class WaylandWindow : Window, INativeWindow
 	internal void ProcessPreedit(string text, int cursorBegin, int cursorEnd)
 	{
 		OnPreeditChanged(new PreeditEventArgs(text, cursorBegin, cursorEnd));
+	}
+
+	internal void ProcessCloseRequest()
+	{
+		OnCloseRequested();
+	}
+
+	internal void ProcessLibDecorCommit()
+	{
+		Surface.Commit();
+	}
+
+	internal void ProcessLibDecorConfigure(int width, int height, IntPtr configuration)
+	{
+		int logicalWidth = width > 0 ? width : _width;
+		int logicalHeight = height > 0 ? height : _height;
+
+		_libdecorFrame?.Commit(logicalWidth, logicalHeight, configuration);
+		UpdateLogicalSize(logicalWidth, logicalHeight);
+
+		// libdecor may use synchronous subsurfaces, so acknowledge the configuration with a
+		// content commit. Extra commits are harmless when the configuration did not change size.
+		Surface.Commit();
 	}
 
 	private void UpdateLogicalSize(int width, int height)

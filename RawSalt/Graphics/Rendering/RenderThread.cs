@@ -3,6 +3,7 @@ using System.Net;
 using System.Numerics;
 using System.Runtime.ExceptionServices;
 using System.Runtime.InteropServices;
+using System.Threading.Channels;
 using RawSalt.Graphics.Drawing;
 using RawSalt.Graphics.Pipelines;
 using RawSalt.Logging;
@@ -19,7 +20,7 @@ internal sealed class RenderThread
 	private readonly GraphicsBackend _backend;
 	private readonly RenderSurface _surface;
 
-	//private readonly Channel<RenderMessage> _messages = Channel.CreateUnbounded<RenderMessage>(new() { SingleReader = true });
+	private readonly Channel<Action<GraphicsDevice>> _messages = Channel.CreateUnbounded<Action<GraphicsDevice>>(new() { SingleReader = true });
 	private readonly AutoResetEvent _wake = new(false);
 	private readonly ManualResetEventSlim _firstFramePresented = new(false);
 
@@ -50,7 +51,11 @@ internal sealed class RenderThread
 	}
 
 	public void Start() => _thread.Start();
-	//public void Post(RenderMessage m) => _messages.Writer.TryWrite(m);
+
+	public void Post(Action<GraphicsDevice> action)
+	{
+		_messages.Writer.TryWrite(action);
+	}
 
 	public void Stop()
 	{

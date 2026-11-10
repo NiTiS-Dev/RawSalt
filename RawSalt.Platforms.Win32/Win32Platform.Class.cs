@@ -7,7 +7,7 @@ using Windows.Win32.Graphics.Gdi;
 using Windows.Win32.UI.WindowsAndMessaging;
 using Microsoft.Win32;
 
-namespace RawSalt.Windowing.Win32;
+namespace RawSalt.Platforms.Win32;
 
 public partial class Win32Platform
 {

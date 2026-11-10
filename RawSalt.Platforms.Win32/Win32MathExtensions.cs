@@ -1,7 +1,7 @@
 using Windows.Win32.Foundation;
 using NiTiS.Mathematics;
 
-namespace RawSalt.Windowing.Win32;
+namespace RawSalt.Platforms.Win32;
 
 internal static class Win32MathExtensions
 {

@@ -1,6 +1,6 @@
 using RawSalt.Logging;
 
-namespace RawSalt.Windowing.Win32;
+namespace RawSalt.Platforms.Win32;
 
 public static class LaunchConfigurationExtensions
 {

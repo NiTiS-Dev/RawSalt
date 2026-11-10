@@ -1,7 +1,6 @@
 using NiTiS.Mathematics;
-using RawSalt.Platforms;
 
-namespace RawSalt.Windowing.Win32;
+namespace RawSalt.Platforms.Win32;
 
 public class Win32Display : Display
 {

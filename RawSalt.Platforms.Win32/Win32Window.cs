@@ -3,9 +3,8 @@ using Windows.Win32;
 using Windows.Win32.Foundation;
 using Windows.Win32.UI.WindowsAndMessaging;
 using NiTiS.Mathematics;
-using RawSalt.Platforms;
 
-namespace RawSalt.Windowing.Win32;
+namespace RawSalt.Platforms.Win32;
 
 public class Win32Window : Window, IWin32Window
 {

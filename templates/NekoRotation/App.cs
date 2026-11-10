@@ -1,7 +1,7 @@
 ﻿using RawSalt;
 using RawSalt.Graphics.Vulkan;
 using RawSalt.Logging;
-using RawSalt.Windowing.Win32;
+using RawSalt.Platforms.Win32;
 
 namespace NekoRotation;
 

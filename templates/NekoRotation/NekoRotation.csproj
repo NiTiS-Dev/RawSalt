@@ -1,6 +1,4 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
-    <Import Project="../../RawSalt/build/RawSalt.props" />
-    
     <PropertyGroup>
         <OutputType>WinExe</OutputType>
         <TargetFramework>net10.0</TargetFramework>
@@ -10,6 +8,8 @@
     </PropertyGroup>
 
     <ItemGroup>
+        <ProjectReference Include="..\..\RawSalt.Graphics.Vulkan\RawSalt.Graphics.Vulkan.csproj" />
+        <ProjectReference Include="..\..\RawSalt.Platforms.Win32\RawSalt.Platforms.Win32.csproj" />
         <ProjectReference Include="..\..\RawSalt\RawSalt.csproj" />
     </ItemGroup>
 
@@ -21,6 +21,4 @@
             <CopyToOutputDirectory>Always</CopyToOutputDirectory>
         </None>
     </ItemGroup>
-    
-    <Import Project="../../RawSalt/build/RawSalt.targets" />
 </Project>

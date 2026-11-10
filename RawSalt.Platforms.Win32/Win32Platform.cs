@@ -13,9 +13,8 @@ using Windows.Win32.UI.WindowsAndMessaging;
 using NiTiS.Mathematics;
 using RawSalt.Collections;
 using RawSalt.Logging;
-using RawSalt.Platforms;
 
-namespace RawSalt.Windowing.Win32;
+namespace RawSalt.Platforms.Win32;
 
 [SupportedOSPlatform("windows10.0")]
 public partial class Win32Platform : Platform

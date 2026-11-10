@@ -19,6 +19,7 @@ public sealed class VulkanDevice : GraphicsDevice
 	public uint PresentQueueFamily { get; }
 	public VkQueue PresentQueue { get; }
 	public VkDescriptorPool DescriptorPool { get; }
+	public VkFormat DepthFormat { get; }
 	internal VulkanUploadHeap UploadHeap { get; }
 
 	internal unsafe VulkanDevice(VulkanAdapter adapter, VkDevice device, VkInstanceApi instanceApi, VkDeviceApi deviceApi,
@@ -36,6 +37,7 @@ public sealed class VulkanDevice : GraphicsDevice
 
 		InstanceApi.vkGetPhysicalDeviceMemoryProperties(PhysicalDevice, out VkPhysicalDeviceMemoryProperties properties);
 		MemoryProperties = properties;
+		DepthFormat = PickDepthFormat();
 
 		VkDescriptorPoolSize* poolSizes = stackalloc VkDescriptorPoolSize[2];
 		poolSizes[0] = new()
@@ -92,6 +94,21 @@ public sealed class VulkanDevice : GraphicsDevice
 	public override Pipeline CreatePipeline(PipelineDescriptor descriptor)
 	{
 		return new VulkanPipeline(this, descriptor);
+	}
+
+	private VkFormat PickDepthFormat()
+	{
+		ReadOnlySpan<VkFormat> candidates = [VkFormat.D32Sfloat, VkFormat.D16Unorm];
+		foreach (VkFormat format in candidates)
+		{
+			InstanceApi.vkGetPhysicalDeviceFormatProperties(PhysicalDevice, format, out VkFormatProperties properties);
+			if ((properties.optimalTilingFeatures & VkFormatFeatureFlags.DepthStencilAttachment) != 0)
+			{
+				return format;
+			}
+		}
+
+		throw new NotSupportedException("Adapter does not support a depth attachment format.");
 	}
 
 	internal uint FindMemoryType(uint typeBits, VkMemoryPropertyFlags required)

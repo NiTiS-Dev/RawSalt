@@ -19,6 +19,8 @@ public sealed class VulkanSwapchain : Swapchain
 	public uint CurrentImageIndex { get; private set; }
 	public VkImage CurrentImage => _images[CurrentImageIndex];
 	public VkImageView CurrentImageView => _views[CurrentImageIndex];
+	public VkImage CurrentDepthImage => _depthImages[CurrentImageIndex];
+	public VkImageView CurrentDepthView => _depthViews[CurrentImageIndex];
 	public VkSemaphore ImageAvailableSemaphore => _imageAvailable[FrameIndex];
 	public VkSemaphore RenderFinishedSemaphore => _renderFinished[CurrentImageIndex];
 	public uint FrameIndex { get; private set; }
@@ -30,6 +32,9 @@ public sealed class VulkanSwapchain : Swapchain
 
 	private VkImage[] _images = [];
 	private VkImageView[] _views = [];
+	private VkImage[] _depthImages = [];
+	private VkImageView[] _depthViews = [];
+	private VkDeviceMemory[] _depthMemory = [];
 	private VkSemaphore[] _imageAvailable = [];
 	private VkSemaphore[] _renderFinished = [];
 
@@ -246,6 +251,45 @@ public sealed class VulkanSwapchain : Swapchain
 			DeviceApi.vkCreateImageView(&viewInfo, out _views[i]);
 		}
 
+		_depthImages = new VkImage[actualCount];
+		_depthViews = new VkImageView[actualCount];
+		_depthMemory = new VkDeviceMemory[actualCount];
+		for (int i = 0; i < actualCount; i++)
+		{
+			VkImageCreateInfo depthInfo = new()
+			{
+				imageType = VkImageType.Image2D,
+				format = Device.DepthFormat,
+				extent = new VkExtent3D(extent.width, extent.height, 1),
+				mipLevels = 1,
+				arrayLayers = 1,
+				samples = VkSampleCountFlags.Count1,
+				tiling = VkImageTiling.Optimal,
+				usage = VkImageUsageFlags.DepthStencilAttachment,
+				sharingMode = VkSharingMode.Exclusive,
+				initialLayout = VkImageLayout.Undefined,
+			};
+			DeviceApi.vkCreateImage(&depthInfo, out _depthImages[i]).CheckResult();
+
+			DeviceApi.vkGetImageMemoryRequirements(_depthImages[i], out VkMemoryRequirements requirements);
+			VkMemoryAllocateInfo allocateInfo = new()
+			{
+				allocationSize = requirements.size,
+				memoryTypeIndex = Device.FindMemoryType(requirements.memoryTypeBits, VkMemoryPropertyFlags.DeviceLocal),
+			};
+			DeviceApi.vkAllocateMemory(&allocateInfo, out _depthMemory[i]).CheckResult();
+			DeviceApi.vkBindImageMemory(_depthImages[i], _depthMemory[i], 0).CheckResult();
+
+			VkImageViewCreateInfo depthViewInfo = new()
+			{
+				image = _depthImages[i],
+				viewType = VkImageViewType.Image2D,
+				format = Device.DepthFormat,
+				subresourceRange = new VkImageSubresourceRange(VkImageAspectFlags.Depth, 0, 1, 0, 1),
+			};
+			DeviceApi.vkCreateImageView(&depthViewInfo, out _depthViews[i]);
+		}
+
 		_renderFinished = new VkSemaphore[actualCount];
 		for (int i = 0; i < actualCount; i++)
 		{
@@ -269,6 +313,13 @@ public sealed class VulkanSwapchain : Swapchain
 			DeviceApi.vkDestroyImageView(v);
 		}
 
+		for (int i = 0; i < _depthImages.Length; i++)
+		{
+			DeviceApi.vkDestroyImageView(_depthViews[i]);
+			DeviceApi.vkDestroyImage(_depthImages[i]);
+			DeviceApi.vkFreeMemory(_depthMemory[i]);
+		}
+
 		foreach (VkSemaphore s in _imageAvailable)
 		{
 			DeviceApi.vkDestroySemaphore(s);
@@ -281,6 +332,9 @@ public sealed class VulkanSwapchain : Swapchain
 
 		_images = [];
 		_views = [];
+		_depthImages = [];
+		_depthViews = [];
+		_depthMemory = [];
 		_imageAvailable = [];
 		_renderFinished = [];
 	}

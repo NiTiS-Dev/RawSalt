@@ -67,8 +67,10 @@ internal sealed class VulkanCommandList : CommandList
 		{
 			throw new ArgumentException("Target belongs to a different backend.", nameof(passDescriptor));
 		}
+		TransitionColor(target, VkImageLayout.ColorAttachmentOptimal);
 
-		Transition(target, VkImageLayout.ColorAttachmentOptimal);
+		bool clearDepth = target.DepthLayout == VkImageLayout.Undefined || passDescriptor.Clear is not null;
+		TransitionDepth(target, VkImageLayout.DepthAttachmentOptimal);
 
 		VkRenderingAttachmentInfo attachment = new()
 		{
@@ -86,12 +88,25 @@ internal sealed class VulkanCommandList : CommandList
 			};
 		}
 
+		VkRenderingAttachmentInfo depthAttachment = new()
+		{
+			imageView = target.DepthView,
+			imageLayout = VkImageLayout.DepthAttachmentOptimal,
+			loadOp = clearDepth ? VkAttachmentLoadOp.Clear : VkAttachmentLoadOp.Load,
+			storeOp = VkAttachmentStoreOp.Store,
+			clearValue = new VkClearValue
+			{
+				depthStencil = new VkClearDepthStencilValue(1f, 0),
+			},
+		};
+
 		VkRenderingInfo info = new()
 		{
 			renderArea = new VkRect2D(new VkOffset2D(0, 0), target.Extent),
 			layerCount = 1,
 			colorAttachmentCount = 1,
 			pColorAttachments = &attachment,
+			pDepthAttachment = &depthAttachment,
 		};
 
 		VkViewport viewport = new()
@@ -277,38 +292,50 @@ internal sealed class VulkanCommandList : CommandList
 		return count;
 	}
 
-	public unsafe void Transition(VulkanRenderTarget target, VkImageLayout newLayout)
+	public void TransitionColor(VulkanRenderTarget target, VkImageLayout newLayout)
 	{
-		if (target.Layout == newLayout)
+		Transition(target.Image, ref target.Layout, VkImageAspectFlags.Color, newLayout);
+	}
+
+	private void TransitionDepth(VulkanRenderTarget target, VkImageLayout newLayout)
+	{
+		Transition(target.DepthImage, ref target.DepthLayout, VkImageAspectFlags.Depth, newLayout);
+	}
+
+	private unsafe void Transition(VkImage image, ref VkImageLayout current, VkImageAspectFlags aspect,
+		VkImageLayout newLayout)
+	{
+		if (current == newLayout)
 		{
 			return;
 		}
 
-		(VkPipelineStageFlags srcStage, VkAccessFlags srcAccess) = Describe(target.Layout);
+		(VkPipelineStageFlags srcStage, VkAccessFlags srcAccess) = Describe(current);
 		(VkPipelineStageFlags dstStage, VkAccessFlags dstAccess) = Describe(newLayout);
 
 		VkImageMemoryBarrier barrier = new()
 		{
-			oldLayout = target.Layout,
+			oldLayout = current,
 			newLayout = newLayout,
 			srcAccessMask = srcAccess,
 			dstAccessMask = dstAccess,
 			srcQueueFamilyIndex = Vk.VK_QUEUE_FAMILY_IGNORED,
 			dstQueueFamilyIndex = Vk.VK_QUEUE_FAMILY_IGNORED,
-			image = target.Image,
-			subresourceRange = new VkImageSubresourceRange(VkImageAspectFlags.Color, 0, 1, 0, 1),
+			image = image,
+			subresourceRange = new VkImageSubresourceRange(aspect, 0, 1, 0, 1),
 		};
 
 		_api.vkCmdPipelineBarrier(Buffer, srcStage, dstStage, 0, 0, null, 0, null, 1, &barrier);
-		target.Layout = newLayout;
+		current = newLayout;
 	}
 
 	private static (VkPipelineStageFlags, VkAccessFlags) Describe(VkImageLayout layout)
 	{
 		return layout switch
 		{
-			VkImageLayout.Undefined => (VkPipelineStageFlags.ColorAttachmentOutput, VkAccessFlags.None),
+			VkImageLayout.Undefined => (VkPipelineStageFlags.TopOfPipe, VkAccessFlags.None),
 			VkImageLayout.ColorAttachmentOptimal => (VkPipelineStageFlags.ColorAttachmentOutput, VkAccessFlags.ColorAttachmentWrite),
+			VkImageLayout.DepthAttachmentOptimal => (VkPipelineStageFlags.EarlyFragmentTests | VkPipelineStageFlags.LateFragmentTests, VkAccessFlags.DepthStencilAttachmentWrite),
 			VkImageLayout.PresentSrcKHR => (VkPipelineStageFlags.BottomOfPipe, VkAccessFlags.None),
 			_ => throw new NotSupportedException($"Layout {layout} is not handled yet."),
 		};

@@ -8,12 +8,47 @@ public abstract class Window : View
 	private readonly HashSet<MouseButton> _pressedButtons = [];
 	private Vec2i _cursorPosition;
 	private bool _isFocused;
+	private bool _isTextInputEnabled = true;
+	private CursorShape _cursorShape = CursorShape.Default;
 
 	// Windows MUST define surface size
 	public abstract override Vec2i SurfaceSize { get; }
 
 	public bool IsFocused => _isFocused;
 	public Vec2i CursorPosition => _cursorPosition;
+
+	/// <summary>
+	/// Whether the platform should attach an input method to this window while it is focused.
+	/// </summary>
+	public bool IsTextInputEnabled
+	{
+		get => _isTextInputEnabled;
+		set
+		{
+			if (_isTextInputEnabled == value)
+			{
+				return;
+			}
+
+			_isTextInputEnabled = value;
+			TextInputEnabledChanged?.Invoke(value);
+		}
+	}
+
+	public CursorShape CursorShape
+	{
+		get => _cursorShape;
+		set
+		{
+			if (_cursorShape == value)
+			{
+				return;
+			}
+
+			_cursorShape = value;
+			CursorShapeChanged?.Invoke(value);
+		}
+	}
 
 	public abstract void Hide();
 	public abstract void Show();
@@ -31,6 +66,10 @@ public abstract class Window : View
 	public event Action<FocusChangedEventArgs>? FocusChanged;
 	public event Action? CursorEntered;
 	public event Action? CursorLeft;
+	public event Action<TextInputEventArgs>? TextInput;
+	public event Action<PreeditEventArgs>? PreeditChanged;
+	public event Action<bool>? TextInputEnabledChanged;
+	public event Action<CursorShape>? CursorShapeChanged;
 
 	protected void OnKeyDown(KeyEventArgs args)
 	{
@@ -75,6 +114,16 @@ public abstract class Window : View
 	protected void OnCursorLeft()
 	{
 		CursorLeft?.Invoke();
+	}
+
+	protected void OnTextInput(TextInputEventArgs args)
+	{
+		TextInput?.Invoke(args);
+	}
+
+	protected void OnPreeditChanged(PreeditEventArgs args)
+	{
+		PreeditChanged?.Invoke(args);
 	}
 
 	protected void OnFocusChanged(bool focused)

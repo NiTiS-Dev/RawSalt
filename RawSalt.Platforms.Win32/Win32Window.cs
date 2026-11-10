@@ -1,7 +1,6 @@
 using System.Runtime.Versioning;
 using Windows.Win32;
 using Windows.Win32.Foundation;
-using Windows.Win32.Graphics.Gdi;
 using Windows.Win32.UI.WindowsAndMessaging;
 using NiTiS.Mathematics;
 using RawSalt.Platforms;
@@ -81,10 +80,8 @@ public class Win32Window : Window, IWin32Window
 		Vector2<int> newSize = new(windowRect.Width, windowRect.Height);
 
 		PInvoke.GetClientRect(Handle, out RECT clientRect);
-		uint dpi = GetDpi();
-		int surfaceWidth = PInvoke.MulDiv(clientRect.Width, (int)dpi, 96);
-		int surfaceHeight = PInvoke.MulDiv(clientRect.Height, (int)dpi, 96);
-		Vector2<int> newSurfaceSize = new(surfaceWidth, surfaceHeight);
+		// The process is per-monitor DPI aware (v2), so the client rect is already in physical pixels.
+		Vector2<int> newSurfaceSize = new(clientRect.Width, clientRect.Height);
 
 		if (_size == newSize && _surfaceSize == newSurfaceSize)
 		{
@@ -94,30 +91,5 @@ public class Win32Window : Window, IWin32Window
 		_size = newSize;
 		_surfaceSize = newSurfaceSize;
 		SizeChanged?.Invoke(new SizeChangedEventArgs(_size, _surfaceSize));
-	}
-
-	[SupportedOSPlatform("windows10.0")]
-	private uint GetDpi()
-	{
-		if (OperatingSystem.IsWindowsVersionAtLeast(10, 0, 14393))
-		{
-			return PInvoke.GetDpiForWindow(Handle);
-		}
-
-		// GetDpiForWindow is unavailable before 10.0.14393; fall back to the DC's DPI.
-		HDC dc = PInvoke.GetDC(Handle);
-		if (dc.IsNull)
-		{
-			return 96;
-		}
-
-		try
-		{
-			return (uint)PInvoke.GetDeviceCaps(dc, GET_DEVICE_CAPS_INDEX.LOGPIXELSX);
-		}
-		finally
-		{
-			PInvoke.ReleaseDC(Handle, dc);
-		}
 	}
 }

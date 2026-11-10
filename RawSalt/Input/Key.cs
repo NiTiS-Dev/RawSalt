@@ -21,7 +21,7 @@ public enum Key
 	Digit9 = 57,
 
 	Semicolon = 59,
-	Equal = 51,
+	Equal = 61,
 
 	A = 65,
 	B = 66,

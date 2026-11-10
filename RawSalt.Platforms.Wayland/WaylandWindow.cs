@@ -2,6 +2,7 @@ using NiTiS.Mathematics;
 using NWayland.Protocols.Wayland;
 using NWayland.Protocols.XdgDecorationUnstableV1;
 using NWayland.Protocols.XdgShell;
+using RawSalt.Input;
 using RawSalt.Platforms;
 
 namespace RawSalt.Windowing.Wayland;
@@ -151,6 +152,58 @@ public sealed class WaylandWindow : Window, INativeWindow
 	{
 		_alive = false;
 		_destroyed = true;
+	}
+
+	internal void ProcessKeyboardFocus(bool focused)
+	{
+		OnFocusChanged(focused);
+	}
+
+	internal void ProcessKey(Key key, KeyModifiers modifiers, bool pressed, bool repeat)
+	{
+		if (pressed)
+		{
+			OnKeyDown(new KeyEventArgs(key, modifiers, repeat));
+		}
+		else
+		{
+			OnKeyUp(new KeyEventArgs(key, modifiers));
+		}
+	}
+
+	internal void ProcessMouseButton(MouseButton button, bool pressed, Vector2<int> position,
+		KeyModifiers modifiers)
+	{
+		MouseButtonEventArgs args = new(button, position, modifiers);
+
+		if (pressed)
+		{
+			OnMouseDown(args);
+		}
+		else
+		{
+			OnMouseUp(args);
+		}
+	}
+
+	internal void ProcessMouseMove(Vector2<int> position)
+	{
+		OnMouseMove(new MouseMoveEventArgs(position));
+	}
+
+	internal void ProcessMouseWheel(Vector2<int> delta)
+	{
+		OnMouseWheel(new MouseWheelEventArgs(delta));
+	}
+
+	internal void ProcessCursorEntered()
+	{
+		OnCursorEntered();
+	}
+
+	internal void ProcessCursorLeft()
+	{
+		OnCursorLeft();
 	}
 
 	private void UpdateLogicalSize(int width, int height)

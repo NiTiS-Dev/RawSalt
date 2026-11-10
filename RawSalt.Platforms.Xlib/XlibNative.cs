@@ -14,9 +14,26 @@ internal static class XlibNative
 	internal const string XRandR = "libXrandr.so.2";
 
 	// Event types.
+	internal const int KeyPress = 2;
+	internal const int KeyRelease = 3;
+	internal const int ButtonPress = 4;
+	internal const int ButtonRelease = 5;
+	internal const int MotionNotify = 6;
+	internal const int EnterNotify = 7;
+	internal const int LeaveNotify = 8;
+	internal const int FocusIn = 9;
+	internal const int FocusOut = 10;
 	internal const int DestroyNotify = 17;
 	internal const int ConfigureNotify = 22;
 	internal const int ClientMessage = 33;
+
+	// Modifier masks.
+	internal const long ShiftMask = 1L << 0;
+	internal const long LockMask = 1L << 1;
+	internal const long ControlMask = 1L << 2;
+	internal const long Mod1Mask = 1L << 3;
+	internal const long Mod2Mask = 1L << 4;
+	internal const long Mod4Mask = 1L << 6;
 
 	// Structure notify / input event masks.
 	internal const long StructureNotifyMask = 1L << 17;
@@ -43,6 +60,9 @@ internal static class XlibNative
 
 	[DllImport(X11)]
 	internal static extern int XInitThreads();
+
+	[DllImport(X11)]
+	internal static extern int XkbSetDetectableAutoRepeat(IntPtr display, int detectable, out int supported);
 
 	[DllImport(X11)]
 	internal static extern IntPtr XOpenDisplay(IntPtr displayName);
@@ -198,6 +218,100 @@ internal struct XDestroyWindowEvent
 	public ulong window;
 }
 
+[StructLayout(LayoutKind.Sequential)]
+internal struct XKeyEvent
+{
+	public int type;
+	public ulong serial;
+	public int send_event;
+	public IntPtr display;
+	public ulong window;
+	public ulong root;
+	public ulong subwindow;
+	public ulong time;
+	public int x;
+	public int y;
+	public int x_root;
+	public int y_root;
+	public uint state;
+	public uint keycode;
+	public int same_screen;
+}
+
+[StructLayout(LayoutKind.Sequential)]
+internal struct XButtonEvent
+{
+	public int type;
+	public ulong serial;
+	public int send_event;
+	public IntPtr display;
+	public ulong window;
+	public ulong root;
+	public ulong subwindow;
+	public ulong time;
+	public int x;
+	public int y;
+	public int x_root;
+	public int y_root;
+	public uint state;
+	public uint button;
+	public int same_screen;
+}
+
+[StructLayout(LayoutKind.Sequential)]
+internal struct XMotionEvent
+{
+	public int type;
+	public ulong serial;
+	public int send_event;
+	public IntPtr display;
+	public ulong window;
+	public ulong root;
+	public ulong subwindow;
+	public ulong time;
+	public int x;
+	public int y;
+	public int x_root;
+	public int y_root;
+	public uint state;
+	public byte is_hint;
+	public int same_screen;
+}
+
+[StructLayout(LayoutKind.Sequential)]
+internal struct XCrossingEvent
+{
+	public int type;
+	public ulong serial;
+	public int send_event;
+	public IntPtr display;
+	public ulong window;
+	public ulong root;
+	public ulong subwindow;
+	public ulong time;
+	public int x;
+	public int y;
+	public int x_root;
+	public int y_root;
+	public int mode;
+	public int detail;
+	public int same_screen;
+	public int focus;
+	public uint state;
+}
+
+[StructLayout(LayoutKind.Sequential)]
+internal struct XFocusChangeEvent
+{
+	public int type;
+	public ulong serial;
+	public int send_event;
+	public IntPtr display;
+	public ulong window;
+	public int mode;
+	public int detail;
+}
+
 [StructLayout(LayoutKind.Explicit, Size = 40)]
 internal struct XClientMessageData
 {
@@ -227,6 +341,11 @@ internal struct XEvent
 {
 	[FieldOffset(0)] public int type;
 	[FieldOffset(0)] public XAnyEvent any;
+	[FieldOffset(0)] public XKeyEvent key;
+	[FieldOffset(0)] public XButtonEvent button;
+	[FieldOffset(0)] public XMotionEvent motion;
+	[FieldOffset(0)] public XCrossingEvent crossing;
+	[FieldOffset(0)] public XFocusChangeEvent focus;
 	[FieldOffset(0)] public XConfigureEvent configure;
 	[FieldOffset(0)] public XDestroyWindowEvent destroy;
 	[FieldOffset(0)] public XClientMessageEvent client;

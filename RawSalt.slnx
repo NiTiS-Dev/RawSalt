@@ -6,6 +6,7 @@
   </Folder>
   <Project Path="RawSalt.Graphics.Vulkan/RawSalt.Graphics.Vulkan.csproj" />
   <Project Path="RawSalt.Platforms.Win32/RawSalt.Platforms.Win32.csproj" />
+  <Project Path="RawSalt.Platforms.Xlib/RawSalt.Platforms.Xlib.csproj" />
   <Project Path="RawSalt.SourceGenerator/RawSalt.SourceGenerator.csproj" />
   <Project Path="RawSalt/RawSalt.csproj" />
   <Project Path="templates/NekoRotation/NekoRotation.csproj" />

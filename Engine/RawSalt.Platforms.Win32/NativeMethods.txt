@@ -33,6 +33,7 @@ DwmSetWindowAttribute
 GetStockObject
 LoadIcon
 IDI_APPLICATION
+ExtractIcon
 LoadCursor
 IDC_ARROW
 

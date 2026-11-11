@@ -1,4 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
+	<Import Project="../../Sdk/RawSalt.Sdk/Sdk/Sdk.props" />
+
     <PropertyGroup>
         <OutputType>WinExe</OutputType>
         <TargetFramework>net10.0</TargetFramework>
@@ -6,6 +8,8 @@
         <Nullable>enable</Nullable>
         <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
     </PropertyGroup>
+
+	<Import Project="../../Sdk/RawSalt.Sdk/Sdk/Sdk.targets" />
 
     <ItemGroup>
         <ProjectReference Include="../../Engine/RawSalt.Graphics.Vulkan/RawSalt.Graphics.Vulkan.csproj" />

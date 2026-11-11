@@ -31,6 +31,7 @@ public partial class Win32Platform
 		ushort RegisterClassSlow()
 		{
 			int index = Interlocked.Increment(ref _counter);
+			HICON icon = TryAcquireExeIcon();
 			fixed (char* pClassName = $"RawSalt.Platforms.Win32.Class{index}")
 			{
 				WNDCLASSEXW param = default;
@@ -38,6 +39,8 @@ public partial class Win32Platform
 				param.hInstance = HInstance;
 				param.hbrBackground = (HBRUSH)(nint)PInvoke.GetStockObject(GET_STOCK_OBJECT_FLAGS.BLACK_BRUSH);
 				param.hCursor = PInvoke.LoadCursor(default, PInvoke.IDC_ARROW);
+				param.hIcon = icon;
+				param.hIconSm = icon;
 				param.lpszClassName = pClassName;
 				param.lpfnWndProc = _wndproc;
 
@@ -72,5 +75,20 @@ public partial class Win32Platform
 		}
 
 		return false;
+	}
+
+	private static unsafe HICON TryAcquireExeIcon()
+	{
+		string? exePath = Environment.ProcessPath;
+
+		if (exePath is null)
+		{
+			return PInvoke.LoadIcon(default, PInvoke.IDI_APPLICATION);
+		}
+
+		fixed (char* pExePath = exePath)
+		{
+			return PInvoke.ExtractIcon(default, pExePath, 0);
+		}
 	}
 }

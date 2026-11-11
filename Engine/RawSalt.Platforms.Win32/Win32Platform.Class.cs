@@ -1,3 +1,4 @@
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Runtime.Versioning;
 using RawSalt.Logging;
@@ -35,7 +36,7 @@ public partial class Win32Platform
 			fixed (char* pClassName = $"RawSalt.Platforms.Win32.Class{index}")
 			{
 				WNDCLASSEXW param = default;
-				param.cbSize = (uint)sizeof(WNDCLASSEXW);
+				param.cbSize = (uint)Unsafe.SizeOf<WNDCLASSEXW>();
 				param.hInstance = HInstance;
 				param.hbrBackground = (HBRUSH)(nint)PInvoke.GetStockObject(GET_STOCK_OBJECT_FLAGS.BLACK_BRUSH);
 				param.hCursor = PInvoke.LoadCursor(default, PInvoke.IDC_ARROW);
@@ -83,12 +84,22 @@ public partial class Win32Platform
 
 		if (exePath is null)
 		{
-			return PInvoke.LoadIcon(default, PInvoke.IDI_APPLICATION);
+			goto DEFAULT;
 		}
 
 		fixed (char* pExePath = exePath)
 		{
-			return PInvoke.ExtractIcon(default, pExePath, 0);
+			HICON icon = PInvoke.ExtractIcon(default, pExePath, 0);
+
+			if (icon.IsNull)
+			{
+				goto DEFAULT;
+			}
+
+			return icon;
 		}
+
+		DEFAULT:
+		return PInvoke.LoadIcon(default, PInvoke.IDI_APPLICATION);
 	}
 }

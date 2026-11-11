@@ -3,6 +3,4 @@
         <!-- TODO: Move to the other directory -->
 		<ApplicationIcon>$(MSBuildThisFileDirectory)/icon.ico</ApplicationIcon>
 	</PropertyGroup>
-
-	<Import Sdk="Microsoft.NET.Sdk" Project="Sdk.props" />
 </Project>

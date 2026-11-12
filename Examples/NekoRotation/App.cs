@@ -37,8 +37,8 @@ internal sealed class App : Application
     {
 	    _pos += deltaTime;
 
-	    float x = float.Cos(_pos);
-	    float z = float.Sin(_pos);
+	    float x = float.Cos(_pos * float.Pi);
+	    float z = float.Sin(_pos * float.Pi);
 
 	    _camera.Position = new Vector3(2f * x, x, 2f * z);
 	    _camera.LookAt(Vector3.Zero);

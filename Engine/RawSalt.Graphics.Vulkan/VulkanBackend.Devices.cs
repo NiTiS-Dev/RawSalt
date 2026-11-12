@@ -1,4 +1,6 @@
 using System.Diagnostics;
+using System.Runtime.InteropServices;
+using RawSalt.Graphics.Devices;
 using RawSalt.Graphics.Rendering;
 using RawSalt.Logging;
 
@@ -6,7 +8,11 @@ namespace RawSalt.Graphics.Vulkan;
 
 public partial class VulkanBackend
 {
-	public override GraphicsDevice CreateDevice(Adapter? device, RenderSurface renderSurface)
+	/// <inheritdoc/>
+	/// <exception cref="ArgumentException">Provided arguments doesn't belong to current backend.</exception>
+	/// <exception cref="InvalidOperationException">Suitable Vulkan adapters not found.</exception>
+	/// <exception cref="NotSupportedException">Adapter is deprecated and can't be used for device creation.</exception>
+	public override GraphicsDevice CreateDevice(RenderSurface renderSurface, [Optional] Adapter? adapter)
 	{
 		Debug.Assert(renderSurface != null);
 		if (renderSurface is not VulkanSurface vulkanSurface)
@@ -14,8 +20,8 @@ public partial class VulkanBackend
 			throw new ArgumentException("Provided render surface is not of Vulkan.");
 		}
 
-		VulkanAdapter adapter;
-		if (device is null)
+		VulkanAdapter vkAdapter;
+		if (adapter is null)
 		{
 			IReadOnlyList<VulkanAdapter> adapters = GetAdapters();
 			if (adapters.Count == 0)
@@ -24,11 +30,11 @@ public partial class VulkanBackend
 				throw new InvalidOperationException("No Vulkan adapter is available.");
 			}
 
-			adapter = SelectAdapter(adapters);
+			vkAdapter = SelectAdapter(adapters);
 		}
-		else if (device is VulkanAdapter vulkanAdapter)
+		else if (adapter is VulkanAdapter vulkanAdapter)
 		{
-			adapter = vulkanAdapter;
+			vkAdapter = vulkanAdapter;
 		}
 		else
 		{
@@ -36,18 +42,18 @@ public partial class VulkanBackend
 		}
 
 		VkInstanceApi instanceApi = InstanceApi;
-		VkPhysicalDevice physicalDevice = adapter.PhysicalDevice;
+		VkPhysicalDevice physicalDevice = vkAdapter.PhysicalDevice;
 
 		VkUtf8String swapchainExtension = Vk.VK_KHR_SWAPCHAIN_EXTENSION_NAME;
 		if (!IsDeviceExtensionSupported(instanceApi, physicalDevice, swapchainExtension))
 		{
-			throw new NotSupportedException($"Adapter \"{adapter.Name}\" does not support {swapchainExtension}.");
+			throw new NotSupportedException($"Adapter \"{vkAdapter.Name}\" does not support {swapchainExtension}.");
 		}
 
 		instanceApi.vkGetPhysicalDeviceQueueFamilyProperties(physicalDevice, out uint queueFamilyCount);
 		if (queueFamilyCount == 0)
 		{
-			throw new NotSupportedException($"Adapter \"{adapter.Name}\" does not expose any queue families.");
+			throw new NotSupportedException($"Adapter \"{vkAdapter.Name}\" does not expose any queue families.");
 		}
 
 		uint? combined = null;
@@ -78,15 +84,15 @@ public partial class VulkanBackend
 
 		if (combined != null)
 		{
-			return CreateDevice(InstanceApi, adapter, combined.Value, combined.Value);
+			return CreateDevice(InstanceApi, vkAdapter, combined.Value, combined.Value);
 		}
 
 		if (graphics != null && present != null)
 		{
-			return CreateDevice(InstanceApi, adapter, graphics.Value, present.Value);
+			return CreateDevice(InstanceApi, vkAdapter, graphics.Value, present.Value);
 		}
 
-		throw new NotSupportedException($"Adapter \"{adapter.Name}\" does not support required operations.");
+		throw new NotSupportedException($"Adapter \"{vkAdapter.Name}\" does not support required operations.");
 	}
 
 	private static unsafe VulkanDevice CreateDevice(VkInstanceApi instanceApi, VulkanAdapter adapter, uint graphicsQueueFamilyIndex, uint presentQueueFamilyIndex)

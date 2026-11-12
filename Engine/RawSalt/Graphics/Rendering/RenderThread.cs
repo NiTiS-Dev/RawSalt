@@ -82,7 +82,7 @@ internal sealed class RenderThread
 		CancellationToken cancellationToken = _cts.Token;
 		try
 		{
-			using GraphicsDevice device = _backend.CreateDevice(null, _surface);
+			using GraphicsDevice device = _backend.CreateDevice(_surface, null);
 			using Swapchain swapchain = device.CreateSwapchain(_surface);
 			using Renderer renderer = device.CreateRenderer(swapchain);
 			SlangCompiler compiler = new();

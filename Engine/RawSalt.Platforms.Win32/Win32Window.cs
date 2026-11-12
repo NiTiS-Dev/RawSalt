@@ -32,6 +32,7 @@ public class Win32Window : Window, IWin32Window
 	[SupportedOSPlatform("windows5.0")]
 	public override void PumpEvents()
 	{
+		// TODO: Send windowing to the separate thread, so moving does cause rendering/presenting to stop
 		while (PInvoke.PeekMessage(out MSG msg, Handle, 0, 0, PEEK_MESSAGE_REMOVE_TYPE.PM_REMOVE))
 		{
 			PInvoke.TranslateMessage(msg);

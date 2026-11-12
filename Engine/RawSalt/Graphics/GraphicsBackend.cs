@@ -1,3 +1,5 @@
+using System.Runtime.InteropServices;
+using RawSalt.Graphics.Devices;
 using RawSalt.Graphics.Rendering;
 using RawSalt.Platforms;
 using RawSalt.Threading;
@@ -21,8 +23,14 @@ public abstract class GraphicsBackend : Disposable
 	/// <returns>Readonly list of available adapters, or <see langword="null"/> if adapter enumeration is not supported.</returns>
 	public abstract IReadOnlyList<Adapter>? GetAdapters();
 
+	/// <summary>
+	/// Creates logical graphics device.
+	/// </summary>
+	/// <param name="renderSurface">Target render surface.</param>
+	/// <param name="adapter">Preferred adapter device.</param>
+	/// <returns></returns>
 	[ThreadSafety(AllowedThread.Render)]
-	public abstract GraphicsDevice CreateDevice(Adapter? device, RenderSurface renderSurface);
+	public abstract GraphicsDevice CreateDevice(RenderSurface renderSurface, [Optional] Adapter? adapter);
 
 	[ThreadSafety(AllowedThread.Main)]
 	public abstract RenderSurface CreateSurface(View view);

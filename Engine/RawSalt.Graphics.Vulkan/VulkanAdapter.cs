@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using System.Runtime.InteropServices;
+using RawSalt.Graphics.Devices;
 
 namespace RawSalt.Graphics.Vulkan;
 

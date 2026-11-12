@@ -1,5 +1,6 @@
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using RawSalt.Graphics.Devices;
 using RawSalt.Graphics.Drawing;
 using RawSalt.Graphics.Pipelines;
 using RawSalt.Graphics.Rendering;

@@ -5,6 +5,9 @@ using RawSalt.Platforms;
 
 namespace RawSalt.Graphics.Vulkan;
 
+/// <summary>
+/// Vulkan 1.3 API graphics backend.
+/// </summary>
 public sealed partial class VulkanBackend : GraphicsBackend
 {
 	private static volatile int _instanceCount;

@@ -16,14 +16,13 @@ using RawSalt.Logging;
 
 namespace RawSalt.Platforms.Win32;
 
-[SupportedOSPlatform("windows10.0")]
 public partial class Win32Platform : Platform
 {
 	public override WellKnownPlatformApi Api => WellKnownPlatformApi.Win32;
 
-	private List<Win32Display>? _displays;
 	private readonly SmallDictionary<nint /*HWND*/, Win32Window> _windows = [];
 
+	[SupportedOSPlatform("windows10.0")]
 	public Win32Platform(Application application) : base(application)
 	{
 		if (OperatingSystem.IsWindowsVersionAtLeast(10, 0, 15063))
@@ -51,80 +50,7 @@ public partial class Win32Platform : Platform
 		}
 	}
 
-	public override Display GetPrimaryDisplay()
-	{
-		HMONITOR handle = PInvoke.MonitorFromPoint(Point.Empty, MONITOR_FROM_FLAGS.MONITOR_DEFAULTTOPRIMARY);
-
-		Win32Display primary = GetDisplay(handle);
-		return primary;
-	}
-
-	public override unsafe IReadOnlyList<Display> GetDisplays()
-	{
-		if (_displays == null)
-		{
-			_displays = [];
-		}
-		else
-		{
-			_displays.Clear();
-		}
-
-		PInvoke.EnumDisplayMonitors(HDC.Null, null, MonitorEnumProc, default);
-		return _displays.AsReadOnly();
-	}
-
-	private unsafe BOOL MonitorEnumProc(HMONITOR hMonitor, HDC hdcMonitor, RECT* lprcMonitor, LPARAM dwData)
-	{
-		Debug.Assert(_displays != null);
-
-		Win32Display display = GetDisplay(hMonitor);
-		_displays.Add(display);
-
-		return true;
-	}
-
-	private static unsafe Win32Display GetDisplay(HMONITOR handle)
-	{
-		MONITORINFOEXW info;
-		info.monitorInfo.cbSize = (uint)Unsafe.SizeOf<MONITORINFOEXW>();
-		if (!PInvoke.GetMonitorInfo(handle, (MONITORINFO*)&info))
-		{
-			throw new Win32Exception(Marshal.GetLastPInvokeError(), Marshal.GetLastPInvokeErrorMessage());
-		}
-
-		string deviceName = info.szDevice.ToString();
-		string displayName = GetDisplayName(deviceName);
-		Region2<int> region = info.monitorInfo.rcMonitor.AsRegion();
-		Region2<int> workRegion = info.monitorInfo.rcWork.AsRegion();
-		return new Win32Display(displayName, region, workRegion);
-	}
-
-	private static unsafe string GetDisplayName(string deviceName)
-	{
-		DISPLAY_DEVICEW displayDevice = new()
-		{
-			cb = (uint)sizeof(DISPLAY_DEVICEW)
-		};
-
-		for (uint i = 0;
-		     PInvoke.EnumDisplayDevices(deviceName, i, ref displayDevice, 0);
-		     i++)
-		{
-			if ((displayDevice.StateFlags & DISPLAY_DEVICE_STATE_FLAGS.DISPLAY_DEVICE_ACTIVE) != 0)
-			{
-				return displayDevice.DeviceString.ToString();
-			}
-
-			displayDevice = new DISPLAY_DEVICEW
-			{
-				cb = (uint)sizeof(DISPLAY_DEVICEW)
-			};
-		}
-
-		return deviceName;
-	}
-
+	[SupportedOSPlatform("windows10.0")]
 	public override unsafe Win32Window CreateView(in WindowConfiguration configuration)
 	{
 		RegisterClass();
@@ -170,6 +96,7 @@ public partial class Win32Platform : Platform
 		return window;
 	}
 
+	[SupportedOSPlatform("windows10.0")]
 	public override bool ReleaseView(View view)
 	{
 		if (view is not Win32Window window)
@@ -181,12 +108,14 @@ public partial class Win32Platform : Platform
 		return true;
 	}
 
+	[SupportedOSPlatform("windows5.0")]
 	public override bool TryCreateErrorMessage(string message)
 	{
 		_ = PInvoke.MessageBox(HWND.Null, message, null, MESSAGEBOX_STYLE.MB_OK | MESSAGEBOX_STYLE.MB_ICONWARNING);
 		return true;
 	}
 
+	[SupportedOSPlatform("windows10.0")]
 	private LRESULT WndProc(HWND hWnd, uint msg, WPARAM wParam, LPARAM lParam)
 	{
 		if (msg == PInvoke.WM_DESTROY)
@@ -225,6 +154,7 @@ public partial class Win32Platform : Platform
 		return PInvoke.DefWindowProc(hWnd, msg, wParam, lParam);
 	}
 
+	[SupportedOSPlatform("windows10.0")]
 	private static unsafe void UpdateTheme(HWND hWnd)
 	{
     	BOOL useDark = IsDarkModeEnabled();

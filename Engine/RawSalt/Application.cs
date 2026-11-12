@@ -123,7 +123,7 @@ public class Application
 			float deltaTime = (now - last) / (float)Stopwatch.Frequency;
 			Update(updateId++, deltaTime);
 			CameraData cameraData = default;
-			if (snapshot != null)
+			if (snapshot != null && (view.SurfaceSize.X != 0 && view.SurfaceSize.Y != 0))
 			{
 				Draw(ref cameraData, view.SurfaceSize, updateId, deltaTime);
 			}

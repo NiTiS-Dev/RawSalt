@@ -6,6 +6,7 @@ using RawSalt.Graphics.Drawing;
 using RawSalt.Graphics.Rendering;
 using RawSalt.Logging;
 using RawSalt.Platforms;
+using RawSalt.Threading;
 
 namespace RawSalt;
 
@@ -42,7 +43,12 @@ public class Application
 		Headless = headless;
 	}
 
+	[ThreadSafety(AllowedThread.Main)]
 	protected virtual void Update(ulong updateId, float deltaTime)
+	{ }
+
+	[ThreadSafety(AllowedThread.Main)]
+	protected virtual void Draw(ref CameraData camera, Vec2i viewport, ulong updateId, float deltaTime)
 	{ }
 
 	protected bool Launch(LaunchConfiguration config)
@@ -76,7 +82,7 @@ public class Application
 			RenderThread renderThread = new(pacer, GraphicsBackend, MainSurface);
 			renderThread.Start();
 
-			AppLoop(pacer, renderThread, MainView);
+			MainLoopWithGraphics(pacer, renderThread, MainView);
 
 			renderThread.Stop();
 			Platform.ReleaseView(MainView);
@@ -92,7 +98,7 @@ public class Application
 		return true;
 	}
 
-	private void AppLoop(FramePacer pacer, RenderThread renderThread, View view)
+	private void MainLoopWithGraphics(FramePacer pacer, RenderThread renderThread, View view)
 	{
 		long last = Stopwatch.GetTimestamp();
 
@@ -116,12 +122,18 @@ public class Application
 			long now = Stopwatch.GetTimestamp();
 			float deltaTime = (now - last) / (float)Stopwatch.Frequency;
 			Update(updateId++, deltaTime);
+			CameraData cameraData = default;
+			if (snapshot != null)
+			{
+				Draw(ref cameraData, view.SurfaceSize, updateId, deltaTime);
+			}
 			statistics.Update();
 			last = now;
 
 			if (snapshot != null)
 			{
 				snapshot.Size = view.SurfaceSize;
+				snapshot.Camera = cameraData;
 				pacer.Submit(snapshot);
 			}
 		}

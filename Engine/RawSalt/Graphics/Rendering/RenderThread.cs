@@ -176,19 +176,12 @@ internal sealed class RenderThread
 
 					CommandList cmd = frame.Commands;
 					deg += 0.65f;
-					Vector3 cameraPosition = new Vector3(0f, 0f, 2f);
-					Vector3 cameraTarget = Vector3.Zero;
-					Vector3 upVector = +Vector3.UnitY;
-					float aspect = (float)size.X / size.Y;
-					float fieldOfView = MathF.PI / 4f;
 
-					Matrix4x4 view = Matrix4x4.CreateLookAt(cameraPosition, cameraTarget, upVector);
-					Matrix4x4 projection = Matrix4x4.CreatePerspectiveFieldOfView(fieldOfView, aspect, 0.001f, 100f);
 					cmd.BeginRenderPass(new RenderPass(frame.BackBuffer, new Color4(0.3f, 0.3f, 0.2f).ShiftHue(deg)));
 					{
 						cmd.SetPipeline(pipeline);
-						cmd.SetUniform("camera", new CameraData { View = view, Projection = projection });
-						cmd.SetUniform("draw", Matrix4x4.CreateScale(0.5f) * Matrix4x4.CreateRotationY(deg / 120) * Matrix4x4.CreateRotationZ(deg / 310));
+						cmd.SetUniform("camera", snapshot.Camera);
+						cmd.SetUniform("draw", Matrix4x4.CreateScale(0.5f));
 						cmd.SetTexture("tex", catTexture);
 						cmd.SetVertexBuffer(0, vertices);
 						cmd.SetIndexBuffer(indexes);

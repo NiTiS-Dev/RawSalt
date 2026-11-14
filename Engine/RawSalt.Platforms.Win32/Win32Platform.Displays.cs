@@ -69,7 +69,7 @@ public partial class Win32Platform
 	}
 
 	[SupportedOSPlatform("windows10.0")]
-	private static string GetDisplayName(string deviceName)
+	private static unsafe string GetDisplayName(string deviceName)
 	{
 		DISPLAY_DEVICEW displayDevice = new()
 		{

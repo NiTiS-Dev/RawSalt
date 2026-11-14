@@ -53,16 +53,15 @@ public class Application
 
 	protected bool Launch(LaunchConfiguration config)
 	{
-		if (Headless)
-		{
-			throw new NotImplementedException("Headless applications is not implemented yet.");
-		}
+		Log.Info("Launch application.");
 
 		try
 		{
-			Log.Info("Launch application.");
+			if (Headless)
+			{
+				MainLoop();
+			}
 
-			// TODO: Add headless launch configuration
 			// TODO: allow user to configure force candidate (parse program cli arguments)
 			Platform = SelectBestPlatform(config.Platforms.Select(t => t(this)).ToList());
 
@@ -96,6 +95,32 @@ public class Application
 		}
 
 		return true;
+	}
+
+	private void MainLoop()
+	{
+		TimeSpan mhz10 = TimeSpan.FromMilliseconds(100);
+		long last = Stopwatch.GetTimestamp();
+
+		RateStatistics statistics = new();
+		statistics.Start();
+
+		ulong updateId = 0;
+		while (true) // TODO: Add Close Methods to application
+		{
+			long now = Stopwatch.GetTimestamp();
+			float deltaTime = (now - last) / (float)Stopwatch.Frequency;
+			if (deltaTime < mhz10.Seconds)
+			{
+				Thread.Sleep(TimeSpan.FromSeconds(mhz10.Seconds - deltaTime));
+				continue;
+			}
+
+			Update(updateId, deltaTime);
+			updateId++;
+			statistics.Update();
+			last = now;
+		}
 	}
 
 	private void MainLoopWithGraphics(FramePacer pacer, RenderThread renderThread, View view)

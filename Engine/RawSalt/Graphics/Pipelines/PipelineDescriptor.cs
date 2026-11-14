@@ -1,5 +1,4 @@
 using RawSalt.Graphics.Drawing;
-using RawSalt.Graphics.Rendering;
 
 namespace RawSalt.Graphics.Pipelines;
 

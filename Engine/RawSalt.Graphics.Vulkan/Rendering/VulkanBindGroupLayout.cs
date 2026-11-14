@@ -1,6 +1,5 @@
 using System.Diagnostics;
 using RawSalt.Graphics.Pipelines;
-using RawSalt.Graphics.Rendering;
 
 namespace RawSalt.Graphics.Vulkan.Rendering;
 

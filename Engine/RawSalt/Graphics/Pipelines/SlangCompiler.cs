@@ -1,5 +1,4 @@
 using System.Collections.Immutable;
-using RawSalt.Graphics.Rendering;
 using SlangShaderSharp;
 
 namespace RawSalt.Graphics.Pipelines;

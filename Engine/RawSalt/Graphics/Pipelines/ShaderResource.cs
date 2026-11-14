@@ -1,5 +1,3 @@
-using RawSalt.Graphics.Rendering;
-
 namespace RawSalt.Graphics.Pipelines;
 
 // Maybe move to the individual graphics API?

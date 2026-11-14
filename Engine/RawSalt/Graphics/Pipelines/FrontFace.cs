@@ -1,4 +1,4 @@
-namespace RawSalt.Graphics.Rendering;
+namespace RawSalt.Graphics.Pipelines;
 
 /// <summary>
 /// Defines direction of front face.

@@ -1,4 +1,4 @@
-namespace RawSalt.Graphics.Rendering;
+namespace RawSalt.Graphics.Pipelines;
 
 public enum BindingType
 {

@@ -1,7 +1,7 @@
 using System.Collections.Concurrent;
 using RawSalt.Threading;
 
-namespace RawSalt.Graphics.Drawing;
+namespace RawSalt.Graphics.Rendering;
 
 [ThreadSafety(AllowedThread.Main | AllowedThread.Render)]
 internal sealed class FramePacer

@@ -1,5 +1,4 @@
 using System.Diagnostics;
-using RawSalt.Graphics.Rendering;
 
 namespace RawSalt.Graphics.Vulkan;
 

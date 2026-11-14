@@ -1,9 +1,7 @@
 using System.Collections.Immutable;
 using System.Diagnostics;
-using System.Runtime.InteropServices;
 using RawSalt.Graphics.Drawing;
 using RawSalt.Graphics.Pipelines;
-using RawSalt.Graphics.Rendering;
 using RawSalt.Graphics.Vulkan.Rendering;
 
 namespace RawSalt.Graphics.Vulkan;

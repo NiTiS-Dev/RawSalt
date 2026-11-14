@@ -2,7 +2,6 @@ using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using RawSalt.Diagnostics;
 using RawSalt.Graphics;
-using RawSalt.Graphics.Drawing;
 using RawSalt.Graphics.Rendering;
 using RawSalt.Logging;
 using RawSalt.Platforms;

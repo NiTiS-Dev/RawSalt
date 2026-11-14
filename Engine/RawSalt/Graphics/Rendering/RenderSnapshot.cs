@@ -1,7 +1,6 @@
-using RawSalt.Graphics.Rendering;
 using RawSalt.Threading;
 
-namespace RawSalt.Graphics.Drawing;
+namespace RawSalt.Graphics.Rendering;
 
 [ThreadSafety(AllowedThread.Main | AllowedThread.Render)]
 internal sealed class RenderSnapshot

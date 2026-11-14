@@ -1,7 +1,7 @@
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
 
-namespace RawSalt.Graphics.Rendering;
+namespace RawSalt.Graphics;
 
 public sealed unsafe class UploadMapArena
 {

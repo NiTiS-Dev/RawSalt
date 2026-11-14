@@ -98,7 +98,7 @@ internal static class FormatExtensions
 		{
 			return sampling switch
 			{
-				Sampling.ClampToBorder => VkSamplerAddressMode.ClampToBorder,
+				Sampling.ClampToEdge => VkSamplerAddressMode.ClampToEdge,
 				Sampling.MirrorRepeat => VkSamplerAddressMode.MirroredRepeat,
 				_ => VkSamplerAddressMode.Repeat,
 			};

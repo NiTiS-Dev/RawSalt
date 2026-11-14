@@ -1,9 +1,11 @@
+using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using RawSalt.Graphics.Devices;
 using RawSalt.Graphics.Drawing;
 using RawSalt.Graphics.Pipelines;
 using RawSalt.Graphics.Rendering;
+using RawSalt.Graphics.Resources;
 using RawSalt.Threading;
 
 namespace RawSalt.Graphics;
@@ -11,14 +13,27 @@ namespace RawSalt.Graphics;
 [ThreadSafety(AllowedThread.Render)]
 public abstract class GraphicsDevice : Disposable
 {
+	private readonly ResourcePool<TextureResource> _textures = new();
+	private readonly ResourcePool<BufferResource> _buffers = new();
+	private readonly Queue<(IDisposable Resource, ulong Frame)> _retired = new();
+	private readonly int _renderThreadId = Environment.CurrentManagedThreadId;
+	private ulong _currentFrame;
+
 	public abstract Adapter Adapter { get; }
 
 	public abstract Swapchain CreateSwapchain(RenderSurface surface);
 	public abstract Renderer CreateRenderer(Swapchain swapchain);
 
-	public abstract Buffer CreateBuffer(in BufferDescriptor descriptor, ReadOnlySpan<byte> initialData);
-	public abstract Texture2D CreateTexture(in Texture2DDescriptor descriptor, ReadOnlySpan<byte> initialData);
+	protected abstract BufferResource CreateBufferResource(in BufferDescriptor descriptor, ReadOnlySpan<byte> initialData);
+	protected abstract TextureResource CreateTextureResource(in TextureDescriptor descriptor, ReadOnlySpan<byte> initialData);
 	public abstract Pipeline CreatePipeline(PipelineDescriptor descriptor);
+
+	public Buffer CreateBuffer(in BufferDescriptor descriptor, ReadOnlySpan<byte> initialData)
+	{
+		AssertRenderThread();
+		BufferResource resource = CreateBufferResource(descriptor, initialData);
+		return new(this, _buffers.Add(resource), resource.Size);
+	}
 
 	public Buffer CreateBuffer<T>(BufferUsage usage, ReadOnlySpan<T> data) where T : unmanaged
 	{
@@ -26,16 +41,231 @@ public abstract class GraphicsDevice : Disposable
 			MemoryMarshal.AsBytes(data));
 	}
 
-	public Texture2D CreateTexture(in Texture2DDescriptor descriptor)
+	public Texture1D CreateTexture(int width, PixelFormat format, Sampling sampling, ReadOnlySpan<byte> initialData)
 	{
-		return CreateTexture(descriptor, []);
+		AssertRenderThread();
+		var descriptor = TextureDescriptor.Create(width, format, sampling);
+		TextureResource resource = CreateTextureResource(descriptor, initialData);
+		return new(this, _textures.Add(resource), resource.Format, resource.Size.X);
 	}
 
-	public Texture2D CreateTexture(PixelMap2D pixels)
+	public Texture1D CreateTexture(int width, PixelFormat format, Sampling sampling)
 	{
-		Texture2DDescriptor descriptor = new(new(pixels.Width, pixels.Height), pixels.Format);
-		return CreateTexture(descriptor, pixels.GetBytes());
+		return CreateTexture(width, format, sampling, []);
+	}
+
+	public Texture2D CreateTexture(int width, int height, PixelFormat format, Sampling sampling,
+		ReadOnlySpan<byte> initialData)
+	{
+		AssertRenderThread();
+		var descriptor = TextureDescriptor.Create(width, height, format, sampling);
+		TextureResource resource = CreateTextureResource(descriptor, initialData);
+		return new(this, _textures.Add(resource), resource.Format, new(resource.Size.X, resource.Size.Y));
+	}
+
+	public Texture2D CreateTexture(int width, int height, PixelFormat format, Sampling sampling)
+	{
+		return CreateTexture(width, height, format, sampling, []);
+	}
+
+	public Texture3D CreateTexture(int width, int height, int depth, PixelFormat format, Sampling sampling,
+		ReadOnlySpan<byte> initialData)
+	{
+		AssertRenderThread();
+		var descriptor = TextureDescriptor.Create(width, height, depth, format, sampling);
+		TextureResource resource = CreateTextureResource(descriptor, initialData);
+		return new(this, _textures.Add(resource), resource.Format, resource.Size);
+	}
+
+	public Texture3D CreateTexture(int width, int height, int depth, PixelFormat format, Sampling sampling)
+	{
+		return CreateTexture(width, height, depth, format, sampling, []);
+	}
+
+	public TextureCube CreateTextureCube(int width, int height, PixelFormat format, Sampling sampling,
+		ReadOnlySpan<byte> initialData)
+	{
+		AssertRenderThread();
+		var descriptor = TextureDescriptor.CreateCube(width, height, format, sampling);
+		TextureResource resource = CreateTextureResource(descriptor, initialData);
+		return new(this, _textures.Add(resource), resource.Format, resource.Size.X);
+	}
+
+	public TextureCube CreateTextureCube(int width, int height, PixelFormat format, Sampling sampling)
+	{
+		return CreateTextureCube(width, height, format, sampling, []);
+	}
+
+	public Texture2D CreateTexture(PixelMap2D pixels, Sampling sampling)
+	{
+		return CreateTexture(pixels.Width, pixels.Height, pixels.Format, sampling, pixels.GetBytes());
+	}
+
+	public TextureResource GetTextureResource(Texture1D texture)
+	{
+		return GetTextureResource(texture.Owner, texture.Handle, nameof(texture));
+	}
+
+	public TextureResource GetTextureResource(Texture2D texture)
+	{
+		return GetTextureResource(texture.Owner, texture.Handle, nameof(texture));
+	}
+
+	public TextureResource GetTextureResource(Texture3D texture)
+	{
+		return GetTextureResource(texture.Owner, texture.Handle, nameof(texture));
+	}
+
+	public TextureResource GetTextureResource(TextureCube texture)
+	{
+		return GetTextureResource(texture.Owner, texture.Handle, nameof(texture));
+	}
+
+	public TextureResource GetTextureResource(GraphicsDevice? owner, ResourceHandle handle, string parameterName)
+	{
+		AssertRenderThread();
+		ValidateOwner(owner, parameterName);
+		return _textures.Get(handle);
+	}
+
+	public BufferResource GetBufferResource(Buffer buffer)
+	{
+		AssertRenderThread();
+		ValidateOwner(buffer.Owner, nameof(buffer));
+		return _buffers.Get(buffer.Handle);
+	}
+
+	public void UpdateTexture(Texture1D texture, ReadOnlySpan<byte> pixels)
+	{
+		GetTextureResource(texture).Update(pixels);
+	}
+
+	public void UpdateTexture(Texture2D texture, ReadOnlySpan<byte> pixels)
+	{
+		GetTextureResource(texture).Update(pixels);
+	}
+
+	public void UpdateTexture(Texture3D texture, ReadOnlySpan<byte> pixels)
+	{
+		GetTextureResource(texture).Update(pixels);
+	}
+
+	public void UpdateTexture(TextureCube texture, ReadOnlySpan<byte> pixels)
+	{
+		GetTextureResource(texture).Update(pixels);
+	}
+
+	public void UpdateTexture(Texture2D texture, PixelMap2D pixels)
+	{
+		GetTextureResource(texture).Update(pixels);
+	}
+
+	public byte[] GetTexturePixels(Texture1D texture)
+	{
+		return GetTextureResource(texture).GetPixels();
+	}
+
+	public byte[] GetTexturePixels(Texture2D texture)
+	{
+		return GetTextureResource(texture).GetPixels();
+	}
+
+	public byte[] GetTexturePixels(Texture3D texture)
+	{
+		return GetTextureResource(texture).GetPixels();
+	}
+
+	public byte[] GetTexturePixels(TextureCube texture)
+	{
+		return GetTextureResource(texture).GetPixels();
+	}
+
+	internal void Destroy(Texture1D texture)
+	{
+		Retire(_textures, texture.Owner, texture.Handle, nameof(texture));
+	}
+
+	internal void Destroy(Texture2D texture)
+	{
+		Retire(_textures, texture.Owner, texture.Handle, nameof(texture));
+	}
+
+	internal void Destroy(Texture3D texture)
+	{
+		Retire(_textures, texture.Owner, texture.Handle, nameof(texture));
+	}
+
+	internal void Destroy(TextureCube texture)
+	{
+		Retire(_textures, texture.Owner, texture.Handle, nameof(texture));
+	}
+
+	internal void Destroy(Buffer buffer)
+	{
+		Retire(_buffers, buffer.Owner, buffer.Handle, nameof(buffer));
+	}
+
+	private void Retire<T>(ResourcePool<T> pool, GraphicsDevice? owner, ResourceHandle handle, string parameterName)
+		where T : class, IDisposable
+	{
+		AssertRenderThread();
+		ValidateOwner(owner, parameterName);
+		if (pool.Release(handle) is { } resource)
+		{
+			_retired.Enqueue((resource, _currentFrame));
+		}
+	}
+
+	/// <summary>
+	/// Marks the start of a new frame being recorded and returns its id.
+	/// </summary>
+	public ulong BeginFrame()
+	{
+		AssertRenderThread();
+		return ++_currentFrame;
+	}
+
+	/// <summary>
+	/// Disposes resources destroyed up to <paramref name="completedFrame"/>. Call after the GPU
+	/// finished that frame.
+	/// </summary>
+	public void CollectGarbage(ulong completedFrame)
+	{
+		AssertRenderThread();
+		while (_retired.TryPeek(out (IDisposable Resource, ulong Frame) entry) && entry.Frame <= completedFrame)
+		{
+			_retired.Dequeue();
+			entry.Resource.Dispose();
+		}
 	}
 
 	public abstract void WaitIdle();
+
+	[Conditional("DEBUG")]
+	protected void AssertRenderThread()
+	{
+		Debug.Assert(Environment.CurrentManagedThreadId == _renderThreadId, "Graphics device used off the render thread.");
+	}
+
+	private void ValidateOwner(GraphicsDevice? owner, string parameterName)
+	{
+		if (!ReferenceEquals(owner, this))
+		{
+			throw new ArgumentException("Resource was created by a different device.", parameterName);
+		}
+	}
+
+	protected override void Dispose(bool disposing)
+	{
+		if (!disposing)
+		{
+			return;
+		}
+
+		AssertRenderThread();
+		WaitIdle();
+		CollectGarbage(ulong.MaxValue);
+		_textures.Dispose();
+		_buffers.Dispose();
+	}
 }

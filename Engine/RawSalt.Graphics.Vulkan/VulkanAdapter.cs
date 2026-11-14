@@ -22,6 +22,7 @@ public sealed class VulkanAdapter : Adapter
 			MaxImageDimension1D = properties.limits.maxImageDimension1D,
 			MaxImageDimension2D = properties.limits.maxImageDimension2D,
 			MaxImageDimension3D = properties.limits.maxImageDimension3D,
+			MaxImageDimensionCube = properties.limits.maxImageDimensionCube,
 			MinUniformBufferOffsetAlignment = (uint)properties.limits.minUniformBufferOffsetAlignment,
 		};
 		Name = Marshal.PtrToStringUTF8((IntPtr)properties.deviceName) ?? "Unknown";

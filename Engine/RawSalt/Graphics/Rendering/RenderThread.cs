@@ -94,8 +94,7 @@ internal sealed class RenderThread
 				FrontFace = FrontFace.CounterClockWise,
 			});
 			using PixelMap2D catPixelMap = PixelMap2D.FromImageBytes(File.ReadAllBytes("test-image.png"));
-			using Texture2D catTexture = device.CreateTexture(new Texture2DDescriptor(catPixelMap.Region.Size, catPixelMap.Format), []);
-			catTexture.Update(catPixelMap);
+			using Texture2D catTexture = device.CreateTexture(catPixelMap, Sampling.ClampToEdge);
 
 			ReadOnlySpan<Vertex> square =
 			[

@@ -1,38 +1,37 @@
+using System.Runtime.CompilerServices;
 using RawSalt.Graphics.Drawing;
+using RawSalt.Graphics.Resources;
+using RawSalt.Threading;
 
 namespace RawSalt.Graphics;
 
-public abstract class Texture2D : Disposable
+/// <summary>
+/// Main-thread safe handle to a GPU texture. GPU work happens on the render thread.
+/// </summary>
+[ThreadSafety(AllowedThread.Main | AllowedThread.Render)]
+public readonly struct Texture2D : IDisposable
 {
-	public abstract PixelFormat Format { get; }
-	public abstract Vec2i Size { get; }
+	public GraphicsDevice? Owner { get; }
+	public ResourceHandle Handle { get; }
+	public PixelFormat Format { get; }
+	public Vec2i Size { get; }
 
-	/// <summary>
-	/// Replaces the whole texture with <paramref name="pixels"/>.
-	/// </summary>
-	/// <param name="pixels">Tightly packed pixel data matching <see cref="Format"/>.</param>
-	public abstract void Update(ReadOnlySpan<byte> pixels);
-
-	/// <summary>
-	/// Copies the whole texture into <paramref name="destination"/>.
-	/// </summary>
-	/// <param name="destination">Tightly packed pixel data matching <see cref="Format"/>.</param>
-	public abstract void GetPixels(Span<byte> destination);
-
-	public void Update(PixelMap2D pixels)
+	internal Texture2D(GraphicsDevice owner, ResourceHandle handle, PixelFormat format, Vec2i size)
 	{
-		if (pixels.Width != Size.X || pixels.Height != Size.Y || pixels.Format != Format)
-		{
-			throw new ArgumentException("Pixel map format and size must match the texture.", nameof(pixels));
-		}
-
-		Update(pixels.GetBytes());
+		Owner = owner;
+		Handle = handle;
+		Format = format;
+		Size = size;
 	}
 
-	public byte[] GetPixels()
+	[ThreadSafety(AllowedThread.Render)]
+	public void Dispose()
 	{
-		byte[] pixels = new byte[Size.X * Size.Y * Format.GetBytesPerPixel()];
-		GetPixels(pixels);
-		return pixels;
+		Owner?.Destroy(this);
+	}
+
+	public Texture2DRegion AsRegion()
+	{
+		return new Texture2DRegion(this, Vec2i.Zero, Size);
 	}
 }

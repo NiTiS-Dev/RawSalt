@@ -1,5 +1,6 @@
 using RawSalt.Graphics.Pipelines;
 using RawSalt.Graphics.Rendering;
+using RawSalt.Graphics.Resources;
 using RawSalt.Graphics.Vulkan.Rendering;
 using RawSalt.Logging;
 
@@ -62,6 +63,7 @@ public sealed class VulkanDevice : GraphicsDevice
 
 	public override Swapchain CreateSwapchain(RenderSurface surface)
 	{
+		AssertRenderThread();
 		if (surface is not VulkanSurface vulkanSurface)
 		{
 			throw new ArgumentException("Provided surface is not of Vulkan");
@@ -72,6 +74,7 @@ public sealed class VulkanDevice : GraphicsDevice
 
 	public override Renderer CreateRenderer(Swapchain swapchain)
 	{
+		AssertRenderThread();
 		if (swapchain is not VulkanSwapchain vulkanSwapchain)
 		{
 			throw new ArgumentException("Provided swapchain is not of Vulkan");
@@ -80,18 +83,19 @@ public sealed class VulkanDevice : GraphicsDevice
 		return new VulkanRenderer(this, vulkanSwapchain);
 	}
 
-	public override Buffer CreateBuffer(in BufferDescriptor descriptor, ReadOnlySpan<byte> data)
+	protected override BufferResource CreateBufferResource(in BufferDescriptor descriptor, ReadOnlySpan<byte> data)
 	{
-		return new VulkanBuffer(this, descriptor, data);
+		return new VulkanBufferResource(this, descriptor, data);
 	}
 
-	public override Texture2D CreateTexture(in Texture2DDescriptor descriptor, ReadOnlySpan<byte> data)
+	protected override TextureResource CreateTextureResource(in TextureDescriptor descriptor, ReadOnlySpan<byte> data)
 	{
-		return new VulkanTexture2D(this, descriptor, data);
+		return new VulkanTextureResource(this, descriptor, data);
 	}
 
 	public override Pipeline CreatePipeline(PipelineDescriptor descriptor)
 	{
+		AssertRenderThread();
 		return new VulkanPipeline(this, descriptor);
 	}
 
@@ -127,6 +131,7 @@ public sealed class VulkanDevice : GraphicsDevice
 	// shortcut: immediate submits wait for the queue, batch them when transfers become hot.
 	internal unsafe void RunOnce(Action<VkCommandBuffer> record)
 	{
+		AssertRenderThread();
 		VkDeviceApi api = DeviceApi;
 		VkCommandPoolCreateInfo poolInfo = new()
 		{
@@ -164,6 +169,7 @@ public sealed class VulkanDevice : GraphicsDevice
 
 	public override void WaitIdle()
 	{
+		AssertRenderThread();
 		VkResult result = DeviceApi.vkDeviceWaitIdle();
 		if (result != VkResult.Success)
 		{
@@ -173,7 +179,8 @@ public sealed class VulkanDevice : GraphicsDevice
 
 	protected override void Dispose(bool disposing)
 	{
-		WaitIdle();
+		// base waits idle, drains retired resources and disposes the pools; the device must stay alive.
+		base.Dispose(disposing);
 		DeviceApi.vkDestroyDescriptorPool(DescriptorPool);
 		UploadHeap.Dispose();
 		DeviceApi.vkDestroyDevice();

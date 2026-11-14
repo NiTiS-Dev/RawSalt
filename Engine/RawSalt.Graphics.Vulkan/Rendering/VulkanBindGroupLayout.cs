@@ -73,12 +73,12 @@ internal sealed class VulkanBindGroupLayout : Disposable
 		return index;
 	}
 
-	public unsafe void SetTexture(uint binding, Texture2D texture)
+	public unsafe void SetTexture(uint binding, VulkanTextureResource texture)
 	{
 		ThrowIfDisposed();
-		if (texture is not VulkanTexture2D vulkanTexture || vulkanTexture.Device != Device)
+		if (!ReferenceEquals(texture.Device, Device))
 		{
-			throw new ArgumentException("Texture was created by a different backend or device.", nameof(texture));
+			throw new ArgumentException("Texture was created by a different device.", nameof(texture));
 		}
 
 		ShaderResource resource = _resources.FirstOrDefault(r => r.Binding == binding);
@@ -92,8 +92,8 @@ internal sealed class VulkanBindGroupLayout : Disposable
 
 		VkDescriptorImageInfo imageInfo = new()
 		{
-			sampler = vulkanTexture.Sampler,
-			imageView = vulkanTexture.View,
+			sampler = texture.Sampler,
+			imageView = texture.View,
 			imageLayout = VkImageLayout.ShaderReadOnlyOptimal,
 		};
 		VkWriteDescriptorSet write = new()

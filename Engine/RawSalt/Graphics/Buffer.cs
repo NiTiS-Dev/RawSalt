@@ -1,12 +1,26 @@
+using RawSalt.Graphics.Resources;
+using RawSalt.Threading;
+
 namespace RawSalt.Graphics;
 
 /// <summary>
-/// Dedicated memory buffer.
+/// Main-thread safe handle to a GPU buffer. GPU work happens on the render thread.
 /// </summary>
-public abstract class Buffer : Disposable
+[ThreadSafety(AllowedThread.Main | AllowedThread.Render)]
+public readonly struct Buffer : IDisposable
 {
-	/// <summary>
-	/// Usable size of buffer.
-	/// </summary>
-	public abstract ulong Size { get; }
+	internal GraphicsDevice? Owner { get; }
+
+	internal Buffer(GraphicsDevice owner, ResourceHandle handle, ulong size)
+	{
+		Owner = owner;
+		Handle = handle;
+		Size = size;
+	}
+
+	public ResourceHandle Handle { get; }
+	public ulong Size { get; }
+
+	[ThreadSafety(AllowedThread.Render)]
+	public void Dispose() => Owner?.Destroy(this);
 }

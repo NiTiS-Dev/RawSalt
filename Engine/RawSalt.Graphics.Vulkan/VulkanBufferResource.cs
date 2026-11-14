@@ -1,6 +1,8 @@
+using RawSalt.Graphics.Resources;
+
 namespace RawSalt.Graphics.Vulkan;
 
-public sealed class VulkanBuffer : Buffer
+public sealed class VulkanBufferResource : BufferResource
 {
 	private readonly VulkanDevice _device;
 	private readonly VkDeviceMemory _memory;
@@ -8,7 +10,7 @@ public sealed class VulkanBuffer : Buffer
 	public VkBuffer Handle { get; }
 	public override ulong Size { get; }
 
-	public unsafe VulkanBuffer(VulkanDevice device, in BufferDescriptor descriptor, ReadOnlySpan<byte> initialData)
+	public unsafe VulkanBufferResource(VulkanDevice device, in BufferDescriptor descriptor, ReadOnlySpan<byte> initialData)
 	{
 		if ((ulong)initialData.Length > descriptor.Size)
 		{
@@ -51,7 +53,6 @@ public sealed class VulkanBuffer : Buffer
 		}
 	}
 
-	// TODO: deferred destruction.
 	protected override void Dispose(bool disposing)
 	{
 		_device.DeviceApi.vkDestroyBuffer(Handle);

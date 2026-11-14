@@ -21,6 +21,11 @@ public readonly struct DeviceLimits
 	public uint MaxImageDimension3D { get; init; }
 
 	/// <summary>
+	/// Max width and height of cubemap faces.
+	/// </summary>
+	public uint MaxImageDimensionCube { get; init; }
+
+	/// <summary>
 	/// Minimal required uniform buffer alignment.
 	/// </summary>
 	public uint MinUniformBufferOffsetAlignment { get; init; }

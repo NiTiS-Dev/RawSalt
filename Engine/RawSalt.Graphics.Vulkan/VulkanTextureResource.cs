@@ -1,46 +1,47 @@
 using NiTiS.Mathematics;
 using RawSalt.Graphics.Drawing;
+using RawSalt.Graphics.Resources;
 
 namespace RawSalt.Graphics.Vulkan;
 
-public sealed class VulkanTexture2D : Texture2D
+public sealed class VulkanTextureResource : TextureResource
 {
 	private readonly VulkanDevice _device;
 	private readonly VkDeviceMemory _memory;
 	private VkImageLayout _layout;
 
+	public override TextureDimension Dimension { get; }
+	public override Vector3<int> Size { get; }
 	public override PixelFormat Format { get; }
-	public override Vector2<int> Size { get; }
 	public VulkanDevice Device => _device;
 	public VkImage Image { get; }
 	public VkImageView View { get; }
 	public VkSampler Sampler { get; }
 
-	public unsafe VulkanTexture2D(VulkanDevice device, in Texture2DDescriptor descriptor, ReadOnlySpan<byte> initialData)
+	public unsafe VulkanTextureResource(VulkanDevice device, in TextureDescriptor descriptor, ReadOnlySpan<byte> initialData)
 	{
-		if (descriptor.Size.X <= 0 || descriptor.Size.Y <= 0)
-		{
-			throw new ArgumentOutOfRangeException(nameof(descriptor), "Texture size must be positive.");
-		}
-
-		if ((uint)descriptor.Size.X > device.Adapter.Limits.MaxImageDimension2D ||
-		    (uint)descriptor.Size.Y > device.Adapter.Limits.MaxImageDimension2D)
-		{
-			throw new ArgumentOutOfRangeException(nameof(descriptor), "Texture size exceeds the device limit.");
-		}
+		ValidateDescriptor(device, descriptor);
 
 		_device = device;
+		Dimension = descriptor.Dimension;
 		Size = descriptor.Size;
 		Format = descriptor.Format;
 
 		VkDeviceApi api = device.DeviceApi;
+		uint layers = (uint)LayerCount;
 		VkImageCreateInfo info = new()
 		{
-			imageType = VkImageType.Image2D,
+			flags = Dimension == TextureDimension.Cube ? VkImageCreateFlags.CubeCompatible : VkImageCreateFlags.None,
+			imageType = Dimension switch
+			{
+				TextureDimension.Texture1D => VkImageType.Image1D,
+				TextureDimension.Texture3D => VkImageType.Image3D,
+				_ => VkImageType.Image2D,
+			},
 			format = descriptor.Format.ToVkFormat(),
-			extent = new VkExtent3D((uint)Size.X, (uint)Size.Y, 1),
+			extent = new VkExtent3D((uint)Size.X, (uint)Size.Y, (uint)Size.Z),
 			mipLevels = 1,
-			arrayLayers = 1,
+			arrayLayers = layers,
 			samples = VkSampleCountFlags.Count1,
 			tiling = VkImageTiling.Optimal,
 			usage = VkImageUsageFlags.Sampled | VkImageUsageFlags.TransferDst | VkImageUsageFlags.TransferSrc,
@@ -62,9 +63,15 @@ public sealed class VulkanTexture2D : Texture2D
 		VkImageViewCreateInfo viewInfo = new()
 		{
 			image = image,
-			viewType = VkImageViewType.Image2D,
+			viewType = Dimension switch
+			{
+				TextureDimension.Texture1D => VkImageViewType.Image1D,
+				TextureDimension.Texture3D => VkImageViewType.Image3D,
+				TextureDimension.Cube => VkImageViewType.ImageCube,
+				_ => VkImageViewType.Image2D,
+			},
 			format = info.format,
-			subresourceRange = new VkImageSubresourceRange(VkImageAspectFlags.Color, 0, 1, 0, 1),
+			subresourceRange = new VkImageSubresourceRange(VkImageAspectFlags.Color, 0, 1, 0, layers),
 		};
 		api.vkCreateImageView(&viewInfo, out VkImageView view).CheckResult();
 		View = view;
@@ -116,8 +123,11 @@ public sealed class VulkanTexture2D : Texture2D
 			_device.RunOnce(cmd =>
 			{
 				Transition(cmd, VkImageLayout.TransferDstOptimal);
-				VkBufferImageCopy region = CreateCopyRegion();
-				api.vkCmdCopyBufferToImage(cmd, staging, Image, VkImageLayout.TransferDstOptimal, 1, &region);
+				for (uint layer = 0; layer < (uint)LayerCount; layer++)
+				{
+					VkBufferImageCopy region = CreateCopyRegion(layer);
+					api.vkCmdCopyBufferToImage(cmd, staging, Image, VkImageLayout.TransferDstOptimal, 1, &region);
+				}
 				Transition(cmd, VkImageLayout.ShaderReadOnlyOptimal);
 			});
 		}
@@ -144,8 +154,11 @@ public sealed class VulkanTexture2D : Texture2D
 			_device.RunOnce(cmd =>
 			{
 				Transition(cmd, VkImageLayout.TransferSrcOptimal);
-				VkBufferImageCopy region = CreateCopyRegion();
-				api.vkCmdCopyImageToBuffer(cmd, Image, VkImageLayout.TransferSrcOptimal, staging, 1, &region);
+				for (uint layer = 0; layer < (uint)LayerCount; layer++)
+				{
+					VkBufferImageCopy region = CreateCopyRegion(layer);
+					api.vkCmdCopyImageToBuffer(cmd, Image, VkImageLayout.TransferSrcOptimal, staging, 1, &region);
+				}
 				Transition(cmd, VkImageLayout.ShaderReadOnlyOptimal);
 			});
 
@@ -161,12 +174,64 @@ public sealed class VulkanTexture2D : Texture2D
 		}
 	}
 
+	private static void ValidateDescriptor(VulkanDevice device, in TextureDescriptor descriptor)
+	{
+		if (descriptor.Format == PixelFormat.Unknown)
+		{
+			throw new ArgumentException("Texture format must be specified.", nameof(descriptor));
+		}
+
+		Vector3<int> size = descriptor.Size;
+		uint limit;
+		switch (descriptor.Dimension)
+		{
+			case TextureDimension.Texture1D:
+				if (size.X <= 0 || size.Y != 1 || size.Z != 1)
+				{
+					throw new ArgumentOutOfRangeException(nameof(descriptor), "A 1D texture must have a positive width and unit height and depth.");
+				}
+				limit = device.Adapter.Limits.MaxImageDimension1D;
+				break;
+
+			case TextureDimension.Texture2D:
+				if (size.X <= 0 || size.Y <= 0 || size.Z != 1)
+				{
+					throw new ArgumentOutOfRangeException(nameof(descriptor), "A 2D texture must have a positive width and height and unit depth.");
+				}
+				limit = device.Adapter.Limits.MaxImageDimension2D;
+				break;
+
+			case TextureDimension.Texture3D:
+				if (size.X <= 0 || size.Y <= 0 || size.Z <= 0)
+				{
+					throw new ArgumentOutOfRangeException(nameof(descriptor), "A 3D texture must have positive width, height and depth.");
+				}
+				limit = device.Adapter.Limits.MaxImageDimension3D;
+				break;
+
+			case TextureDimension.Cube:
+				if (size.X <= 0 || size.X != size.Y || size.Z != 1)
+				{
+					throw new ArgumentOutOfRangeException(nameof(descriptor), "A cubemap must have equal, positive width and height and unit depth.");
+				}
+				limit = device.Adapter.Limits.MaxImageDimensionCube;
+				break;
+
+			default:
+				throw new ArgumentOutOfRangeException(nameof(descriptor), $"Unsupported texture dimension {descriptor.Dimension}.");
+		}
+
+		if ((uint)size.X > limit || (uint)size.Y > limit || (uint)size.Z > limit)
+		{
+			throw new ArgumentOutOfRangeException(nameof(descriptor), "Texture size exceeds the device limit.");
+		}
+	}
+
 	private void ValidateSize(int byteCount)
 	{
-		int expected = Size.X * Size.Y * Format.GetBytesPerPixel();
-		if (byteCount != expected)
+		if ((ulong)byteCount != ByteSize)
 		{
-			throw new ArgumentException($"Expected {expected} bytes of pixel data, got {byteCount}.");
+			throw new ArgumentException($"Expected {ByteSize} bytes of pixel data, got {byteCount}.");
 		}
 	}
 
@@ -193,13 +258,15 @@ public sealed class VulkanTexture2D : Texture2D
 		return (buffer, memory);
 	}
 
-	private VkBufferImageCopy CreateCopyRegion()
+	private VkBufferImageCopy CreateCopyRegion(uint layer)
 	{
+		ulong layerBytes = (ulong)Size.X * (ulong)Size.Y * (ulong)Size.Z * (ulong)Format.GetBytesPerPixel();
 		return new VkBufferImageCopy
 		{
-			imageSubresource = new VkImageSubresourceLayers(VkImageAspectFlags.Color, 0, 0, 1),
+			bufferOffset = layer * layerBytes,
+			imageSubresource = new VkImageSubresourceLayers(VkImageAspectFlags.Color, 0, layer, 1),
 			imageOffset = new VkOffset3D(0, 0, 0),
-			imageExtent = new VkExtent3D((uint)Size.X, (uint)Size.Y, 1),
+			imageExtent = new VkExtent3D((uint)Size.X, (uint)Size.Y, (uint)Size.Z),
 		};
 	}
 
@@ -222,7 +289,7 @@ public sealed class VulkanTexture2D : Texture2D
 			srcQueueFamilyIndex = Vk.VK_QUEUE_FAMILY_IGNORED,
 			dstQueueFamilyIndex = Vk.VK_QUEUE_FAMILY_IGNORED,
 			image = Image,
-			subresourceRange = new VkImageSubresourceRange(VkImageAspectFlags.Color, 0, 1, 0, 1),
+			subresourceRange = new VkImageSubresourceRange(VkImageAspectFlags.Color, 0, 1, 0, (uint)LayerCount),
 		};
 
 		_device.DeviceApi.vkCmdPipelineBarrier(cmd, srcStage, dstStage, 0, 0, null, 0, null, 1, &barrier);
@@ -241,10 +308,8 @@ public sealed class VulkanTexture2D : Texture2D
 		};
 	}
 
-	// TODO: deferred destruction.
 	protected override void Dispose(bool disposing)
 	{
-		_device.WaitIdle();
 		_device.DeviceApi.vkDestroySampler(Sampler);
 		_device.DeviceApi.vkDestroyImageView(View);
 		_device.DeviceApi.vkDestroyImage(Image);

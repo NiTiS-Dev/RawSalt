@@ -10,6 +10,7 @@ public sealed class VulkanRenderer : Renderer
 	private readonly VulkanSwapchain _swapchain;
 	private readonly VkCommandPool _pool;
 	private readonly VulkanRenderFrame[] _frames;
+	private readonly ulong[] _frameIds;
 	private VulkanRenderFrame? _active;
 
 	private VkDeviceApi Api => _device.DeviceApi;
@@ -42,11 +43,12 @@ public sealed class VulkanRenderer : Renderer
 		}
 
 		_frames = new VulkanRenderFrame[count];
+		_frameIds = new ulong[count];
 		VkFenceCreateInfo fenceInfo = new() { flags = VkFenceCreateFlags.Signaled };
 		for (int i = 0; i < count; i++)
 		{
 			Api.vkCreateFence(&fenceInfo, out VkFence fence);
-			_frames[i] = new VulkanRenderFrame(fence, new VulkanCommandList(Api, buffers[i], device.UploadHeap.CreateArena(i, 256)));
+			_frames[i] = new VulkanRenderFrame(fence, new VulkanCommandList(device, buffers[i], device.UploadHeap.CreateArena(i, 256)));
 		}
 	}
 
@@ -58,15 +60,19 @@ public sealed class VulkanRenderer : Renderer
 			throw new InvalidOperationException("The previous frame was not ended yet.");
 		}
 
-		Api.vkWaitForFences(_frames[_swapchain.FrameIndex].Fence, true, ulong.MaxValue);
+		// FrameIndex only advances in Present(), so capture the slot once.
+		uint slot = _swapchain.FrameIndex;
+		Api.vkWaitForFences(_frames[slot].Fence, true, ulong.MaxValue);
+		_device.CollectGarbage(_frameIds[slot]);
 
 		if (!_swapchain.TryAcquire())
 		{
 			return false;
 		}
 
-		VulkanRenderFrame f = _frames[_swapchain.FrameIndex];
+		VulkanRenderFrame f = _frames[slot];
 		Api.vkResetFences(f.Fence);
+		_frameIds[slot] = _device.BeginFrame();
 
 		f.Target.Image = _swapchain.CurrentImage;
 		f.Target.View = _swapchain.CurrentImageView;

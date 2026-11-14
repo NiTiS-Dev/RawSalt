@@ -2,6 +2,7 @@ using System.Diagnostics;
 using System.Numerics;
 using RawSalt.Graphics.Pipelines;
 using RawSalt.Graphics.Rendering;
+using RawSalt.Graphics.Resources;
 
 namespace RawSalt.Graphics.Vulkan.Rendering;
 
@@ -11,6 +12,7 @@ internal sealed class VulkanCommandList : CommandList
 	private const int MaxGroups = 4;
 	private const int MaxDynamicPerGroup = 4;
 
+	private readonly VulkanDevice _device;
 	private readonly VkDeviceApi _api;
 	private readonly UploadMapArena _uploadMapArena;
 	private VulkanRenderTarget? _pass;
@@ -27,9 +29,10 @@ internal sealed class VulkanCommandList : CommandList
 	private uint _dirtyGroups;                                 // bit g = group g must be (re)bound before the next draw
 
 
-	public VulkanCommandList(VkDeviceApi api, VkCommandBuffer buffer, UploadMapArena uploadMapArena)
+	public VulkanCommandList(VulkanDevice device, VkCommandBuffer buffer, UploadMapArena uploadMapArena)
 	{
-		_api = api;
+		_device = device;
+		_api = device.DeviceApi;
 		_uploadMapArena = uploadMapArena;
 		Buffer = buffer;
 	}
@@ -186,27 +189,44 @@ internal sealed class VulkanCommandList : CommandList
 		_dirtyGroups |= 1u << (int)resource.Set;
 	}
 
+	public override void SetTexture(string name, Texture1D texture)
+	{
+		SetTexture(name, texture.Owner, texture.Handle, nameof(texture));
+	}
+
 	public override void SetTexture(string name, Texture2D texture)
+	{
+		SetTexture(name, texture.Owner, texture.Handle, nameof(texture));
+	}
+
+	public override void SetTexture(string name, Texture3D texture)
+	{
+		SetTexture(name, texture.Owner, texture.Handle, nameof(texture));
+	}
+
+	public override void SetTexture(string name, TextureCube texture)
+	{
+		SetTexture(name, texture.Owner, texture.Handle, nameof(texture));
+	}
+
+	private void SetTexture(string name, GraphicsDevice? owner, ResourceHandle handle, string parameterName)
 	{
 		Debug.Assert(_pipeline != null, "SetPipeline must be called before setting textures.");
 
-		ShaderResource resource = _pipeline.GetResource(name, BindingType.CombinedImageSampler);
-		_pipeline.BindGroupLayouts[resource.Set].SetTexture(resource.Binding, texture);
+		VulkanTextureResource resource = (VulkanTextureResource)_device.GetTextureResource(owner, handle, parameterName);
+		ShaderResource shaderResource = _pipeline.GetResource(name, BindingType.CombinedImageSampler);
+		_pipeline.BindGroupLayouts[shaderResource.Set].SetTexture(shaderResource.Binding, resource);
 	}
 
 	public override unsafe void SetVertexBuffer(uint slot, Buffer buffer, ulong offset = 0)
 	{
-		Debug.Assert(buffer is VulkanBuffer);
-
-		VkBuffer handle = ((VulkanBuffer)buffer).Handle;
+		VkBuffer handle = ((VulkanBufferResource)_device.GetBufferResource(buffer)).Handle;
 		_api.vkCmdBindVertexBuffers(Buffer, slot, 1, &handle, &offset);
 	}
 
 	public override void SetIndexBuffer(Buffer buffer, ulong offset = 0)
 	{
-		Debug.Assert(buffer is VulkanBuffer);
-
-		VkBuffer handle = ((VulkanBuffer)buffer).Handle;
+		VkBuffer handle = ((VulkanBufferResource)_device.GetBufferResource(buffer)).Handle;
 		_api.vkCmdBindIndexBuffer(Buffer, handle, offset, VkIndexType.Uint32);
 	}
 

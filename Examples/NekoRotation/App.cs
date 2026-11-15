@@ -22,11 +22,13 @@ internal sealed class App : Application
 	};
 
 	private Pipeline? _pipeline;
+	private Pipeline? _skyboxPipeline;
 	private Texture2D _texture;
+	private TextureCube _skybox;
+	private Buffer _skyboxVertices;
 	private Buffer _vertices;
 	private Buffer _indexes;
 	private uint _indexCount;
-	private float _hue;
 	private float _pos;
 
     public static void Main()
@@ -70,12 +72,25 @@ internal sealed class App : Application
 	    {
 		    Anatomy = new PipelineAnatomy(compiler, File.ReadAllText("triangle.slang")),
 		    ColorFormat = renderer.BackBufferFormat,
-		    CullMode = CullMode.Back,
-		    FrontFace = FrontFace.CounterClockWise,
+		    CullMode = CullMode.Back
 	    });
 
 	    using PixelMap2D pixels = PixelMap2D.FromImageBytes(File.ReadAllBytes("test-image.png"));
 	    _texture = device.CreateTexture(pixels, Sampling.ClampToEdge);
+
+	    _skyboxPipeline = device.CreatePipeline(new PipelineDescriptor
+	    {
+		    Anatomy = new PipelineAnatomy(compiler, File.ReadAllText("skybox.slang")),
+		    ColorFormat = renderer.BackBufferFormat,
+		    CullMode = CullMode.None
+	    });
+
+	    using PixelMap2D cross = PixelMap2D.FromImageBytes(File.ReadAllBytes("test-cubemap-image.png"));
+	    int face = cross.Width / 4;
+	    _skybox = device.CreateTextureCube(face, face, cross.Format, Sampling.ClampToEdge, CubeFaces(cross));
+
+	    ReadOnlySpan<Vector2> skyVertices = [new(-1f, -1f), new(3f, -1f), new(-1f, 3f)];
+	    _skyboxVertices = device.CreateBuffer(BufferUsage.Vertex, skyVertices);
 
 	    ReadOnlySpan<Vertex> cube =
 	    [
@@ -138,9 +153,13 @@ internal sealed class App : Application
 	    }
 
 	    CommandList cmd = frame.Commands;
-	    _hue += 0.65f;
 
-	    cmd.BeginRenderPass(new RenderPass(frame.BackBuffer, new Color4(0.3f, 0.3f, 0.2f).ShiftHue(_hue)));
+	    Matrix4x4 view = camera.View;
+	    view.Translation = Vector3.Zero;
+	    Matrix4x4.Invert(view * camera.Projection, out Matrix4x4 inverseViewProjection);
+	    SkyboxData sky = new() { InverseViewProjection = inverseViewProjection };
+
+	    cmd.BeginRenderPass(new RenderPass(frame.BackBuffer));
 	    {
 		    cmd.SetPipeline(_pipeline);
 		    cmd.SetUniform("camera", camera);
@@ -149,6 +168,12 @@ internal sealed class App : Application
 		    cmd.SetVertexBuffer(0, _vertices);
 		    cmd.SetIndexBuffer(_indexes);
 		    cmd.DrawIndexed(_indexCount);
+
+		    cmd.SetPipeline(_skyboxPipeline!);
+		    cmd.SetUniform("sky", sky);
+		    cmd.SetTexture("skybox", _skybox);
+		    cmd.SetVertexBuffer(0, _skyboxVertices);
+		    cmd.Draw(3);
 	    }
 	    cmd.EndRenderPass();
     }
@@ -156,10 +181,58 @@ internal sealed class App : Application
     protected override void UnloadGraphics()
     {
 	    _pipeline?.Dispose();
+	    _skyboxPipeline?.Dispose();
 	    _texture.Dispose();
+	    _skybox.Dispose();
+	    _skyboxVertices.Dispose();
 	    _vertices.Dispose();
 	    _indexes.Dispose();
     }
+
+    /// <summary>
+    /// Splits a 4x3 horizontal cross into the six cube faces, in +X, -X, +Y, -Y, +Z, -Z order.
+    /// </summary>
+    private static byte[] CubeFaces(PixelMap2D cross)
+    {
+	    int face = cross.Width / 4;
+	    if (face * 4 != cross.Width || face * 3 != cross.Height)
+	    {
+		    throw new ArgumentException("Cubemap image must be a 4x3 cross.", nameof(cross));
+	    }
+
+	    ReadOnlySpan<(int Column, int Row)> layout =
+	    [
+		    (2, 1), // +X
+		    (0, 1), // -X
+		    (1, 0), // +Y
+		    (1, 2), // -Y
+		    (1, 1), // +Z
+		    (3, 1), // -Z
+	    ];
+
+	    int bpp = cross.Format.GetBytesPerPixel();
+	    int faceRowBytes = face * bpp;
+	    ReadOnlySpan<byte> source = cross.GetBytes();
+	    byte[] faces = new byte[6 * face * face * bpp];
+
+	    for (int f = 0; f < layout.Length; f++)
+	    {
+		    (int column, int row) = layout[f];
+		    for (int y = 0; y < face; y++)
+		    {
+			    source.Slice(((row * face + y) * cross.Width + column * face) * bpp, faceRowBytes)
+				    .CopyTo(faces.AsSpan((f * face + y) * faceRowBytes, faceRowBytes));
+		    }
+	    }
+
+	    return faces;
+    }
+}
+
+[StructLayout(LayoutKind.Sequential)]
+file struct SkyboxData
+{
+	public Matrix4x4 InverseViewProjection;
 }
 
 [StructLayout(LayoutKind.Sequential)]

@@ -7,9 +7,14 @@ namespace RawSalt.Graphics.Resources;
 /// <summary>
 /// Slot-based ownership of GPU resources addressed by <see cref="ResourceHandle"/>.
 /// </summary>
-[ThreadSafety(AllowedThread.Render)]
+/// <remarks>
+/// A slot can be reserved on any thread and filled later on the render thread. Reserving or
+/// releasing a slot bumps its generation, so handles to earlier uses stop resolving immediately.
+/// </remarks>
+[ThreadSafety(AllowedThread.Main | AllowedThread.Render)]
 public sealed class ResourcePool<T> : Disposable where T : class, IDisposable
 {
+	private readonly Lock _gate = new();
 	private T?[] _items;
 	private int[] _generations;
 	private readonly Stack<int> _free = new();
@@ -24,8 +29,101 @@ public sealed class ResourcePool<T> : Disposable where T : class, IDisposable
 	public ResourceHandle Add(T resource)
 	{
 		ArgumentNullException.ThrowIfNull(resource);
-		ThrowIfDisposed();
+		lock (_gate)
+		{
+			ThrowIfDisposed();
+			ResourceHandle handle = TakeLocked();
+			_items[handle.Index] = resource;
+			return handle;
+		}
+	}
 
+	/// <summary>
+	/// Claims an empty slot without a resource. Fill it later with <see cref="Set"/>.
+	/// </summary>
+	public ResourceHandle Reserve()
+	{
+		lock (_gate)
+		{
+			ThrowIfDisposed();
+			return TakeLocked();
+		}
+	}
+
+	/// <summary>
+	/// Fills a slot claimed by <see cref="Reserve"/>.
+	/// </summary>
+	/// <returns><see langword="false"/> when the slot was released in the meantime.</returns>
+	public bool Set(ResourceHandle handle, T resource)
+	{
+		ArgumentNullException.ThrowIfNull(resource);
+		lock (_gate)
+		{
+			ThrowIfDisposed();
+			if (!IsReservedLocked(handle))
+			{
+				return false;
+			}
+
+			_items[handle.Index] = resource;
+			return true;
+		}
+	}
+
+	/// <summary>
+	/// Whether the slot is filled. A reserved but not yet filled slot is not ready.
+	/// </summary>
+	public bool IsReady(ResourceHandle handle)
+	{
+		lock (_gate)
+		{
+			return IsLiveLocked(handle, out _);
+		}
+	}
+
+	public bool TryGet(ResourceHandle handle, [NotNullWhen(true)] out T? resource)
+	{
+		lock (_gate)
+		{
+			return IsLiveLocked(handle, out resource);
+		}
+	}
+
+	public T Get(ResourceHandle handle)
+	{
+		lock (_gate)
+		{
+			if (IsLiveLocked(handle, out T? resource))
+			{
+				return resource;
+			}
+		}
+
+		throw new ObjectDisposedException(typeof(T).Name, "The resource handle is stale.");
+	}
+
+	/// <summary>
+	/// Invalidates <paramref name="handle"/> and returns the resource so the caller can retire it
+	/// after the GPU is done with it.
+	/// </summary>
+	/// <returns>The released resource, or <see langword="null"/> when the handle was already stale.</returns>
+	public T? Release(ResourceHandle handle)
+	{
+		lock (_gate)
+		{
+			if ((uint)handle.Index >= (uint)_items.Length || _generations[handle.Index] != handle.Generation)
+			{
+				return null;
+			}
+
+			T? resource = _items[handle.Index];
+			InvalidateLocked(handle.Index);
+			return resource;
+		}
+	}
+
+	private ResourceHandle TakeLocked()
+	{
 		int index;
 		if (_free.TryPop(out int free))
 		{
@@ -41,14 +139,25 @@ public sealed class ResourcePool<T> : Disposable where T : class, IDisposable
 		}
 		Debug.Assert(_items[index] == null);
 
-		// Generation 0 is reserved, so a default handle never resolves.
-		int generation = _generations[index] + 1;
-		_generations[index] = generation == 0 ? 1 : generation;
-		_items[index] = resource;
-		return new(index, _generations[index]);
+		return new ResourceHandle(index, Bump(index));
 	}
 
-	public bool TryGet(ResourceHandle handle, [NotNullWhen(true)] out T? resource)
+	private void InvalidateLocked(int index)
+	{
+		_items[index] = null;
+		Bump(index);
+		_free.Push(index);
+	}
+
+	// Generation 0 is reserved, so a default handle never resolves.
+	private int Bump(int index)
+	{
+		int generation = _generations[index] + 1;
+		_generations[index] = generation == 0 ? 1 : generation;
+		return _generations[index];
+	}
+
+	private bool IsLiveLocked(ResourceHandle handle, [NotNullWhen(true)] out T? resource)
 	{
 		resource = null;
 		if ((uint)handle.Index >= (uint)_items.Length || _generations[handle.Index] != handle.Generation)
@@ -60,31 +169,11 @@ public sealed class ResourcePool<T> : Disposable where T : class, IDisposable
 		return resource != null;
 	}
 
-	public T Get(ResourceHandle handle)
+	private bool IsReservedLocked(ResourceHandle handle)
 	{
-		if (TryGet(handle, out T? resource))
-		{
-			return resource;
-		}
-
-		throw new ObjectDisposedException(typeof(T).Name, "The resource handle is stale.");
-	}
-
-	/// <summary>
-	/// Invalidates <paramref name="handle"/> and returns the resource so the caller can retire it
-	/// after the GPU is done with it.
-	/// </summary>
-	/// <returns>The released resource, or <see langword="null"/> when the handle was already stale.</returns>
-	public T? Release(ResourceHandle handle)
-	{
-		if (!TryGet(handle, out T? resource))
-		{
-			return null;
-		}
-
-		_items[handle.Index] = null;
-		_free.Push(handle.Index);
-		return resource;
+		return (uint)handle.Index < (uint)_items.Length &&
+		       _generations[handle.Index] == handle.Generation &&
+		       _items[handle.Index] == null;
 	}
 
 	private void Grow()
@@ -101,13 +190,16 @@ public sealed class ResourcePool<T> : Disposable where T : class, IDisposable
 			return;
 		}
 
-		for (int i = 0; i < _next; i++)
+		lock (_gate)
 		{
-			_items[i]?.Dispose();
-			_items[i] = null;
-		}
+			for (int i = 0; i < _next; i++)
+			{
+				_items[i]?.Dispose();
+				_items[i] = null;
+			}
 
-		_free.Clear();
-		_next = 0;
+			_free.Clear();
+			_next = 0;
+		}
 	}
 }

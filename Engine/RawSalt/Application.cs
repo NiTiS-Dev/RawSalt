@@ -37,6 +37,19 @@ public class Application
 	[NotNullIfNotNull(nameof(MainSurface))]
 	public GraphicsBackend? GraphicsBackend { get; private set; }
 
+	private RenderThread? _renderThread;
+
+	/// <summary>
+	/// The graphics device, available once the render thread has created it. Usable from the
+	/// update/draw loop to create graphics objects, which are uploaded by the render thread later.
+	/// </summary>
+	/// <remarks>
+	/// Can be null, if application is not include graphics.
+	/// </remarks>
+	[ThreadSafety(AllowedThread.Main)]
+	[MemberNotNullWhen(false, nameof(Headless))]
+	protected GraphicsDevice? Device => _renderThread?.Device;
+
 	protected Application(bool headless = false)
 	{
 		Headless = headless;
@@ -48,6 +61,28 @@ public class Application
 
 	[ThreadSafety(AllowedThread.Main)]
 	protected virtual void Draw(ref CameraData camera, Vec2i viewport, ulong updateId, float deltaTime)
+	{ }
+
+	/// <summary>
+	/// Called on the render thread once the device and renderer exist. Create render content here.
+	/// </summary>
+	[ThreadSafety(AllowedThread.Render)]
+	protected virtual void LoadGraphics(GraphicsDevice device, Renderer renderer)
+	{ }
+
+	/// <summary>
+	/// Called on the render thread to record one frame, after it was begun and before it is submitted.
+	/// </summary>
+	[ThreadSafety(AllowedThread.Render)]
+	protected virtual void Render(GraphicsDevice device, RenderFrame frame, in CameraData camera)
+	{ }
+
+	/// <summary>
+	/// Called on the render thread before the device is disposed. Release the content created in
+	/// <see cref="LoadGraphics"/> here.
+	/// </summary>
+	[ThreadSafety(AllowedThread.Render)]
+	protected virtual void UnloadGraphics()
 	{ }
 
 	protected bool Launch(LaunchConfiguration config)
@@ -77,12 +112,16 @@ public class Application
 			MainSurface = GraphicsBackend.CreateSurface(MainView);
 
 			FramePacer pacer = new();
-			RenderThread renderThread = new(pacer, GraphicsBackend, MainSurface);
-			renderThread.Start();
+			_renderThread = new RenderThread(pacer, GraphicsBackend, MainSurface,
+				LoadGraphics,
+				(device, frame, camera) => Render(device, frame, camera),
+				UnloadGraphics);
+			_renderThread.Start();
 
-			MainLoopWithGraphics(pacer, renderThread, MainView);
+			MainLoopWithGraphics(pacer, _renderThread, MainView);
 
-			renderThread.Stop();
+			_renderThread.Stop();
+			_renderThread = null;
 			Platform.ReleaseView(MainView);
 			MainView = null!;
 		}

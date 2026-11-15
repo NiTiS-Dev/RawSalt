@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
@@ -10,12 +11,13 @@ using RawSalt.Threading;
 
 namespace RawSalt.Graphics;
 
-[ThreadSafety(AllowedThread.Render)]
+[ThreadSafety(AllowedThread.Main | AllowedThread.Render)]
 public abstract class GraphicsDevice : Disposable
 {
 	private readonly ResourcePool<TextureResource> _textures = new();
 	private readonly ResourcePool<BufferResource> _buffers = new();
 	private readonly Queue<(IDisposable Resource, ulong Frame)> _retired = new();
+	private readonly ConcurrentQueue<Action> _pending = new();
 	private readonly int _renderThreadId = Environment.CurrentManagedThreadId;
 	private ulong _currentFrame;
 
@@ -43,10 +45,8 @@ public abstract class GraphicsDevice : Disposable
 
 	public Texture1D CreateTexture(int width, PixelFormat format, Sampling sampling, ReadOnlySpan<byte> initialData)
 	{
-		AssertRenderThread();
-		var descriptor = TextureDescriptor.Create(width, format, sampling);
-		TextureResource resource = CreateTextureResource(descriptor, initialData);
-		return new(this, _textures.Add(resource), resource.Format, resource.Size.X);
+		TextureDescriptor descriptor = TextureDescriptor.Create(width, format, sampling);
+		return new(this, CreateTextureHandle(descriptor, initialData), descriptor.Format, descriptor.Size.X);
 	}
 
 	public Texture1D CreateTexture(int width, PixelFormat format, Sampling sampling)
@@ -57,10 +57,9 @@ public abstract class GraphicsDevice : Disposable
 	public Texture2D CreateTexture(int width, int height, PixelFormat format, Sampling sampling,
 		ReadOnlySpan<byte> initialData)
 	{
-		AssertRenderThread();
-		var descriptor = TextureDescriptor.Create(width, height, format, sampling);
-		TextureResource resource = CreateTextureResource(descriptor, initialData);
-		return new(this, _textures.Add(resource), resource.Format, new(resource.Size.X, resource.Size.Y));
+		TextureDescriptor descriptor = TextureDescriptor.Create(width, height, format, sampling);
+		return new(this, CreateTextureHandle(descriptor, initialData), descriptor.Format,
+			new(descriptor.Size.X, descriptor.Size.Y));
 	}
 
 	public Texture2D CreateTexture(int width, int height, PixelFormat format, Sampling sampling)
@@ -71,10 +70,8 @@ public abstract class GraphicsDevice : Disposable
 	public Texture3D CreateTexture(int width, int height, int depth, PixelFormat format, Sampling sampling,
 		ReadOnlySpan<byte> initialData)
 	{
-		AssertRenderThread();
-		var descriptor = TextureDescriptor.Create(width, height, depth, format, sampling);
-		TextureResource resource = CreateTextureResource(descriptor, initialData);
-		return new(this, _textures.Add(resource), resource.Format, resource.Size);
+		TextureDescriptor descriptor = TextureDescriptor.Create(width, height, depth, format, sampling);
+		return new(this, CreateTextureHandle(descriptor, initialData), descriptor.Format, descriptor.Size);
 	}
 
 	public Texture3D CreateTexture(int width, int height, int depth, PixelFormat format, Sampling sampling)
@@ -85,10 +82,8 @@ public abstract class GraphicsDevice : Disposable
 	public TextureCube CreateTextureCube(int width, int height, PixelFormat format, Sampling sampling,
 		ReadOnlySpan<byte> initialData)
 	{
-		AssertRenderThread();
-		var descriptor = TextureDescriptor.CreateCube(width, height, format, sampling);
-		TextureResource resource = CreateTextureResource(descriptor, initialData);
-		return new(this, _textures.Add(resource), resource.Format, resource.Size.X);
+		TextureDescriptor descriptor = TextureDescriptor.CreateCube(width, height, format, sampling);
+		return new(this, CreateTextureHandle(descriptor, initialData), descriptor.Format, descriptor.Size.X);
 	}
 
 	public TextureCube CreateTextureCube(int width, int height, PixelFormat format, Sampling sampling)
@@ -99,6 +94,42 @@ public abstract class GraphicsDevice : Disposable
 	public Texture2D CreateTexture(PixelMap2D pixels, Sampling sampling)
 	{
 		return CreateTexture(pixels.Width, pixels.Height, pixels.Format, sampling, pixels.GetBytes());
+	}
+
+	/// <summary>
+	/// Creates the GPU texture on the render thread, or reserves its slot and queues the work when
+	/// called from another thread.
+	/// </summary>
+	private ResourceHandle CreateTextureHandle(in TextureDescriptor descriptor, ReadOnlySpan<byte> initialData)
+	{
+		if (IsRenderThread)
+		{
+			return _textures.Add(CreateTextureResource(descriptor, initialData));
+		}
+
+		// Lambdas cannot capture `in` parameters, and the span must outlive this call.
+		TextureDescriptor captured = descriptor;
+		byte[] data = [.. initialData];
+		ResourceHandle handle = _textures.Reserve();
+		_pending.Enqueue(() =>
+		{
+			TextureResource resource = CreateTextureResource(captured, data);
+			if (!_textures.Set(handle, resource))
+			{
+				// The handle was disposed before the render thread got to create it.
+				resource.Dispose();
+			}
+		});
+		return handle;
+	}
+
+	/// <summary>
+	/// Whether the GPU texture exists. Textures created off the render thread are not ready until
+	/// the render thread has created them.
+	/// </summary>
+	public bool IsTextureReady(ResourceHandle handle)
+	{
+		return _textures.IsReady(handle);
 	}
 
 	public TextureResource GetTextureResource(Texture1D texture)
@@ -208,12 +239,27 @@ public abstract class GraphicsDevice : Disposable
 	private void Retire<T>(ResourcePool<T> pool, GraphicsDevice? owner, ResourceHandle handle, string parameterName)
 		where T : class, IDisposable
 	{
-		AssertRenderThread();
 		ValidateOwner(owner, parameterName);
-		if (pool.Release(handle) is { } resource)
+
+		// Release on the calling thread so the handle is stale immediately, even from the main thread.
+		if (pool.Release(handle) is not { } resource)
 		{
-			_retired.Enqueue((resource, _currentFrame));
+			return;
 		}
+
+		if (IsRenderThread)
+		{
+			RetireNow(resource);
+			return;
+		}
+
+		_pending.Enqueue(() => RetireNow(resource));
+	}
+
+	private void RetireNow(IDisposable resource)
+	{
+		AssertRenderThread();
+		_retired.Enqueue((resource, _currentFrame));
 	}
 
 	/// <summary>
@@ -222,7 +268,16 @@ public abstract class GraphicsDevice : Disposable
 	public ulong BeginFrame()
 	{
 		AssertRenderThread();
+		DrainPending();
 		return ++_currentFrame;
+	}
+
+	private void DrainPending()
+	{
+		while (_pending.TryDequeue(out Action? action))
+		{
+			action();
+		}
 	}
 
 	/// <summary>
@@ -244,8 +299,10 @@ public abstract class GraphicsDevice : Disposable
 	[Conditional("DEBUG")]
 	protected void AssertRenderThread()
 	{
-		Debug.Assert(Environment.CurrentManagedThreadId == _renderThreadId, "Graphics device used off the render thread.");
+		Debug.Assert(IsRenderThread, "Graphics device used off the render thread.");
 	}
+
+	private bool IsRenderThread => Environment.CurrentManagedThreadId == _renderThreadId;
 
 	private void ValidateOwner(GraphicsDevice? owner, string parameterName)
 	{
@@ -263,6 +320,7 @@ public abstract class GraphicsDevice : Disposable
 		}
 
 		AssertRenderThread();
+		DrainPending();
 		WaitIdle();
 		CollectGarbage(ulong.MaxValue);
 		_textures.Dispose();

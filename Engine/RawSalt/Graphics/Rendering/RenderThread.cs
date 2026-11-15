@@ -1,10 +1,6 @@
 using System.Diagnostics;
-using System.Numerics;
 using System.Runtime.ExceptionServices;
-using System.Runtime.InteropServices;
 using System.Threading.Channels;
-using RawSalt.Graphics.Drawing;
-using RawSalt.Graphics.Pipelines;
 using RawSalt.Logging;
 using RawSalt.Threading;
 
@@ -20,12 +16,16 @@ internal sealed class RenderThread
 	private readonly FramePacer _pacer;
 	private readonly GraphicsBackend _backend;
 	private readonly RenderSurface _surface;
+	private readonly Action<GraphicsDevice, Renderer>? _load;
+	private readonly Action<GraphicsDevice, RenderFrame, CameraData>? _render;
+	private readonly Action? _unload;
 
 	private readonly Channel<Action<GraphicsDevice>> _messages = Channel.CreateUnbounded<Action<GraphicsDevice>>(new() { SingleReader = true });
 	private readonly AutoResetEvent _wake = new(false);
 	private readonly ManualResetEventSlim _firstFramePresented = new(false);
 
 	private Exception? _failure;
+	private volatile GraphicsDevice? _device;
 	private readonly CancellationTokenSource _cts;
 
 	[ThreadSafety(AllowedThread.Main)]
@@ -33,7 +33,18 @@ internal sealed class RenderThread
 	[ThreadSafety(AllowedThread.Main)]
 	public bool IsValid => _failure == null;
 
-	public RenderThread(FramePacer pacer, GraphicsBackend backend, RenderSurface surface, CancellationToken cancellationToken = default)
+	/// <summary>
+	/// The device created by the render thread, or <see langword="null"/> before it exists and
+	/// after the thread stopped.
+	/// </summary>
+	[ThreadSafety(AllowedThread.Main)]
+	public GraphicsDevice? Device => _device;
+
+	public RenderThread(FramePacer pacer, GraphicsBackend backend, RenderSurface surface,
+		Action<GraphicsDevice, Renderer>? load = null,
+		Action<GraphicsDevice, RenderFrame, CameraData>? render = null,
+		Action? unload = null,
+		CancellationToken cancellationToken = default)
 	{
 		Debug.Assert(pacer != null);
 		Debug.Assert(backend != null);
@@ -42,6 +53,9 @@ internal sealed class RenderThread
 		_pacer = pacer;
 		_backend = backend;
 		_surface = surface;
+		_load = load;
+		_render = render;
+		_unload = unload;
 
 		// Wrap cancellationToken, so we can cancel operation both from outside and inside the thread.
 		_cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
@@ -68,6 +82,7 @@ internal sealed class RenderThread
 		_cts.Cancel();
 		_wake.Set();
 		_thread.Join();
+		_device = null;
 		_cts.Dispose();
 
 		if (_failure != null)
@@ -83,71 +98,14 @@ internal sealed class RenderThread
 		try
 		{
 			using GraphicsDevice device = _backend.CreateDevice(_surface, null);
+			_device = device;
 			using Swapchain swapchain = device.CreateSwapchain(_surface);
 			using Renderer renderer = device.CreateRenderer(swapchain);
-			SlangCompiler compiler = new();
-			using Pipeline pipeline = device.CreatePipeline(new PipelineDescriptor
-			{
-				Anatomy = new PipelineAnatomy(compiler, File.ReadAllText("triangle.slang")),
-				ColorFormat = renderer.BackBufferFormat,
-				CullMode = CullMode.Back,
-				FrontFace = FrontFace.CounterClockWise,
-			});
-			using PixelMap2D catPixelMap = PixelMap2D.FromImageBytes(File.ReadAllBytes("test-image.png"));
-			using Texture2D catTexture = device.CreateTexture(catPixelMap, Sampling.ClampToEdge);
-
-			ReadOnlySpan<Vertex> square =
-			[
-				// Front
-				new() { X = -1f, Y = +1f, Z = +1f, U = 0, V = 0 },
-				new() { X = -1f, Y = -1f, Z = +1f, U = 0, V = 1 },
-				new() { X = +1f, Y = +1f, Z = +1f, U = 1, V = 0 },
-				new() { X = +1f, Y = -1f, Z = +1f, U = 1, V = 1 },
-
-				// Back
-				new() { X = +1f, Y = +1f, Z = -1f, U = 0, V = 0 },
-				new() { X = +1f, Y = -1f, Z = -1f, U = 0, V = 1 },
-				new() { X = -1f, Y = +1f, Z = -1f, U = 1, V = 0 },
-				new() { X = -1f, Y = -1f, Z = -1f, U = 1, V = 1 },
-
-				// Top
-				new() { X = -1f, Y = +1f, Z = -1f, U = 0, V = 0 },
-				new() { X = -1f, Y = +1f, Z = +1f, U = 0, V = 1 },
-				new() { X = +1f, Y = +1f, Z = -1f, U = 1, V = 0 },
-				new() { X = +1f, Y = +1f, Z = +1f, U = 1, V = 1 },
-
-				// Bottom
-				new() { X = -1f, Y = -1f, Z = +1f, U = 0, V = 0 },
-				new() { X = -1f, Y = -1f, Z = -1f, U = 0, V = 1 },
-				new() { X = +1f, Y = -1f, Z = +1f, U = 1, V = 0 },
-				new() { X = +1f, Y = -1f, Z = -1f, U = 1, V = 1 },
-
-				// Left
-				new() { X = -1f, Y = +1f, Z = -1f, U = 0, V = 0 },
-				new() { X = -1f, Y = -1f, Z = -1f, U = 0, V = 1 },
-				new() { X = -1f, Y = +1f, Z = +1f, U = 1, V = 0 },
-				new() { X = -1f, Y = -1f, Z = +1f, U = 1, V = 1 },
-
-				// Right
-				new() { X = +1f, Y = +1f, Z = +1f, U = 0, V = 0 },
-				new() { X = +1f, Y = -1f, Z = +1f, U = 0, V = 1 },
-				new() { X = +1f, Y = +1f, Z = -1f, U = 1, V = 0 },
-				new() { X = +1f, Y = -1f, Z = -1f, U = 1, V = 1 },
-			];
-			using Buffer vertices = device.CreateBuffer(BufferUsage.Vertex, square);
-			ReadOnlySpan<uint> squareIndexes = [
-				0, 1, 2, 2, 1, 3,
-				4, 5, 6, 6, 5, 7,
-				8, 9, 10, 10, 9, 11,
-				12, 13, 14, 14, 13, 15,
-				16, 17, 18, 18, 17, 19,
-				20, 21, 22, 22, 21, 23
-			];
-			using Buffer indexes = device.CreateBuffer(BufferUsage.Index, squareIndexes);
 
 			try
 			{
-				float deg = 0;
+				_load?.Invoke(device, renderer);
+
 				while (!cancellationToken.IsCancellationRequested)
 				{
 					RenderSnapshot? snapshot = _pacer.AcquireForRender(TimeSpan.FromMilliseconds(SleepMs));
@@ -173,20 +131,7 @@ internal sealed class RenderThread
 						continue;
 					}
 
-					CommandList cmd = frame.Commands;
-					deg += 0.65f;
-
-					cmd.BeginRenderPass(new RenderPass(frame.BackBuffer, new Color4(0.3f, 0.3f, 0.2f).ShiftHue(deg)));
-					{
-						cmd.SetPipeline(pipeline);
-						cmd.SetUniform("camera", snapshot.Camera);
-						cmd.SetUniform("draw", Matrix4x4.CreateScale(0.5f));
-						cmd.SetTexture("tex", catTexture);
-						cmd.SetVertexBuffer(0, vertices);
-						cmd.SetIndexBuffer(indexes);
-						cmd.DrawIndexed((uint)squareIndexes.Length);
-					}
-					cmd.EndRenderPass();
+					_render?.Invoke(device, frame, snapshot.Camera);
 
 					renderer.EndFrame(frame);
 					_firstFramePresented.Set();
@@ -196,6 +141,7 @@ internal sealed class RenderThread
 			finally
 			{
 				device.WaitIdle();
+				_unload?.Invoke();
 			}
 		}
 		catch (OperationCanceledException)
@@ -208,12 +154,4 @@ internal sealed class RenderThread
 			Log.Error(ex, "Render thread crashed.");
 		}
 	}
-}
-
-[StructLayout(LayoutKind.Sequential)]
-file struct Vertex()
-{
-	public float X, Y, Z;
-	public float R = 1f, G = 1f, B = 1f;
-	public float U, V;
 }

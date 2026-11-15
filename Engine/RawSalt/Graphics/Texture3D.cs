@@ -15,6 +15,12 @@ public readonly struct Texture3D : IDisposable
 	public PixelFormat Format { get; }
 	public Vec3i Size { get; }
 
+	/// <summary>
+	/// Whether the GPU texture exists. A texture created off the render thread is not ready until
+	/// the render thread has created it.
+	/// </summary>
+	public bool IsReady => Owner?.IsTextureReady(Handle) ?? false;
+
 	internal Texture3D(GraphicsDevice owner, ResourceHandle handle, PixelFormat format, Vec3i size)
 	{
 		Owner = owner;

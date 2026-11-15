@@ -27,6 +27,12 @@ public readonly struct TextureCube : IDisposable
 	/// </summary>
 	public int Size { get; }
 
+	/// <summary>
+	/// Whether the GPU texture exists. A texture created off the render thread is not ready until
+	/// the render thread has created it.
+	/// </summary>
+	public bool IsReady => Owner?.IsTextureReady(Handle) ?? false;
+
 	[ThreadSafety(AllowedThread.Render)]
 	public void Dispose()
 	{

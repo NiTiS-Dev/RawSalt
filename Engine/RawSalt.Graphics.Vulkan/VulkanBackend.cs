@@ -113,8 +113,7 @@ public sealed partial class VulkanBackend : GraphicsBackend
 #if DEBUG
 		return true;
 #else
-		string? value = Environment.GetEnvironmentVariable("RAWSALT_ENABLE_DEBUG_LAYERS_VULKAN");
-		return !string.IsNullOrEmpty(value) && value.ToLowerInvariant() is not ("0" or "false");
+		return Environment.GetEnvironmentVariableBool("RAWSALT_ENABLE_DEBUG_LAYERS_VULKAN").IsTrue;
 #endif
 	}
 

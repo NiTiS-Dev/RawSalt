@@ -27,6 +27,14 @@ public abstract class PixelMap2D : Disposable
 
 	public abstract void Fill(ReadOnlySpan<byte> source);
 
+
+	public virtual void Outline(Color4 outline, int radius)
+	{
+		Outline(outline, radius, static color => color.Alpha == 0f);
+	}
+
+	public abstract void Outline(Color4 outline, int radius, Predicate<Color4> threshold);
+
 	/// <summary>
 	/// Fills pixel map with provided <paramref name="color"/>.
 	/// </summary>

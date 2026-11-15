@@ -7,12 +7,25 @@ using StbImageNext.Encoders;
 
 namespace RawSalt.Graphics.Drawing;
 
-public class PixelMap2D<TPixel> : PixelMap2D
+/// <summary>
+/// Mutable pixel map of <typeparamref name="TPixel"/> format.
+/// </summary>
+/// <typeparam name="TPixel">
+/// Pixel format. Use <see cref="Rgb24"/> for basic RGB support,
+/// and <see cref="Rgba32"/> for additional transparency.
+/// </typeparam>
+public class PixelMap2D<TPixel> : PixelMap2D, ICloneable
 	where TPixel : unmanaged, IPixelFormat<TPixel>
 {
-	public override PixelFormat Format => TPixel.Format;
-	public override int Width { get; }
-	public override int Height { get; }
+	/// <inheritdoc/>
+	public sealed override PixelFormat Format => TPixel.Format;
+	/// <inheritdoc/>
+	public sealed override int Width { get; }
+	/// <inheritdoc/>
+	public sealed override int Height { get; }
+	/// <summary>
+	/// Length of continuous memory in pixels.
+	/// </summary>
 	public int Length => Width * Height;
 	private readonly IMemoryOwner<TPixel> _pixels;
 
@@ -34,9 +47,19 @@ public class PixelMap2D<TPixel> : PixelMap2D
 		Guard.IsGreaterThan(width, 0);
 		Guard.IsGreaterThan(height, 0);
 
-		_pixels = MemoryPool<TPixel>.Shared.Rent(width * height);
+		_pixels = MemoryPool<TPixel>.Shared.Rent(Length);
 	}
 
+	private PixelMap2D(PixelMap2D<TPixel> original)
+	{
+		Width = original.Width;
+		Height = original.Height;
+
+		_pixels = MemoryPool<TPixel>.Shared.Rent(Length);
+		original._pixels.Memory[..Length].CopyTo(_pixels.Memory);
+	}
+
+	/// <inheritdoc/>
 	protected override void Dispose(bool disposing)
 	{
 		if (disposing)
@@ -44,6 +67,15 @@ public class PixelMap2D<TPixel> : PixelMap2D
 			_pixels.Dispose();
 		}
 	}
+
+	/// <inheritdoc cref="ICloneable.Clone" />
+	public PixelMap2D<TPixel> Clone()
+	{
+		ThrowIfDisposed();
+		return new PixelMap2D<TPixel>(original: this);
+	}
+
+	object ICloneable.Clone() => Clone();
 
 	public Span<TPixel> GetRow(int row)
 	{
@@ -53,6 +85,21 @@ public class PixelMap2D<TPixel> : PixelMap2D
 
 		int index = row * Width;
 		return _pixels.Memory.Span[index..(index + Width)];
+	}
+
+	public ref TPixel Get(int x, int y)
+	{
+		return ref GetRow(y)[x];
+	}
+
+	public TPixel Get(int x, int y, TPixel onDefault)
+	{
+		if (Region.Contains(new Vec2i(x, y)))
+		{
+			return Get(x, y);
+		}
+
+		return onDefault;
 	}
 
 	public override void FlipX()
@@ -128,6 +175,58 @@ public class PixelMap2D<TPixel> : PixelMap2D
 	{
 		ThrowIfDisposed();
 		_pixels.Memory.Span[..(Width * Height)].Fill(color);
+	}
+
+	/// <inheritdoc/>
+	public override void Outline(Color4 outline, int radius, Predicate<Color4> threshold)
+	{
+		Outline(TPixel.FromColor(outline), radius, pixel => threshold(pixel.ToColor()));
+	}
+
+	/// <inheritdoc cref="Outline(Color4, int, Predicate{Color4})"/>
+	public void Outline(TPixel outline, int radius, Predicate<TPixel> threshold)
+	{
+		for (int y = 0; y < Height; y++)
+		{
+			for (int x = 0; x < Width; x++)
+			{
+				ref TPixel pixel = ref Get(x, y);
+				if (!threshold(pixel)) continue;
+
+				bool found = false;
+
+				outer:
+				for (int dY = -radius; dY <= radius; dY++)
+				{
+					for (int dX = -radius; dX <= radius; dX++)
+					{
+						if (dX * dX + dY * dY > radius * radius)
+						{
+							continue;
+						}
+
+						int nX = x + dX;
+						int nY = y + dY;
+
+						if ((uint)nX >= (uint)Width || (uint)nY >= (uint)Height)
+						{
+							continue;
+						}
+
+						if (threshold(Get(nX, nY)))
+						{
+							found = true;
+							break outer;
+						}
+					}
+				}
+
+				if (found)
+				{
+					pixel = outline;
+				}
+			}
+		}
 	}
 
 	public override void Save(Stream stream, ImageFormat format)

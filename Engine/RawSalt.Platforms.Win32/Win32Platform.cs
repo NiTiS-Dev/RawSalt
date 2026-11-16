@@ -7,8 +7,11 @@ using Windows.Win32;
 using Windows.Win32.Foundation;
 using Windows.Win32.Graphics.Dwm;
 using Windows.Win32.UI.HiDpi;
+using Windows.Win32.UI.Input.KeyboardAndMouse;
 using Windows.Win32.UI.WindowsAndMessaging;
+using NiTiS.Mathematics;
 using RawSalt.Collections;
+using RawSalt.Input;
 using RawSalt.Logging;
 
 namespace RawSalt.Platforms.Win32;
@@ -23,6 +26,10 @@ public partial class Win32Platform : Platform
 
 	private readonly SmallDictionary<nint /*HWND*/, Win32Window> _windows = [];
 	private readonly ConcurrentQueue<Action> _dispatcher = new();
+
+	// Written by the window thread, drained by View.PumpEvents on the application thread.
+	private readonly ConcurrentQueue<Win32KeyEvent> _keyboardQueue = new();
+
 	private readonly ManualResetEventSlim _threadReady = new(false);
 	private readonly Thread _windowThread;
 	private volatile bool _stopping;
@@ -199,6 +206,11 @@ public partial class Win32Platform : Platform
 		}
 	}
 
+	internal bool TryDrainKeyboardQueue(out Win32KeyEvent keyEvent)
+	{
+		return _keyboardQueue.TryDequeue(out keyEvent);
+	}
+
 	[SupportedOSPlatform("windows5.0")]
 	private void DestroyAllWindows()
 	{
@@ -284,6 +296,91 @@ public partial class Win32Platform : Platform
 		return true;
 	}
 
+	private static Key MapKey(VIRTUAL_KEY virtualKey, LPARAM lParam)
+	{
+		uint flags = unchecked((uint)lParam.Value);
+
+		uint scanCode = (flags >> 16) & 0xFF;
+		bool extended = (flags & (1u << 24)) != 0;
+
+		switch (virtualKey)
+		{
+			case VIRTUAL_KEY.VK_SHIFT:
+				return scanCode == 0x36 ? Key.ShiftRight : Key.ShiftLeft;
+
+			case VIRTUAL_KEY.VK_CONTROL: // VK_CONTROL
+				return extended ? Key.ControlRight : Key.ControlLeft;
+
+			case VIRTUAL_KEY.VK_MENU: // VK_MENU
+				return extended ? Key.AltRight : Key.AltLeft;
+		}
+
+		// Letters, digits and space use the same values as Win32 virtual-key codes.
+		if ((ushort)virtualKey is >= 'A' and <= 'Z' or >= '0' and <= '9' or ' ')
+		{
+			return (Key)virtualKey;
+		}
+
+		if (virtualKey is >= VIRTUAL_KEY.VK_NUMPAD0 and <= VIRTUAL_KEY.VK_NUMPAD9)
+		{
+			return Key.Keypad0 + (virtualKey - VIRTUAL_KEY.VK_NUMPAD0);
+		}
+
+		if (virtualKey is >= VIRTUAL_KEY.VK_F1 and <= VIRTUAL_KEY.VK_F24)
+		{
+			return Key.F1 + (virtualKey - VIRTUAL_KEY.VK_F1);
+		}
+
+		return virtualKey switch
+		{
+			VIRTUAL_KEY.VK_BACK => Key.Backspace,
+			VIRTUAL_KEY.VK_TAB => Key.Tab,
+			VIRTUAL_KEY.VK_RETURN => Key.Enter,
+			VIRTUAL_KEY.VK_PAUSE => Key.Pause,
+			VIRTUAL_KEY.VK_CAPITAL => Key.CapsLock,
+			VIRTUAL_KEY.VK_ESCAPE => Key.Escape,
+			VIRTUAL_KEY.VK_PRIOR => Key.PageUp,
+			VIRTUAL_KEY.VK_NEXT => Key.PageDown,
+			VIRTUAL_KEY.VK_END => Key.End,
+			VIRTUAL_KEY.VK_HOME => Key.Home,
+			VIRTUAL_KEY.VK_LEFT => Key.Left,
+			VIRTUAL_KEY.VK_UP => Key.Up,
+			VIRTUAL_KEY.VK_RIGHT => Key.Right,
+			VIRTUAL_KEY.VK_DOWN => Key.Down,
+			VIRTUAL_KEY.VK_SNAPSHOT => Key.PrintScreen,
+			VIRTUAL_KEY.VK_INSERT => Key.Insert,
+			VIRTUAL_KEY.VK_DELETE => Key.Delete,
+			VIRTUAL_KEY.VK_LWIN => Key.SuperLeft,
+			VIRTUAL_KEY.VK_RWIN => Key.SuperRight,
+			VIRTUAL_KEY.VK_APPS => Key.Menu,
+			VIRTUAL_KEY.VK_MULTIPLY => Key.KeypadMultiply,
+			VIRTUAL_KEY.VK_ADD => Key.KeypadAdd,
+			VIRTUAL_KEY.VK_SUBTRACT => Key.KeypadSubtract,
+			VIRTUAL_KEY.VK_DECIMAL => Key.KeypadPeriod,
+			VIRTUAL_KEY.VK_DIVIDE => Key.KeypadDivide,
+			VIRTUAL_KEY.VK_NUMLOCK => Key.NumLock,
+			VIRTUAL_KEY.VK_SCROLL => Key.ScrollLock,
+			VIRTUAL_KEY.VK_LSHIFT => Key.ShiftLeft,
+			VIRTUAL_KEY.VK_RSHIFT => Key.ShiftRight,
+			VIRTUAL_KEY.VK_LCONTROL => Key.ControlLeft,
+			VIRTUAL_KEY.VK_RCONTROL => Key.ControlRight,
+			VIRTUAL_KEY.VK_LMENU => Key.AltLeft,
+			VIRTUAL_KEY.VK_RMENU => Key.AltRight,
+			VIRTUAL_KEY.VK_OEM_1 => Key.Semicolon,
+			VIRTUAL_KEY.VK_OEM_PLUS => Key.Equal,
+			VIRTUAL_KEY.VK_OEM_COMMA => Key.Comma,
+			VIRTUAL_KEY.VK_OEM_MINUS => Key.Minus,
+			VIRTUAL_KEY.VK_OEM_PERIOD => Key.Period,
+			VIRTUAL_KEY.VK_OEM_2 => Key.Slash,
+			VIRTUAL_KEY.VK_OEM_3 => Key.GraveAccent,
+			VIRTUAL_KEY.VK_OEM_4 => Key.LeftBracket,
+			VIRTUAL_KEY.VK_OEM_5 => Key.BackSlash,
+			VIRTUAL_KEY.VK_OEM_6 => Key.RightBracket,
+			VIRTUAL_KEY.VK_OEM_7 => Key.Apostrophe,
+			_ => Key.Unknown
+		};
+	}
+
 	[SupportedOSPlatform("windows10.0")]
 	private LRESULT WndProc(HWND hWnd, uint msg, WPARAM wParam, LPARAM lParam)
 	{
@@ -301,6 +398,25 @@ public partial class Win32Platform : Platform
 
 		if (_windows.TryGetValue(hWnd, out Win32Window? window))
 		{
+			if (msg is PInvoke.WM_KEYDOWN or PInvoke.WM_SYSKEYDOWN or PInvoke.WM_KEYUP or PInvoke.WM_SYSKEYUP)
+			{
+				Key key = MapKey((VIRTUAL_KEY)(ushort)wParam, lParam);
+				bool isDown = msg is PInvoke.WM_KEYDOWN or PInvoke.WM_SYSKEYDOWN;
+				bool wasDown = (lParam & (1 << 30)) != 0;
+
+				// TODO: Since we do not remove stale buttons yet, we should not push repeat press events into queue.
+				if (isDown ^ wasDown)
+				{
+					_keyboardQueue.Enqueue(new Win32KeyEvent()
+					{
+						Key = key,
+						Pressed = isDown
+					});
+				}
+
+				return PInvoke.DefWindowProc(hWnd, msg, wParam, lParam);
+			}
+
 			if (msg == PInvoke.WM_SIZE)
 			{
 				window.UpdateSize();

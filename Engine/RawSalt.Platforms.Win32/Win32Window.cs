@@ -68,6 +68,24 @@ public class Win32Window : Window, IWin32Window
 		Platform.Post(() => PInvoke.ShowWindow(Handle, SHOW_WINDOW_CMD.SW_SHOW));
 	}
 
+	/// <inheritdoc/>
+	public override void PumpEvents()
+	{
+		Application application = Platform.Application;
+
+		while (Platform.TryDrainKeyboardQueue(out Win32KeyEvent keyEvent))
+		{
+			if (keyEvent.Pressed)
+			{
+				application.OnKeyPressed(keyEvent.Key);
+			}
+			else
+			{
+				application.OnKeyReleased(keyEvent.Key);
+			}
+		}
+	}
+
 	internal void RequestClose()
 	{
 		_alive = false;

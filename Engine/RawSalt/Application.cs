@@ -44,6 +44,8 @@ public class Application
 	[MemberNotNullWhen(false, nameof(Headless))]
 	protected GraphicsDevice? Device => RenderThread?.Device;
 
+	public KeyboardState Keyboard { get; } = new();
+
 	protected Application(bool headless = false)
 	{
 		Headless = headless;
@@ -199,12 +201,16 @@ public class Application
 
 			long now = Stopwatch.GetTimestamp();
 			float deltaTime = (now - last) / (float)Stopwatch.Frequency;
-			Update(updateId++, deltaTime);
+			Keyboard.Update(updateId, deltaTime);
+			Update(updateId, deltaTime);
+			updateId++;
+
 			CameraData cameraData = default;
 			if (snapshot != null && (view.SurfaceSize.X != 0 && view.SurfaceSize.Y != 0))
 			{
 				Draw(ref cameraData, view.SurfaceSize, updateId, deltaTime);
 			}
+
 			statistics.Update();
 			last = now;
 
@@ -219,13 +225,18 @@ public class Application
 
 	// Input events are called during PumpEvents on MAIN thread
 	// If platform dedicate a separate thread it should NOT invoke these method from that thread.
-	[ThreadSafety(AllowedThread.Main)]
-	public virtual void OnKeyDown(Key key)
-	{ }
 
 	[ThreadSafety(AllowedThread.Main)]
-	public virtual void OnKeyUp(Key key)
-	{ }
+	public virtual void OnKeyPressed(Key key)
+	{
+		Keyboard.OnKeyPressed(key);
+	}
+
+	[ThreadSafety(AllowedThread.Main)]
+	public virtual void OnKeyReleased(Key key)
+	{
+		Keyboard.OnKeyReleased(key);
+	}
 
 	private static GraphicsBackend SelectBestGraphicsBackend(params IList<GraphicsBackend> backends)
 	{

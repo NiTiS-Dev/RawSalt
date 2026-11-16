@@ -3,6 +3,7 @@ using System.Diagnostics.CodeAnalysis;
 using RawSalt.Diagnostics;
 using RawSalt.Graphics;
 using RawSalt.Graphics.Rendering;
+using RawSalt.Input;
 using RawSalt.Logging;
 using RawSalt.Platforms;
 using RawSalt.Threading;
@@ -201,6 +202,16 @@ public class Application
 			}
 		}
 	}
+
+	// Input events are called during PumpEvents on MAIN thread
+	// If platform dedicate a separate thread it should NOT invoke these method from that thread.
+	[ThreadSafety(AllowedThread.Main)]
+	public virtual void OnKeyDown(Key key)
+	{ }
+
+	[ThreadSafety(AllowedThread.Main)]
+	public virtual void OnKeyUp(Key key)
+	{ }
 
 	private static GraphicsBackend SelectBestGraphicsBackend(params IList<GraphicsBackend> backends)
 	{

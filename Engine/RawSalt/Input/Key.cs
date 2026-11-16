@@ -2,6 +2,7 @@ namespace RawSalt.Input;
 
 public enum Key
 {
+	Unknown = 0,
 	Space = 32,
 	Apostrophe = 39,
 	Comma = 44,
@@ -104,7 +105,6 @@ public enum Key
 	F22 = 311,
 	F23 = 312,
 	F24 = 313,
-	F25 = 314,
 
 	Keypad0 = 320,
 	Keypad1 = 321,

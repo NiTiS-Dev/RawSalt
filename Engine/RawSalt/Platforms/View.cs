@@ -9,8 +9,6 @@ public abstract class View
 
 	public abstract bool ShouldUpdate { get; }
 
-	public abstract event Action<CloseRequest>? CloseRequest;
-
 	/// <summary>
 	/// Total size of the view in virtual units.
 	/// </summary>
@@ -20,8 +18,6 @@ public abstract class View
 	/// Surface size in physical pixels.
 	/// </summary>
 	public virtual Vec2i SurfaceSize => Size;
-
-	public abstract event Action<SizeChangedEventArgs>? SizeChanged;
 
 	public virtual void PumpEvents() {}
 }

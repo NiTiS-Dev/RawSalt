@@ -39,7 +39,10 @@ IDC_ARROW
 
 GetMessage
 PeekMessage
+PostThreadMessage
+GetCurrentThreadId
 WM_QUIT
+WM_APP
 WM_CLOSE
 WM_SIZE
 WM_DPICHANGED

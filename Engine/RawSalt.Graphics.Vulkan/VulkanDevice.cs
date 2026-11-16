@@ -93,9 +93,8 @@ public sealed class VulkanDevice : GraphicsDevice
 		return new VulkanTextureResource(this, descriptor, data);
 	}
 
-	public override Pipeline CreatePipeline(PipelineDescriptor descriptor)
+	protected override PipelineResource CreatePipelineResource(PipelineDescriptor descriptor)
 	{
-		AssertRenderThread();
 		return new VulkanPipeline(this, descriptor);
 	}
 

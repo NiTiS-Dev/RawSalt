@@ -2,11 +2,12 @@ using System.Collections.Immutable;
 using System.Diagnostics;
 using RawSalt.Graphics.Drawing;
 using RawSalt.Graphics.Pipelines;
+using RawSalt.Graphics.Resources;
 using RawSalt.Graphics.Vulkan.Rendering;
 
 namespace RawSalt.Graphics.Vulkan;
 
-public sealed class VulkanPipeline : Pipeline
+public sealed class VulkanPipeline : PipelineResource
 {
 	private readonly VulkanDevice _device;
 	private readonly Dictionary<string, ShaderResource> _resources;
@@ -16,7 +17,7 @@ public sealed class VulkanPipeline : Pipeline
 
 	public VkPipeline Handle { get; }
 	public override ShaderStages Stages { get; }
-	public PixelFormat ColorFormat { get; }
+	public override PixelFormat ColorFormat { get; }
 
 	public unsafe VulkanPipeline(VulkanDevice device, PipelineDescriptor descriptor)
 	{

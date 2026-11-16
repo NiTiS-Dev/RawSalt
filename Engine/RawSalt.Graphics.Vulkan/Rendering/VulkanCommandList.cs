@@ -142,7 +142,7 @@ internal sealed class VulkanCommandList : CommandList
 
 	public override void SetPipeline(Pipeline pipeline)
 	{
-		if (pipeline is not VulkanPipeline vkPipeline)
+		if (_device.GetPipelineResource(pipeline) is not VulkanPipeline vkPipeline)
 		{
 			throw new ArgumentException("Pipeline must be a Vulkan pipeline.", nameof(pipeline));
 		}

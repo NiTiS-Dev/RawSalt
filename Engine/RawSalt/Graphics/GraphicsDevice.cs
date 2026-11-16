@@ -16,6 +16,7 @@ public abstract class GraphicsDevice : Disposable
 {
 	private readonly ResourcePool<TextureResource> _textures = new();
 	private readonly ResourcePool<BufferResource> _buffers = new();
+	private readonly ResourcePool<PipelineResource> _pipelines = new();
 	private readonly Queue<(IDisposable Resource, ulong Frame)> _retired = new();
 	private readonly ConcurrentQueue<Action> _pending = new();
 	private readonly int _renderThreadId = Environment.CurrentManagedThreadId;
@@ -28,7 +29,7 @@ public abstract class GraphicsDevice : Disposable
 
 	protected abstract BufferResource CreateBufferResource(in BufferDescriptor descriptor, ReadOnlySpan<byte> initialData);
 	protected abstract TextureResource CreateTextureResource(in TextureDescriptor descriptor, ReadOnlySpan<byte> initialData);
-	public abstract Pipeline CreatePipeline(PipelineDescriptor descriptor);
+	protected abstract PipelineResource CreatePipelineResource(PipelineDescriptor descriptor);
 
 	public Buffer CreateBuffer(in BufferDescriptor descriptor, ReadOnlySpan<byte> initialData)
 	{
@@ -41,6 +42,39 @@ public abstract class GraphicsDevice : Disposable
 	{
 		return CreateBuffer(new BufferDescriptor((ulong)(data.Length * Unsafe.SizeOf<T>()), usage),
 			MemoryMarshal.AsBytes(data));
+	}
+
+	/// <summary>
+	/// Creates the GPU pipeline on the render thread, or reserves its slot and queues the work when
+	/// called from another thread.
+	/// </summary>
+	public Pipeline CreatePipeline(PipelineDescriptor descriptor)
+	{
+		if (IsRenderThread)
+		{
+			return new(this, _pipelines.Add(CreatePipelineResource(descriptor)));
+		}
+
+		ResourceHandle handle = _pipelines.Reserve();
+		_pending.Enqueue(() =>
+		{
+			PipelineResource resource = CreatePipelineResource(descriptor);
+			if (!_pipelines.Set(handle, resource))
+			{
+				// The handle was disposed before the render thread got to create it.
+				resource.Dispose();
+			}
+		});
+		return new(this, handle);
+	}
+
+	/// <summary>
+	/// Whether the GPU pipeline exists. Pipelines created off the render thread are not ready until
+	/// the render thread has created them.
+	/// </summary>
+	public bool IsPipelineReady(ResourceHandle handle)
+	{
+		return _pipelines.IsReady(handle);
 	}
 
 	public Texture1D CreateTexture(int width, PixelFormat format, Sampling sampling, ReadOnlySpan<byte> initialData)
@@ -159,6 +193,13 @@ public abstract class GraphicsDevice : Disposable
 		return _textures.Get(handle);
 	}
 
+	public PipelineResource GetPipelineResource(Pipeline pipeline)
+	{
+		AssertRenderThread();
+		ValidateOwner(pipeline.Owner, nameof(pipeline));
+		return _pipelines.Get(pipeline.Handle);
+	}
+
 	public BufferResource GetBufferResource(Buffer buffer)
 	{
 		AssertRenderThread();
@@ -234,6 +275,11 @@ public abstract class GraphicsDevice : Disposable
 	internal void Destroy(Buffer buffer)
 	{
 		Retire(_buffers, buffer.Owner, buffer.Handle, nameof(buffer));
+	}
+
+	internal void Destroy(Pipeline pipeline)
+	{
+		Retire(_pipelines, pipeline.Owner, pipeline.Handle, nameof(pipeline));
 	}
 
 	private void Retire<T>(ResourcePool<T> pool, GraphicsDevice? owner, ResourceHandle handle, string parameterName)
@@ -325,5 +371,6 @@ public abstract class GraphicsDevice : Disposable
 		CollectGarbage(ulong.MaxValue);
 		_textures.Dispose();
 		_buffers.Dispose();
+		_pipelines.Dispose();
 	}
 }

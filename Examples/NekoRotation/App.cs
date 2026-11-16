@@ -147,7 +147,7 @@ internal sealed class App : Application
 
     protected override void Render(GraphicsDevice device, RenderFrame frame, in CameraData camera)
     {
-	    if (_pipeline == null)
+	    if (_pipeline is not { } pipeline || _skyboxPipeline is not { } skyboxPipeline)
 	    {
 		    return;
 	    }
@@ -161,7 +161,7 @@ internal sealed class App : Application
 
 	    cmd.BeginRenderPass(new RenderPass(frame.BackBuffer));
 	    {
-		    cmd.SetPipeline(_pipeline);
+		    cmd.SetPipeline(pipeline);
 		    cmd.SetUniform("camera", camera);
 		    cmd.SetUniform("draw", Matrix4x4.CreateScale(0.5f));
 		    cmd.SetTexture("tex", _texture);
@@ -169,7 +169,7 @@ internal sealed class App : Application
 		    cmd.SetIndexBuffer(_indexes);
 		    cmd.DrawIndexed(_indexCount);
 
-		    cmd.SetPipeline(_skyboxPipeline!);
+		    cmd.SetPipeline(skyboxPipeline);
 		    cmd.SetUniform("sky", sky);
 		    cmd.SetTexture("skybox", _skybox);
 		    cmd.SetVertexBuffer(0, _skyboxVertices);

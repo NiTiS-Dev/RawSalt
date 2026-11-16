@@ -210,7 +210,7 @@ internal sealed class App : Application
 		    (3, 1), // -Z
 	    ];
 
-	    int bpp = cross.Format.GetBytesPerPixel();
+	    int bpp = cross.Format.BytesPerPixel;
 	    int faceRowBytes = face * bpp;
 	    ReadOnlySpan<byte> source = cross.GetBytes();
 	    byte[] faces = new byte[6 * face * face * bpp];

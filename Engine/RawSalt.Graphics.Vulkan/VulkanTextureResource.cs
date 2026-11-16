@@ -260,7 +260,7 @@ public sealed class VulkanTextureResource : TextureResource
 
 	private VkBufferImageCopy CreateCopyRegion(uint layer)
 	{
-		ulong layerBytes = (ulong)Size.X * (ulong)Size.Y * (ulong)Size.Z * (ulong)Format.GetBytesPerPixel();
+		ulong layerBytes = (ulong)Size.X * (ulong)Size.Y * (ulong)Size.Z * (ulong)Format.BytesPerPixel;
 		return new VkBufferImageCopy
 		{
 			bufferOffset = layer * layerBytes,

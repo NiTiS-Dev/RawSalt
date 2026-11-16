@@ -14,7 +14,8 @@ public sealed class VulkanPipeline : Pipeline
 	internal VulkanBindGroupLayout[] BindGroupLayouts { get; }
 	public VkPipelineLayout Layout { get; }
 
-	public VkPipeline Handle { get; } // TODO: lazy initialize
+	public VkPipeline Handle { get; }
+	public override ShaderStages Stages { get; }
 	public PixelFormat ColorFormat { get; }
 
 	public unsafe VulkanPipeline(VulkanDevice device, PipelineDescriptor descriptor)
@@ -149,6 +150,7 @@ public sealed class VulkanPipeline : Pipeline
 					module = modules[i],
 					pName = pEntryName
 				};
+				Stages |= shader.Stages[i].Stage;
 			}
 
 			try

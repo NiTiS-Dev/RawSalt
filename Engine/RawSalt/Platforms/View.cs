@@ -7,7 +7,7 @@ public abstract class View
 {
 	public abstract Platform Platform { get; }
 
-	public abstract bool ShouldUpdate { get; }
+	public abstract bool IsAlive { get; }
 
 	/// <summary>
 	/// Total size of the view in virtual units.

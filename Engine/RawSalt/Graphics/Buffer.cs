@@ -10,6 +10,8 @@ namespace RawSalt.Graphics;
 public readonly struct Buffer : IDisposable
 {
 	internal GraphicsDevice? Owner { get; }
+	public ResourceHandle Handle { get; }
+	public ulong Size { get; }
 
 	internal Buffer(GraphicsDevice owner, ResourceHandle handle, ulong size)
 	{
@@ -18,9 +20,9 @@ public readonly struct Buffer : IDisposable
 		Size = size;
 	}
 
-	public ResourceHandle Handle { get; }
-	public ulong Size { get; }
-
 	[ThreadSafety(AllowedThread.Render)]
-	public void Dispose() => Owner?.Destroy(this);
+	public void Dispose()
+	{
+		Owner?.Destroy(this);
+	}
 }

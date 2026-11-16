@@ -10,6 +10,8 @@ namespace RawSalt.Graphics.Vulkan;
 /// </summary>
 public sealed partial class VulkanBackend : GraphicsBackend
 {
+	public sealed override WellKnownGraphicsApi Api => WellKnownGraphicsApi.Vulkan;
+
 	private static volatile int _instanceCount;
 
 	private Platform Platform { get; }
@@ -18,8 +20,8 @@ public sealed partial class VulkanBackend : GraphicsBackend
 
 	public VulkanBackend(Application app) : base(app)
 	{
+		Debug.Assert(app.Platform != null);
 		Platform = app.Platform;
-		Debug.Assert(Platform != null);
 
 		if (Interlocked.Increment(ref _instanceCount) == 1)
 		{

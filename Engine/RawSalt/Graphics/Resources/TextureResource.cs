@@ -26,7 +26,7 @@ public abstract class TextureResource : Disposable
 	/// <summary>
 	/// Size of the tightly packed pixel data for the whole texture, in bytes.
 	/// </summary>
-	public ulong ByteSize => (ulong)Size.X * (ulong)Size.Y * (ulong)Size.Z * (ulong)LayerCount * (ulong)Format.GetBytesPerPixel();
+	public ulong ByteSize => (ulong)Size.X * (ulong)Size.Y * (ulong)Size.Z * (ulong)LayerCount * (ulong)Format.BytesPerPixel;
 
 	/// <summary>
 	/// Replaces the whole texture with <paramref name="pixels"/>.

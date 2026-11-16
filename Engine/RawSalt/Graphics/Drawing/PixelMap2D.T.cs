@@ -31,7 +31,7 @@ public class PixelMap2D<TPixel> : PixelMap2D, ICloneable
 
 	static PixelMap2D()
 	{
-		Debug.Assert(TPixel.ByteWidth == TPixel.Format.GetBytesPerPixel());
+		Debug.Assert(TPixel.ByteWidth == TPixel.Format.BytesPerPixel);
 	}
 
 	/// <summary>

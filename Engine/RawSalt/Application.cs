@@ -12,33 +12,26 @@ namespace RawSalt;
 
 public class Application
 {
+	/// <summary>
+	/// Describe how application handles graphics.<br/>
+	/// When returns <see langword="true"/> application does not use any graphics.
+	/// </summary>
 	public bool Headless { get; }
 
 	[MemberNotNullWhen(false, nameof(Headless))]
-	[NotNullIfNotNull(nameof(MainView))]
-	[NotNullIfNotNull(nameof(MainSurface))]
-	[NotNullIfNotNull(nameof(GraphicsBackend))]
 	public Platform? Platform { get; private set; }
 
 	[MemberNotNullWhen(false, nameof(Headless))]
-	[NotNullIfNotNull(nameof(Platform))]
-	[NotNullIfNotNull(nameof(MainSurface))]
-	[NotNullIfNotNull(nameof(GraphicsBackend))]
-	public View? MainView { get; private set; }
+	private View? MainView { get; set; }
 
 	[MemberNotNullWhen(false, nameof(Headless))]
-	[NotNullIfNotNull(nameof(Platform))]
-	[NotNullIfNotNull(nameof(MainView))]
-	[NotNullIfNotNull(nameof(GraphicsBackend))]
-	public RenderSurface? MainSurface { get; private set; }
+	private RenderSurface? MainSurface { get; set; }
 
 	[MemberNotNullWhen(false, nameof(Headless))]
-	[NotNullIfNotNull(nameof(Platform))]
-	[NotNullIfNotNull(nameof(MainView))]
-	[NotNullIfNotNull(nameof(MainSurface))]
-	public GraphicsBackend? GraphicsBackend { get; private set; }
+	private GraphicsBackend? GraphicsBackend { get; set; }
 
-	private RenderThread? _renderThread;
+	[MemberNotNullWhen(false, nameof(Headless))]
+	private RenderThread? RenderThread { get; set; }
 
 	/// <summary>
 	/// The graphics device, available once the render thread has created it. Usable from the
@@ -49,7 +42,7 @@ public class Application
 	/// </remarks>
 	[ThreadSafety(AllowedThread.Main)]
 	[MemberNotNullWhen(false, nameof(Headless))]
-	protected GraphicsDevice? Device => _renderThread?.Device;
+	protected GraphicsDevice? Device => RenderThread?.Device;
 
 	protected Application(bool headless = false)
 	{
@@ -99,6 +92,7 @@ public class Application
 
 			// TODO: allow user to configure force candidate (parse program cli arguments)
 			Platform = SelectBestPlatform(config.Platforms.Select(t => t(this)).ToList());
+			Log.Info("Selected Platform: {0}", Platform.Api);
 
 			// TODO: config.GetConfiguration<ViewConfiguration>() ?? default;
 			WindowConfiguration windowConfig = new()
@@ -110,19 +104,20 @@ public class Application
 			MainView = Platform.CreateView(in windowConfig);
 
 			GraphicsBackend = SelectBestGraphicsBackend(config.GraphicsBackends.Select(t => t(this)).ToList());
+			Log.Info("Selected Graphics Backend: {0}", GraphicsBackend.Api);
 			MainSurface = GraphicsBackend.CreateSurface(MainView);
 
 			FramePacer pacer = new();
-			_renderThread = new RenderThread(pacer, GraphicsBackend, MainSurface,
+			RenderThread = new RenderThread(pacer, GraphicsBackend, MainSurface,
 				LoadGraphics,
 				(device, frame, camera) => Render(device, frame, camera),
 				UnloadGraphics);
-			_renderThread.Start();
+			RenderThread.Start();
 
-			MainLoopWithGraphics(pacer, _renderThread, MainView);
+			MainLoopWithGraphics(pacer, RenderThread, MainView);
 
-			_renderThread.Stop();
-			_renderThread = null;
+			RenderThread.Stop();
+			RenderThread = null;
 			Platform.ReleaseView(MainView);
 			MainView = null!;
 		}
@@ -171,7 +166,7 @@ public class Application
 
 		bool firstFrame = true;
 		ulong updateId = 0;
-		while (view.ShouldUpdate && renderThread.IsValid)
+		while (view.IsAlive && renderThread.IsValid)
 		{
 			view.PumpEvents();
 			if (firstFrame && renderThread.FirstFramePresented)

@@ -41,7 +41,7 @@ public class Win32Window : Window, IWin32Window
 	nint IWin32Window.ModuleHandle => Platform.HInstance;
 
 	private volatile bool _alive = true;
-	public override bool ShouldUpdate => _alive;
+	public override bool IsAlive => _alive;
 
 	internal Win32Window(HWND handle, Win32Platform platform)
 	{

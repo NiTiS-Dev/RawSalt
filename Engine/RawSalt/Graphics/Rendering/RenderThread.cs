@@ -13,12 +13,9 @@ internal sealed class RenderThread
 	private const int SleepMs = 50;
 
 	private readonly Thread _thread;
+	private readonly Application _application;
 	private readonly FramePacer _pacer;
-	private readonly GraphicsBackend _backend;
-	private readonly RenderSurface _surface;
-	private readonly Action<GraphicsDevice, Renderer>? _load;
 	private readonly Action<GraphicsDevice, RenderFrame, CameraData>? _render;
-	private readonly Action? _unload;
 
 	private readonly Channel<Action<GraphicsDevice>> _messages = Channel.CreateUnbounded<Action<GraphicsDevice>>(new() { SingleReader = true });
 	private readonly AutoResetEvent _wake = new(false);
@@ -27,6 +24,9 @@ internal sealed class RenderThread
 	private Exception? _failure;
 	private volatile GraphicsDevice? _device;
 	private readonly CancellationTokenSource _cts;
+
+	private RenderSurface RenderSurface => _application.MainSurface!;
+	private GraphicsBackend Backend => _application.GraphicsBackend!;
 
 	[ThreadSafety(AllowedThread.Main)]
 	public bool FirstFramePresented => _firstFramePresented.IsSet;
@@ -40,22 +40,16 @@ internal sealed class RenderThread
 	[ThreadSafety(AllowedThread.Main)]
 	public GraphicsDevice? Device => _device;
 
-	public RenderThread(FramePacer pacer, GraphicsBackend backend, RenderSurface surface,
-		Action<GraphicsDevice, Renderer>? load = null,
-		Action<GraphicsDevice, RenderFrame, CameraData>? render = null,
-		Action? unload = null,
-		CancellationToken cancellationToken = default)
+	public RenderThread(Application application, FramePacer pacer, CancellationToken cancellationToken = default)
 	{
 		Debug.Assert(pacer != null);
-		Debug.Assert(backend != null);
-		Debug.Assert(surface != null);
+		Debug.Assert(application != null);
+		Debug.Assert(application.Platform != null);
+		Debug.Assert(application.MainView != null);
+		Debug.Assert(application.MainSurface != null);
 
+		_application = application;
 		_pacer = pacer;
-		_backend = backend;
-		_surface = surface;
-		_load = load;
-		_render = render;
-		_unload = unload;
 
 		// Wrap cancellationToken, so we can cancel operation both from outside and inside the thread.
 		_cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
@@ -97,14 +91,14 @@ internal sealed class RenderThread
 		CancellationToken cancellationToken = _cts.Token;
 		try
 		{
-			using GraphicsDevice device = _backend.CreateDevice(_surface, null);
+			using GraphicsDevice device = Backend.CreateDevice(RenderSurface, null);
 			_device = device;
-			using Swapchain swapchain = device.CreateSwapchain(_surface);
+			using Swapchain swapchain = device.CreateSwapchain(RenderSurface);
 			using Renderer renderer = device.CreateRenderer(swapchain);
 
 			try
 			{
-				_load?.Invoke(device, renderer);
+				_application.LoadGraphics(device, renderer);
 
 				while (!cancellationToken.IsCancellationRequested)
 				{
@@ -131,7 +125,7 @@ internal sealed class RenderThread
 						continue;
 					}
 
-					_render?.Invoke(device, frame, snapshot.Camera);
+					_application.Render(device, frame, snapshot.Camera);
 
 					renderer.EndFrame(frame);
 					_firstFramePresented.Set();
@@ -141,7 +135,7 @@ internal sealed class RenderThread
 			finally
 			{
 				device.WaitIdle();
-				_unload?.Invoke();
+				_application.UnloadGraphics();
 			}
 		}
 		catch (OperationCanceledException)

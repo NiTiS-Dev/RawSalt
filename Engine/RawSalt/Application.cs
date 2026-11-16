@@ -22,13 +22,13 @@ public class Application
 	public Platform? Platform { get; private set; }
 
 	[MemberNotNullWhen(false, nameof(Headless))]
-	private View? MainView { get; set; }
+	internal View? MainView { get; private set; }
 
 	[MemberNotNullWhen(false, nameof(Headless))]
-	private RenderSurface? MainSurface { get; set; }
+	internal RenderSurface? MainSurface { get; private set; }
 
 	[MemberNotNullWhen(false, nameof(Headless))]
-	private GraphicsBackend? GraphicsBackend { get; set; }
+	internal GraphicsBackend? GraphicsBackend { get; private set; }
 
 	[MemberNotNullWhen(false, nameof(Headless))]
 	private RenderThread? RenderThread { get; set; }
@@ -49,6 +49,17 @@ public class Application
 		Headless = headless;
 	}
 
+	/// <summary>
+	/// Logical update event.
+	/// <br/><br/>
+	/// The update happens approximately every frame or more frequently, when rendering is too slow.
+	/// Headless application takes a fixed update.
+	/// </summary>
+	/// <param name="updateId">Incremental index of update.</param>
+	/// <param name="deltaTime">Time since previous update in seconds.</param>
+	/// <remarks>
+	/// Do no call manually.
+	/// </remarks>
 	[ThreadSafety(AllowedThread.Main)]
 	protected virtual void Update(ulong updateId, float deltaTime)
 	{ }
@@ -61,14 +72,14 @@ public class Application
 	/// Called on the render thread once the device and renderer exist. Create render content here.
 	/// </summary>
 	[ThreadSafety(AllowedThread.Render)]
-	protected virtual void LoadGraphics(GraphicsDevice device, Renderer renderer)
+	protected internal virtual void LoadGraphics(GraphicsDevice device, Renderer renderer)
 	{ }
 
 	/// <summary>
 	/// Called on the render thread to record one frame, after it was begun and before it is submitted.
 	/// </summary>
 	[ThreadSafety(AllowedThread.Render)]
-	protected virtual void Render(GraphicsDevice device, RenderFrame frame, in CameraData camera)
+	protected internal virtual void Render(GraphicsDevice device, RenderFrame frame, in CameraData camera)
 	{ }
 
 	/// <summary>
@@ -76,11 +87,18 @@ public class Application
 	/// <see cref="LoadGraphics"/> here.
 	/// </summary>
 	[ThreadSafety(AllowedThread.Render)]
-	protected virtual void UnloadGraphics()
+	protected internal virtual void UnloadGraphics()
 	{ }
 
+	/// <summary>
+	/// Initialize and starts application lifetime cycle.
+	/// </summary>
+	/// <param name="config">Application configuration.</param>
+	/// <returns>Exit state: <see langword="true"/> when successfully exit; <see langword="false"/> when crashed.</returns>
 	protected bool Launch(LaunchConfiguration config)
 	{
+		// TODO(high): Move platform and backend to the application constructor
+		// TODO(high): Dedicate platform/backend selection to the builder, not application!
 		Log.Info("Launch application.");
 
 		try
@@ -108,13 +126,10 @@ public class Application
 			MainSurface = GraphicsBackend.CreateSurface(MainView);
 
 			FramePacer pacer = new();
-			RenderThread = new RenderThread(pacer, GraphicsBackend, MainSurface,
-				LoadGraphics,
-				(device, frame, camera) => Render(device, frame, camera),
-				UnloadGraphics);
+			RenderThread = new RenderThread(this, pacer);
 			RenderThread.Start();
 
-			MainLoopWithGraphics(pacer, RenderThread, MainView);
+			MainLoopWithGraphics(pacer);
 
 			RenderThread.Stop();
 			RenderThread = null;
@@ -157,10 +172,14 @@ public class Application
 		}
 	}
 
-	private void MainLoopWithGraphics(FramePacer pacer, RenderThread renderThread, View view)
+	private void MainLoopWithGraphics(FramePacer pacer)
 	{
 		long last = Stopwatch.GetTimestamp();
 
+		Debug.Assert(RenderThread != null);
+		Debug.Assert(MainView != null);
+		var renderThread = RenderThread!;
+		var view = MainView!;
 		RateStatistics statistics = new();
 		statistics.Start();
 

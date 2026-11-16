@@ -1,0 +1,9 @@
+<Project>
+  <PropertyGroup>
+      <NoWarn>$(NoWarn);IDE0290</NoWarn>
+      
+      <RawSaltVersion>0.0.3</RawSaltVersion>
+      
+      <_RawSaltProjectRootDirectory>$(MSBuildThisFileDirectory)</_RawSaltProjectRootDirectory>
+  </PropertyGroup>
+</Project>

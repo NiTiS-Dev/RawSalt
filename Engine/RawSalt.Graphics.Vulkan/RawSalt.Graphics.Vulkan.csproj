@@ -1,0 +1,10 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+    <ItemGroup>
+        <PackageReference Include="Vortice.Vulkan" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\RawSalt\RawSalt.csproj" />
+    </ItemGroup>
+
+</Project>

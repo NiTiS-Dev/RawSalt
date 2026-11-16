@@ -1,0 +1,142 @@
+using System.Diagnostics.CodeAnalysis;
+using RawSalt.Graphics.Drawing;
+using RawSalt.Graphics.Rendering;
+
+namespace RawSalt.Graphics.Vulkan.Rendering;
+
+public sealed class VulkanRenderer : Renderer
+{
+	private readonly VulkanDevice _device;
+	private readonly VulkanSwapchain _swapchain;
+	private readonly VkCommandPool _pool;
+	private readonly VulkanRenderFrame[] _frames;
+	private readonly ulong[] _frameIds;
+	private VulkanRenderFrame? _active;
+
+	private VkDeviceApi Api => _device.DeviceApi;
+
+	public override PixelFormat BackBufferFormat => _swapchain.Format.ToPixelFormat();
+
+	public unsafe VulkanRenderer(VulkanDevice device, VulkanSwapchain swapchain)
+	{
+		_device = device;
+		_swapchain = swapchain;
+
+		VkCommandPoolCreateInfo poolInfo = new()
+		{
+			flags = VkCommandPoolCreateFlags.ResetCommandBuffer,
+			queueFamilyIndex = device.GraphicsQueueFamily,
+		};
+		Api.vkCreateCommandPool(&poolInfo, out _pool);
+
+		uint count = swapchain.FramesInFlight;
+		VkCommandBuffer[] buffers = new VkCommandBuffer[count];
+		VkCommandBufferAllocateInfo allocInfo = new()
+		{
+			commandPool = _pool,
+			level = VkCommandBufferLevel.Primary,
+			commandBufferCount = count,
+		};
+		fixed (VkCommandBuffer* p = buffers)
+		{
+			Api.vkAllocateCommandBuffers(&allocInfo, p);
+		}
+
+		_frames = new VulkanRenderFrame[count];
+		_frameIds = new ulong[count];
+		VkFenceCreateInfo fenceInfo = new() { flags = VkFenceCreateFlags.Signaled };
+		for (int i = 0; i < count; i++)
+		{
+			Api.vkCreateFence(&fenceInfo, out VkFence fence);
+			_frames[i] = new VulkanRenderFrame(fence, new VulkanCommandList(device, buffers[i], device.UploadHeap.CreateArena(i, 256)));
+		}
+	}
+
+	public override bool TryBeginFrame([NotNullWhen(true)] out RenderFrame? frame)
+	{
+		frame = null;
+		if (_active != null)
+		{
+			throw new InvalidOperationException("The previous frame was not ended yet.");
+		}
+
+		// FrameIndex only advances in Present(), so capture the slot once.
+		uint slot = _swapchain.FrameIndex;
+		Api.vkWaitForFences(_frames[slot].Fence, true, ulong.MaxValue);
+		_device.CollectGarbage(_frameIds[slot]);
+
+		if (!_swapchain.TryAcquire())
+		{
+			return false;
+		}
+
+		VulkanRenderFrame f = _frames[slot];
+		Api.vkResetFences(f.Fence);
+		_frameIds[slot] = _device.BeginFrame();
+
+		f.Target.Image = _swapchain.CurrentImage;
+		f.Target.View = _swapchain.CurrentImageView;
+		f.Target.Extent = _swapchain.Extent;
+		f.Target.Layout = VkImageLayout.Undefined;
+		f.Target.Format = _swapchain.Format;
+		f.Target.DepthImage = _swapchain.CurrentDepthImage;
+		f.Target.DepthView = _swapchain.CurrentDepthView;
+		// Depth contents are discarded between frames, the first pass of the frame must clear them.
+		f.Target.DepthLayout = VkImageLayout.Undefined;
+		f.CommandList.Begin();
+
+		_active = f;
+		frame = f;
+		return true;
+	}
+
+	public override unsafe void EndFrame(RenderFrame frame)
+	{
+		if (_active == null || !ReferenceEquals(frame, _active))
+		{
+			throw new InvalidOperationException("Frame does not match the active frame.");
+		}
+
+		VulkanRenderFrame f = _active;
+		_active = null;
+
+		f.CommandList.TransitionColor(f.Target, VkImageLayout.PresentSrcKHR);
+		f.CommandList.End();
+
+		// Read these BEFORE Present(): it advances FrameIndex.
+		VkSemaphore wait = _swapchain.ImageAvailableSemaphore;
+		VkSemaphore signal = _swapchain.RenderFinishedSemaphore;
+		VkCommandBuffer cmd = f.CommandList.Buffer;
+		VkPipelineStageFlags waitStage = VkPipelineStageFlags.ColorAttachmentOutput;
+
+		VkSubmitInfo submit = new()
+		{
+			waitSemaphoreCount = 1,
+			pWaitSemaphores = &wait,
+			pWaitDstStageMask = &waitStage,
+			commandBufferCount = 1,
+			pCommandBuffers = &cmd,
+			signalSemaphoreCount = 1,
+			pSignalSemaphores = &signal,
+		};
+
+		VkResult result = Api.vkQueueSubmit(_device.GraphicsQueue, 1, &submit, f.Fence);
+		if (result != VkResult.Success)
+		{
+			throw new VkException(result, "Failed to submit frame.");
+		}
+
+		_swapchain.Present();
+	}
+
+	protected override void Dispose(bool disposing)
+	{
+		Api.vkDeviceWaitIdle();
+		foreach (VulkanRenderFrame f in _frames)
+		{
+			Api.vkDestroyFence(f.Fence);
+		}
+
+		Api.vkDestroyCommandPool(_pool);
+	}
+}

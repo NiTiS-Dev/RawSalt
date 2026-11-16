@@ -1,0 +1,28 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+	<Import Project="../../Sdk/RawSalt.Sdk/Sdk/Sdk.props" />
+
+    <PropertyGroup>
+        <OutputType Condition="$([MSBuild]::IsOSPlatform('Windows'))">WinExe</OutputType>
+        <OutputType Condition="!$([MSBuild]::IsOSPlatform('Windows'))">Exe</OutputType>
+        <TargetFramework>net10.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+        <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
+    </PropertyGroup>
+
+	<Import Project="../../Sdk/RawSalt.Sdk/Sdk/Sdk.targets" />
+	<Import Project="../../Sdk/RawSalt.Sdk/Sdk/RawSalt.targets" />
+
+    <ItemGroup>
+        <ProjectReference Include="../../Engine/RawSalt/RawSalt.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <None Update="*.slang">
+            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+        </None>
+        <None Update="*.png">
+            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+        </None>
+    </ItemGroup>
+</Project>

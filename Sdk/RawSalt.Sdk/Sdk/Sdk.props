@@ -1,0 +1,6 @@
+<Project>
+	<PropertyGroup Condition="'$(ApplicationIcon)' == ''">
+        <!-- TODO: Move to the other directory -->
+		<ApplicationIcon>$(MSBuildThisFileDirectory)/icon.ico</ApplicationIcon>
+	</PropertyGroup>
+</Project>

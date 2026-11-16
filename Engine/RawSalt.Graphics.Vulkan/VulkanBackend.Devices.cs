@@ -1,0 +1,184 @@
+using System.Diagnostics;
+using System.Runtime.InteropServices;
+using RawSalt.Graphics.Devices;
+using RawSalt.Graphics.Rendering;
+using RawSalt.Logging;
+
+namespace RawSalt.Graphics.Vulkan;
+
+public partial class VulkanBackend
+{
+	/// <inheritdoc/>
+	/// <exception cref="ArgumentException">Provided arguments doesn't belong to current backend.</exception>
+	/// <exception cref="InvalidOperationException">Suitable Vulkan adapters not found.</exception>
+	/// <exception cref="NotSupportedException">Adapter is deprecated and can't be used for device creation.</exception>
+	public override GraphicsDevice CreateDevice(RenderSurface renderSurface, [Optional] Adapter? adapter)
+	{
+		Debug.Assert(renderSurface != null);
+		if (renderSurface is not VulkanSurface vulkanSurface)
+		{
+			throw new ArgumentException("Provided render surface is not of Vulkan.");
+		}
+
+		VulkanAdapter vkAdapter;
+		if (adapter is null)
+		{
+			IReadOnlyList<VulkanAdapter> adapters = GetAdapters();
+			if (adapters.Count == 0)
+			{
+				// TODO: Add documentation how to fix that error on laptops with switchable graphics?
+				throw new InvalidOperationException("No Vulkan adapter is available.");
+			}
+
+			vkAdapter = SelectAdapter(adapters);
+		}
+		else if (adapter is VulkanAdapter vulkanAdapter)
+		{
+			vkAdapter = vulkanAdapter;
+		}
+		else
+		{
+			throw new ArgumentException("Provided adapter device is not of Vulkan.");
+		}
+
+		VkInstanceApi instanceApi = InstanceApi;
+		VkPhysicalDevice physicalDevice = vkAdapter.PhysicalDevice;
+
+		VkUtf8String swapchainExtension = Vk.VK_KHR_SWAPCHAIN_EXTENSION_NAME;
+		if (!IsDeviceExtensionSupported(instanceApi, physicalDevice, swapchainExtension))
+		{
+			throw new NotSupportedException($"Adapter \"{vkAdapter.Name}\" does not support {swapchainExtension}.");
+		}
+
+		instanceApi.vkGetPhysicalDeviceQueueFamilyProperties(physicalDevice, out uint queueFamilyCount);
+		if (queueFamilyCount == 0)
+		{
+			throw new NotSupportedException($"Adapter \"{vkAdapter.Name}\" does not expose any queue families.");
+		}
+
+		uint? combined = null;
+		uint? graphics = null;
+		uint? present = null;
+
+		VkQueueFamilyProperties[] queueFamilies = new VkQueueFamilyProperties[queueFamilyCount];
+		instanceApi.vkGetPhysicalDeviceQueueFamilyProperties(physicalDevice, queueFamilies);
+		for (uint i = 0; i < queueFamilies.Length; i++)
+		{
+			bool isGraphics = queueFamilies[i].queueFlags.HasFlag(VkQueueFlags.Graphics);
+			instanceApi.vkGetPhysicalDeviceSurfaceSupportKHR(physicalDevice, i, vulkanSurface.Surface, out VkBool32 supported);
+
+			// Prefer a single family for both graphics and present.
+			if (isGraphics && supported)
+			{
+				combined ??= i;
+			}
+			else if (isGraphics)
+			{
+				graphics ??= i;
+			}
+			else if (supported)
+			{
+				present ??= i;
+			}
+		}
+
+		if (combined != null)
+		{
+			return CreateDevice(InstanceApi, vkAdapter, combined.Value, combined.Value);
+		}
+
+		if (graphics != null && present != null)
+		{
+			return CreateDevice(InstanceApi, vkAdapter, graphics.Value, present.Value);
+		}
+
+		throw new NotSupportedException($"Adapter \"{vkAdapter.Name}\" does not support required operations.");
+	}
+
+	private static unsafe VulkanDevice CreateDevice(VkInstanceApi instanceApi, VulkanAdapter adapter, uint graphicsQueueFamilyIndex, uint presentQueueFamilyIndex)
+	{
+		float queuePriority = 1.0f;
+		bool sharedFamily = graphicsQueueFamilyIndex == presentQueueFamilyIndex;
+		uint queueCreateInfoCount = sharedFamily ? 1u : 2u;
+		VkDeviceQueueCreateInfo* queueCreateInfos = stackalloc VkDeviceQueueCreateInfo[2];
+		queueCreateInfos[0] = new()
+		{
+			queueFamilyIndex = graphicsQueueFamilyIndex,
+			queueCount = 1,
+			pQueuePriorities = &queuePriority
+		};
+		queueCreateInfos[1] = new()
+		{
+			queueFamilyIndex = presentQueueFamilyIndex,
+			queueCount = 1,
+			pQueuePriorities = &queuePriority
+		};
+
+		VkUtf8String[] extensionNames = [Vk.VK_KHR_SWAPCHAIN_EXTENSION_NAME];
+		using VkStringArray extensions = new(extensionNames);
+
+		VkPhysicalDeviceVulkan13Features features13 = new()
+		{
+			dynamicRendering = true
+		};
+		VkDeviceCreateInfo createInfo = new()
+		{
+			pNext = &features13,
+			queueCreateInfoCount = queueCreateInfoCount,
+			pQueueCreateInfos = queueCreateInfos,
+			enabledExtensionCount = extensions.Length,
+			ppEnabledExtensionNames = extensions
+		};
+
+		VkResult result = instanceApi.vkCreateDevice(adapter.PhysicalDevice, in createInfo, out VkDevice device);
+		if (result != VkResult.Success)
+		{
+			throw new InvalidOperationException($"Failed to create Vulkan device, reason: {result}.");
+		}
+
+		VkDeviceApi deviceApi = Vk.GetApi(instanceApi.Instance, device);
+		deviceApi.vkGetDeviceQueue(graphicsQueueFamilyIndex, 0, out VkQueue graphicsQueue);
+		deviceApi.vkGetDeviceQueue(presentQueueFamilyIndex, 0, out VkQueue presentQueue);
+		return new VulkanDevice(adapter, device, instanceApi, deviceApi, graphicsQueueFamilyIndex, graphicsQueue, presentQueueFamilyIndex, presentQueue);
+	}
+
+	private static VulkanAdapter SelectAdapter(IReadOnlyList<VulkanAdapter> adapters)
+	{
+		VulkanAdapter? fallback = null;
+
+		foreach (VulkanAdapter adapter in adapters)
+		{
+			if (adapter.Properties.deviceType == VkPhysicalDeviceType.DiscreteGpu)
+			{
+				return adapter;
+			}
+
+			fallback ??= adapter;
+		}
+
+		return fallback ?? adapters[0];
+	}
+
+	private static unsafe bool IsDeviceExtensionSupported(VkInstanceApi instanceApi, VkPhysicalDevice physicalDevice, VkUtf8String extensionName)
+	{
+		VkResult result = instanceApi.vkEnumerateDeviceExtensionProperties(physicalDevice, out uint extensionCount);
+		if (result != VkResult.Success && result != VkResult.Incomplete)
+		{
+			throw new InvalidOperationException($"Failed to enumerate Vulkan device extensions, reason: {result}.");
+		}
+
+		if (extensionCount == 0)
+		{
+			return false;
+		}
+
+		Span<VkExtensionProperties> extensions = stackalloc VkExtensionProperties[(int)extensionCount];
+		result = instanceApi.vkEnumerateDeviceExtensionProperties(physicalDevice, extensions);
+		if (result != VkResult.Success && result != VkResult.Incomplete)
+		{
+			throw new InvalidOperationException($"Failed to retrieve Vulkan device extensions, reason: {result}.");
+		}
+
+		return ContainsExtension(extensions, extensionName);
+	}
+}

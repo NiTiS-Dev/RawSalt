@@ -1,5 +1,6 @@
 using System.Collections.Concurrent;
 using System.ComponentModel;
+using System.Numerics;
 using System.Runtime.ExceptionServices;
 using System.Runtime.InteropServices;
 using System.Runtime.Versioning;
@@ -29,6 +30,14 @@ public partial class Win32Platform : Platform
 
 	// Written by the window thread, drained by View.PumpEvents on the application thread.
 	private readonly ConcurrentQueue<Win32KeyEvent> _keyboardQueue = new();
+
+	private volatile bool _mouseWasMoved;
+	private volatile bool _mouseWasScrolled;
+	private readonly Lock _mouseStateLock = new();
+	private readonly bool[] _pressedMouseButtons = new bool[5];
+	private readonly ConcurrentQueue<Win32MouseEvent> _mouseQueue = new();
+	private Vector2 _mousePosition = default;
+	private Vector2 _mouseScroll = default;
 
 	private readonly ManualResetEventSlim _threadReady = new(false);
 	private readonly Thread _windowThread;
@@ -211,6 +220,46 @@ public partial class Win32Platform : Platform
 		return _keyboardQueue.TryDequeue(out keyEvent);
 	}
 
+	internal bool TryDrainMouseQueue(out Win32MouseEvent mouseEvent)
+	{
+		return _mouseQueue.TryDequeue(out mouseEvent);
+	}
+
+	// Returns true, when mouse moved
+	internal bool GetMousePosition(out Vector2 mousePosition)
+	{
+		lock (_mouseStateLock)
+		{
+			if (_mouseWasMoved)
+			{
+				mousePosition = _mousePosition;
+
+				_mouseWasMoved = false;
+				return true;
+			}
+		}
+
+		mousePosition = default;
+		return false;
+	}
+
+	internal bool GetMouseScroll(out Vector2 mouseScroll)
+	{
+		lock (_mouseStateLock)
+		{
+			if (_mouseWasScrolled)
+			{
+				mouseScroll = _mouseScroll;
+
+				_mouseWasScrolled = false;
+				return true;
+			}
+		}
+
+		mouseScroll = default;
+		return false;
+	}
+
 	[SupportedOSPlatform("windows5.0")]
 	private void DestroyAllWindows()
 	{
@@ -381,6 +430,65 @@ public partial class Win32Platform : Platform
 		};
 	}
 
+	private static MouseButton MapButton(uint code, WPARAM wParam, out bool pressed)
+	{
+		uint button = ((uint)wParam >> 16) & 0xFFFF;
+
+		switch (code)
+		{
+			case PInvoke.WM_LBUTTONUP:
+				pressed = false;
+				return MouseButton.Left;
+			case PInvoke.WM_LBUTTONDOWN:
+				pressed = true;
+				return MouseButton.Left;
+
+			case PInvoke.WM_RBUTTONUP:
+				pressed = false;
+				return MouseButton.Right;
+			case PInvoke.WM_RBUTTONDOWN:
+				pressed = true;
+				return MouseButton.Right;
+
+			case PInvoke.WM_MBUTTONUP:
+				pressed = false;
+				return MouseButton.Middle;
+			case PInvoke.WM_MBUTTONDOWN:
+				pressed = true;
+				return MouseButton.Middle;
+
+			case PInvoke.WM_XBUTTONUP:
+				pressed = false;
+				return FromX();
+			case PInvoke.WM_XBUTTONDOWN:
+				pressed = true;
+				return FromX();
+
+			default:
+				pressed = false;
+				return MouseButton.Back;
+		}
+
+		MouseButton FromX()
+		{
+			return button switch
+			{
+				PInvoke.XBUTTON1 => MouseButton.Back,
+				_ => MouseButton.Forward
+			};
+		}
+	}
+
+	private static Vector2 WheelToVector(WPARAM wParam, bool horizontal)
+	{
+		short value = unchecked((short)((uint)wParam >> 16));
+
+		float delta = PInvoke.WHEEL_DELTA;
+		Vector2 scroll = horizontal ? new Vector2(value / delta, 0) : new Vector2(0, value / delta);
+
+		return scroll;
+	}
+
 	[SupportedOSPlatform("windows10.0")]
 	private LRESULT WndProc(HWND hWnd, uint msg, WPARAM wParam, LPARAM lParam)
 	{
@@ -393,7 +501,7 @@ public partial class Win32Platform : Platform
 		if (msg == PInvoke.WM_SETTINGCHANGE)
 		{
 			UpdateTheme(hWnd);
-			return PInvoke.DefWindowProc(hWnd, msg, wParam, lParam);
+			goto DEF_WIND_PROC;
 		}
 
 		if (_windows.TryGetValue(hWnd, out Win32Window? window))
@@ -414,19 +522,71 @@ public partial class Win32Platform : Platform
 					});
 				}
 
-				return PInvoke.DefWindowProc(hWnd, msg, wParam, lParam);
+				goto DEF_WIND_PROC;
+			}
+
+			if (msg is PInvoke.WM_MOUSEMOVE)
+			{
+				// Relative to view
+				int x = unchecked((short)(lParam & 0xFFFF));
+				int y = unchecked((short)((lParam >> 16) & 0xFFFF));
+
+				lock (_mouseStateLock)
+				{
+					_mouseWasMoved = true;
+					_mousePosition = new(x, y);
+				}
+
+				goto DEF_WIND_PROC;
+			}
+
+			if (msg is PInvoke.WM_LBUTTONDOWN or PInvoke.WM_RBUTTONDOWN or PInvoke.WM_MBUTTONDOWN or PInvoke.WM_XBUTTONDOWN
+			    or PInvoke.WM_LBUTTONUP or PInvoke.WM_RBUTTONUP or PInvoke.WM_MBUTTONUP or PInvoke.WM_XBUTTONUP)
+			{
+				MouseButton button = MapButton(msg, wParam, out bool pressed);
+
+				_pressedMouseButtons[(int)button] = pressed;
+
+				if (pressed && _pressedMouseButtons.Count(e => e) == 1)
+				{
+					PInvoke.SetCapture(hWnd);
+				}
+				else if (!pressed && !_pressedMouseButtons.Any(e => e))
+				{
+					PInvoke.ReleaseCapture();
+				}
+
+				_mouseQueue.Enqueue(new Win32MouseEvent()
+				{
+					Button = button,
+					Pressed = pressed
+				});
+			}
+
+			if (msg is PInvoke.WM_MOUSEWHEEL or PInvoke.WM_MOUSEHWHEEL)
+			{
+				lock (_mouseStateLock)
+				{
+					_mouseWasScrolled = true;
+					Vector2 scroll = WheelToVector(wParam, horizontal: msg is PInvoke.WM_MOUSEHWHEEL);
+				}
+			}
+
+			if (msg == PInvoke.WM_KILLFOCUS)
+			{
+				PInvoke.ReleaseCapture();
 			}
 
 			if (msg == PInvoke.WM_SIZE)
 			{
 				window.UpdateSize();
-				return PInvoke.DefWindowProc(hWnd, msg, wParam, lParam);
+				goto DEF_WIND_PROC;
 			}
 
 			if (msg == PInvoke.WM_DPICHANGED)
 			{
 				window.UpdateSize();
-				return PInvoke.DefWindowProc(hWnd, msg, wParam, lParam);
+				goto DEF_WIND_PROC;
 			}
 
 			if (msg == PInvoke.WM_CLOSE)
@@ -437,6 +597,7 @@ public partial class Win32Platform : Platform
 			}
 		}
 
+		DEF_WIND_PROC:
 		return PInvoke.DefWindowProc(hWnd, msg, wParam, lParam);
 	}
 

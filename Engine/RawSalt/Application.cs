@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
+using System.Numerics;
 using RawSalt.Diagnostics;
 using RawSalt.Graphics;
 using RawSalt.Graphics.Rendering;
@@ -45,6 +46,7 @@ public class Application
 	protected GraphicsDevice? Device => RenderThread?.Device;
 
 	public KeyboardState Keyboard { get; } = new();
+	public MouseState Mouse { get; } = new();
 
 	protected Application(bool headless = false)
 	{
@@ -201,8 +203,9 @@ public class Application
 
 			long now = Stopwatch.GetTimestamp();
 			float deltaTime = (now - last) / (float)Stopwatch.Frequency;
-			Keyboard.Update(updateId, deltaTime);
 			Update(updateId, deltaTime);
+			Keyboard.Update(updateId, deltaTime);
+			Mouse.Update(updateId, deltaTime);
 			updateId++;
 
 			CameraData cameraData = default;
@@ -236,6 +239,28 @@ public class Application
 	public virtual void OnKeyReleased(Key key)
 	{
 		Keyboard.OnKeyReleased(key);
+	}
+
+	[ThreadSafety(AllowedThread.Main)]
+	public virtual void OnButtonPressed(MouseButton button)
+	{
+		Mouse.OnButtonPressed(button);
+	}
+
+	[ThreadSafety(AllowedThread.Main)]
+	public virtual void OnButtonReleased(MouseButton button)
+	{
+		Mouse.OnButtonReleased(button);
+	}
+
+	public virtual void OnMouseMove(Vector2 position)
+	{
+		Mouse.OnMouseMove(position);
+	}
+
+	public virtual void OnMouseScroll(Vector2 scroll)
+	{
+		Mouse.OnMouseScroll(scroll);
 	}
 
 	private static GraphicsBackend SelectBestGraphicsBackend(params IList<GraphicsBackend> backends)

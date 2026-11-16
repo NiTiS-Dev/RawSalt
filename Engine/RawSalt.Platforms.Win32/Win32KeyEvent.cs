@@ -7,3 +7,9 @@ internal struct Win32KeyEvent
 	public Key Key;
 	public bool Pressed;
 }
+
+internal struct Win32MouseEvent
+{
+	public MouseButton Button;
+	public bool Pressed;
+}

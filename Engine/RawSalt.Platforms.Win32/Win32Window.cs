@@ -1,3 +1,4 @@
+using System.Numerics;
 using System.Runtime.Versioning;
 using Windows.Win32;
 using Windows.Win32.Foundation;
@@ -83,6 +84,28 @@ public class Win32Window : Window, IWin32Window
 			{
 				application.OnKeyReleased(keyEvent.Key);
 			}
+		}
+
+		while (Platform.TryDrainMouseQueue(out Win32MouseEvent mouseEvent))
+		{
+			if (mouseEvent.Pressed)
+			{
+				application.OnButtonPressed(mouseEvent.Button);
+			}
+			else
+			{
+				application.OnButtonReleased(mouseEvent.Button);
+			}
+		}
+
+		if (Platform.GetMousePosition(out Vector2 position))
+		{
+			application.OnMouseMove(position);
+		}
+
+		if (Platform.GetMouseScroll(out Vector2 scroll))
+		{
+			application.OnMouseScroll(scroll);
 		}
 	}
 

@@ -125,7 +125,7 @@ internal sealed class RenderThread
 						continue;
 					}
 
-					_application.Render(device, frame, snapshot.Camera);
+					Render(frame, snapshot.Camera, snapshot.Items);
 
 					renderer.EndFrame(frame);
 					_firstFramePresented.Set();
@@ -147,5 +147,35 @@ internal sealed class RenderThread
 			_failure = ex;
 			Log.Error(ex, "Render thread crashed.");
 		}
+	}
+
+	private static void Render(RenderFrame frame, in CameraData camera, List<RenderItem> items)
+	{
+		if (items.Count == 0)
+		{
+			return;
+		}
+
+		// PERF: This cost a lot process time
+		items.Sort(static (a, b) =>
+		{
+			int byLayer = a.Layer.CompareTo(b.Layer);
+			return byLayer != 0 ? byLayer : a.Order.CompareTo(b.Order);
+		});
+
+		CommandList cmd = frame.Commands;
+		cmd.BeginRenderPass(new RenderPass(frame.BackBuffer));
+
+		foreach (RenderItem item in items)
+		{
+			if (item.Material is not { } material || item.Mesh is not { } mesh)
+			{
+				continue;
+			}
+
+			material.Apply(cmd, in item, in camera);
+			mesh.Render(cmd);
+		}
+		cmd.EndRenderPass();
 	}
 }

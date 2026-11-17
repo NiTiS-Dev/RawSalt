@@ -7,6 +7,7 @@ using RawSalt.Graphics.Rendering;
 using RawSalt.Input;
 using RawSalt.Logging;
 using RawSalt.Platforms;
+using RawSalt.Scenes;
 using RawSalt.Threading;
 
 namespace RawSalt;
@@ -18,6 +19,11 @@ public class Application
 	/// When returns <see langword="true"/> application does not use any graphics.
 	/// </summary>
 	public bool Headless { get; }
+
+	/// <summary>
+	/// The scene drawn by this application.
+	/// </summary>
+	public Scene Scene { get; }
 
 	[MemberNotNullWhen(false, nameof(Headless))]
 	public Platform? Platform { get; private set; }
@@ -51,6 +57,7 @@ public class Application
 	protected Application(bool headless = false)
 	{
 		Headless = headless;
+		Scene = new Scene(this);
 
 		Thread.CurrentThread.Name = "RawSalt/MainThread";
 	}
@@ -71,22 +78,19 @@ public class Application
 	{ }
 
 	[ThreadSafety(AllowedThread.Main)]
-	protected virtual void Draw(ref CameraData camera, Vec2i viewport, ulong updateId, float deltaTime)
-	{ }
+	protected virtual void Draw(ref CameraData camera, Vec2i viewport, List<RenderItem> items, ulong updateId, float deltaTime)
+	{
+		Scene.Collect(ref camera, viewport, items);
+	}
 
 	/// <summary>
 	/// Called on the render thread once the device and renderer exist. Create render content here.
 	/// </summary>
 	[ThreadSafety(AllowedThread.Render)]
 	protected internal virtual void LoadGraphics(GraphicsDevice device, Renderer renderer)
-	{ }
-
-	/// <summary>
-	/// Called on the render thread to record one frame, after it was begun and before it is submitted.
-	/// </summary>
-	[ThreadSafety(AllowedThread.Render)]
-	protected internal virtual void Render(GraphicsDevice device, RenderFrame frame, in CameraData camera)
-	{ }
+	{
+		Scene.LoadGraphics();
+	}
 
 	/// <summary>
 	/// Called on the render thread before the device is disposed. Release the content created in
@@ -94,7 +98,9 @@ public class Application
 	/// </summary>
 	[ThreadSafety(AllowedThread.Render)]
 	protected internal virtual void UnloadGraphics()
-	{ }
+	{
+		Scene.UnloadGraphics();
+	}
 
 	/// <summary>
 	/// Initialize and starts application lifetime cycle.
@@ -213,7 +219,7 @@ public class Application
 			CameraData cameraData = default;
 			if (snapshot != null && (view.SurfaceSize.X != 0 && view.SurfaceSize.Y != 0))
 			{
-				Draw(ref cameraData, view.SurfaceSize, updateId, deltaTime);
+				Draw(ref cameraData, view.SurfaceSize, snapshot.Items, updateId, deltaTime);
 			}
 
 			statistics.Update();

@@ -87,8 +87,12 @@ public sealed class XlibWindow : Window, INativeWindow
 				break;
 
 			case XlibNative.MotionNotify:
-				OnMouseMove(new MouseMoveEventArgs(new Vector2<int>(xevent.motion.x, xevent.motion.y)));
+			{
+				Vector2<int> position = new(xevent.motion.x, xevent.motion.y);
+				Platform.Application.OnMouseMove(new System.Numerics.Vector2(position.X, position.Y));
+				OnMouseMove(new MouseMoveEventArgs(position));
 				break;
+			}
 
 			case XlibNative.EnterNotify:
 				OnCursorEntered();
@@ -100,10 +104,12 @@ public sealed class XlibWindow : Window, INativeWindow
 
 			case XlibNative.FocusIn:
 				OnFocusChanged(true);
+				Platform.Application.OnFocusGain();
 				break;
 
 			case XlibNative.FocusOut:
 				OnFocusChanged(false);
+				Platform.Application.OnFocusLost();
 				break;
 
 			case XlibNative.ConfigureNotify:
@@ -138,10 +144,13 @@ public sealed class XlibWindow : Window, INativeWindow
 		KeyModifiers modifiers = GetModifiers(keyEvent.state);
 		if (pressed)
 		{
-			OnKeyDown(new KeyEventArgs(key, modifiers, IsKeyDown(key)));
+			bool repeat = IsKeyDown(key);
+			Platform.Application.OnKeyPressed(key);
+			OnKeyDown(new KeyEventArgs(key, modifiers, repeat));
 		}
 		else
 		{
+			Platform.Application.OnKeyReleased(key);
 			OnKeyUp(new KeyEventArgs(key, modifiers));
 		}
 	}
@@ -152,7 +161,9 @@ public sealed class XlibWindow : Window, INativeWindow
 
 		if (pressed && TryGetWheelDelta(buttonEvent.button, out Vector2<int> delta))
 		{
+			Platform.Application.OnMouseMove(new System.Numerics.Vector2(position.X, position.Y));
 			OnMouseMove(new MouseMoveEventArgs(position));
+			Platform.Application.OnMouseScroll(new System.Numerics.Vector2(delta.X, delta.Y));
 			OnMouseWheel(new MouseWheelEventArgs(delta));
 			return;
 		}
@@ -165,10 +176,12 @@ public sealed class XlibWindow : Window, INativeWindow
 		MouseButtonEventArgs args = new(button, position, GetModifiers(buttonEvent.state));
 		if (pressed)
 		{
+			Platform.Application.OnButtonPressed(button);
 			OnMouseDown(args);
 		}
 		else
 		{
+			Platform.Application.OnButtonReleased(button);
 			OnMouseUp(args);
 		}
 	}

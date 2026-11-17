@@ -204,16 +204,27 @@ public sealed class WaylandWindow : Window, INativeWindow
 	internal void ProcessKeyboardFocus(bool focused)
 	{
 		OnFocusChanged(focused);
+
+		if (focused)
+		{
+			Platform.Application.OnFocusGain();
+		}
+		else
+		{
+			Platform.Application.OnFocusLost();
+		}
 	}
 
 	internal void ProcessKey(Key key, KeyModifiers modifiers, bool pressed, bool repeat)
 	{
 		if (pressed)
 		{
+			Platform.Application.OnKeyPressed(key);
 			OnKeyDown(new KeyEventArgs(key, modifiers, repeat));
 		}
 		else
 		{
+			Platform.Application.OnKeyReleased(key);
 			OnKeyUp(new KeyEventArgs(key, modifiers));
 		}
 	}
@@ -225,21 +236,25 @@ public sealed class WaylandWindow : Window, INativeWindow
 
 		if (pressed)
 		{
+			Platform.Application.OnButtonPressed(button);
 			OnMouseDown(args);
 		}
 		else
 		{
+			Platform.Application.OnButtonReleased(button);
 			OnMouseUp(args);
 		}
 	}
 
 	internal void ProcessMouseMove(Vector2<int> position)
 	{
+		Platform.Application.OnMouseMove(new System.Numerics.Vector2(position.X, position.Y));
 		OnMouseMove(new MouseMoveEventArgs(position));
 	}
 
 	internal void ProcessMouseWheel(Vector2<int> delta)
 	{
+		Platform.Application.OnMouseScroll(new System.Numerics.Vector2(delta.X, delta.Y));
 		OnMouseWheel(new MouseWheelEventArgs(delta));
 	}
 

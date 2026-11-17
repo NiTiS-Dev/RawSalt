@@ -303,6 +303,7 @@ public class Application
 	public virtual void OnFocusLost()
 	{
 		Keyboard.OnFocusLost();
+		Mouse.OnFocusLost();
 	}
 
 	private static GraphicsBackend SelectBestGraphicsBackend(params IList<GraphicsBackend> backends)

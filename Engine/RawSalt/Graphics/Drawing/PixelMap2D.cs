@@ -27,6 +27,11 @@ public abstract class PixelMap2D : Disposable
 
 	public abstract void Fill(ReadOnlySpan<byte> source);
 
+	/// <summary>
+	/// Fills pixel map with provided <paramref name="color"/>.
+	/// </summary>
+	/// <param name="color">The operation color.</param>
+	public abstract void Fill(Color4 color);
 
 	public virtual void Outline(Color4 outline, int radius)
 	{
@@ -34,12 +39,6 @@ public abstract class PixelMap2D : Disposable
 	}
 
 	public abstract void Outline(Color4 outline, int radius, Predicate<Color4> threshold);
-
-	/// <summary>
-	/// Fills pixel map with provided <paramref name="color"/>.
-	/// </summary>
-	/// <param name="color">The operation color.</param>
-	public abstract void Fill(Color4 color);
 
 	public static PixelMap2D FromImageBytes(byte[] bytes)
 	{

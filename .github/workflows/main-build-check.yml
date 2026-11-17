@@ -3,8 +3,18 @@ name: .NET Build Check
 on:
   push:
     branches: [ "main" ]
+    paths:
+      - '**/*.cs'
+      - '**/*.csproj'
+      - '**/*.props'
+      - '**/*.targets'
   pull_request:
     branches: [ "main" ]
+    paths:
+      - '**/*.cs'
+      - '**/*.csproj'
+      - '**/*.props'
+      - '**/*.targets'
 
 jobs:
   build:

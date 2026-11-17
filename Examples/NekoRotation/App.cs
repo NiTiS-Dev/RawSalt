@@ -52,8 +52,8 @@ internal sealed class App : Application
 
 		var config = LaunchConfiguration.CreateBuilder()
 			.AddWin32Platform()
-      .AddWaylandPlatform()
-      .AddXlibPlatform()
+			.AddWaylandPlatform()
+			.AddXlibPlatform()
 			.AddVulkanBackend()
 			.Build();
 

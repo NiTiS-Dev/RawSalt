@@ -277,10 +277,10 @@ public sealed class WaylandPlatform : Platform
 		KeyModifiers modifiers = KeyModifiers.None;
 
 		if ((mask & (1u << 0)) != 0) modifiers |= KeyModifiers.Shift;
-		if ((mask & (1u << 1)) != 0) modifiers |= KeyModifiers.CapsLock;
+		// if ((mask & (1u << 1)) != 0) modifiers |= KeyModifiers.CapsLock;
 		if ((mask & (1u << 2)) != 0) modifiers |= KeyModifiers.Control;
 		if ((mask & (1u << 3)) != 0) modifiers |= KeyModifiers.Alt;
-		if ((mask & (1u << 4)) != 0) modifiers |= KeyModifiers.NumLock;
+		// if ((mask & (1u << 4)) != 0) modifiers |= KeyModifiers.NumLock;
 		if ((mask & (1u << 6)) != 0) modifiers |= KeyModifiers.Super;
 
 		_modifiers = modifiers;

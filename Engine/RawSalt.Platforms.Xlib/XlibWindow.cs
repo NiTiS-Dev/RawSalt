@@ -207,8 +207,8 @@ public sealed class XlibWindow : Window, INativeWindow
 		if ((mask & XlibNative.ControlMask) != 0) modifiers |= KeyModifiers.Control;
 		if ((mask & XlibNative.Mod1Mask) != 0) modifiers |= KeyModifiers.Alt;
 		if ((mask & XlibNative.Mod4Mask) != 0) modifiers |= KeyModifiers.Super;
-		if ((mask & XlibNative.LockMask) != 0) modifiers |= KeyModifiers.CapsLock;
-		if ((mask & XlibNative.Mod2Mask) != 0) modifiers |= KeyModifiers.NumLock;
+		// if ((mask & XlibNative.LockMask) != 0) modifiers |= KeyModifiers.CapsLock;
+		// if ((mask & XlibNative.Mod2Mask) != 0) modifiers |= KeyModifiers.NumLock;
 
 		return modifiers;
 	}

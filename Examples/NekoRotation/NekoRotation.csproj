@@ -11,11 +11,14 @@
     </PropertyGroup>
 
 	<Import Project="../../Sdk/RawSalt.Sdk/Sdk/Sdk.targets" />
-	<Import Project="../../Sdk/RawSalt.Sdk/Sdk/RawSalt.targets" />
 
-    <ItemGroup>
-        <ProjectReference Include="../../Engine/RawSalt/RawSalt.csproj" />
-    </ItemGroup>
+	<ItemGroup>
+		<ProjectReference Include="../../Engine/RawSalt.Graphics.Vulkan/RawSalt.Graphics.Vulkan.csproj" />
+		<ProjectReference Include="../../Engine/RawSalt.Platforms.Win32/RawSalt.Platforms.Win32.csproj" />
+		<ProjectReference Include="../../Engine/RawSalt.Platforms.Wayland/RawSalt.Platforms.Wayland.csproj" />
+		<ProjectReference Include="../../Engine/RawSalt.Platforms.Xlib/RawSalt.Platforms.Xlib.csproj" />
+		<ProjectReference Include="../../Engine/RawSalt/RawSalt.csproj" />
+	</ItemGroup>
 
     <ItemGroup>
         <None Update="*.slang">

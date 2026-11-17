@@ -1,3 +1,4 @@
+using System.Numerics;
 using System.Runtime.Versioning;
 using Windows.Win32;
 using Windows.Win32.Foundation;
@@ -69,6 +70,57 @@ public class Win32Window : Window, IWin32Window, INativeWindow
 	public override void Show()
 	{
 		Platform.Post(() => PInvoke.ShowWindow(Handle, SHOW_WINDOW_CMD.SW_SHOW));
+	}
+
+	/// <inheritdoc/>
+	public override void PumpEvents()
+	{
+		Application application = Platform.Application;
+
+		while (Platform.TryDrainKeyboardQueue(out Win32KeyEvent keyEvent))
+		{
+			if (keyEvent.Pressed)
+			{
+				application.OnKeyPressed(keyEvent.Key);
+			}
+			else
+			{
+				application.OnKeyReleased(keyEvent.Key);
+			}
+		}
+
+		while (Platform.TryDrainMouseQueue(out Win32MouseEvent mouseEvent))
+		{
+			if (mouseEvent.Pressed)
+			{
+				application.OnButtonPressed(mouseEvent.Button);
+			}
+			else
+			{
+				application.OnButtonReleased(mouseEvent.Button);
+			}
+		}
+
+		if (Platform.GetMousePosition(out Vector2 position))
+		{
+			application.OnMouseMove(position);
+		}
+
+		if (Platform.GetMouseScroll(out Vector2 scroll))
+		{
+			application.OnMouseScroll(scroll);
+		}
+
+		ThreeState focusSate = Platform.GetFocusState();
+
+		if (focusSate.IsTrue)
+		{
+			application.OnFocusGain();
+		}
+		else if (focusSate.IsFalse)
+		{
+			application.OnFocusLost();
+		}
 	}
 
 	internal void RequestClose()

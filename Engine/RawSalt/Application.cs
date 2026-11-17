@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
+using System.Numerics;
 using RawSalt.Diagnostics;
 using RawSalt.Graphics;
 using RawSalt.Graphics.Rendering;
@@ -44,9 +45,14 @@ public class Application
 	[MemberNotNullWhen(false, nameof(Headless))]
 	protected GraphicsDevice? Device => RenderThread?.Device;
 
+	public KeyboardState Keyboard { get; } = new();
+	public MouseState Mouse { get; } = new();
+
 	protected Application(bool headless = false)
 	{
 		Headless = headless;
+
+		Thread.CurrentThread.Name = "RawSalt/MainThread";
 	}
 
 	/// <summary>
@@ -225,12 +231,17 @@ public class Application
 
 			long now = Stopwatch.GetTimestamp();
 			float deltaTime = (now - last) / (float)Stopwatch.Frequency;
-			Update(updateId++, deltaTime);
+			Update(updateId, deltaTime);
+			Keyboard.Update(updateId, deltaTime);
+			Mouse.Update(updateId, deltaTime);
+			updateId++;
+
 			CameraData cameraData = default;
 			if (snapshot != null && (view.SurfaceSize.X != 0 && view.SurfaceSize.Y != 0))
 			{
 				Draw(ref cameraData, view.SurfaceSize, updateId, deltaTime);
 			}
+
 			statistics.Update();
 			last = now;
 
@@ -245,13 +256,48 @@ public class Application
 
 	// Input events are called during PumpEvents on MAIN thread
 	// If platform dedicate a separate thread it should NOT invoke these method from that thread.
-	[ThreadSafety(AllowedThread.Main)]
-	public virtual void OnKeyDown(Key key)
-	{ }
 
 	[ThreadSafety(AllowedThread.Main)]
-	public virtual void OnKeyUp(Key key)
+	public virtual void OnKeyPressed(Key key)
+	{
+		Keyboard.OnKeyPressed(key);
+	}
+
+	[ThreadSafety(AllowedThread.Main)]
+	public virtual void OnKeyReleased(Key key)
+	{
+		Keyboard.OnKeyReleased(key);
+	}
+
+	[ThreadSafety(AllowedThread.Main)]
+	public virtual void OnButtonPressed(MouseButton button)
+	{
+		Mouse.OnButtonPressed(button);
+	}
+
+	[ThreadSafety(AllowedThread.Main)]
+	public virtual void OnButtonReleased(MouseButton button)
+	{
+		Mouse.OnButtonReleased(button);
+	}
+
+	public virtual void OnMouseMove(Vector2 position)
+	{
+		Mouse.OnMouseMove(position);
+	}
+
+	public virtual void OnMouseScroll(Vector2 scroll)
+	{
+		Mouse.OnMouseScroll(scroll);
+	}
+
+	public virtual void OnFocusGain()
 	{ }
+
+	public virtual void OnFocusLost()
+	{
+		Keyboard.OnFocusLost();
+	}
 
 	private static GraphicsBackend SelectBestGraphicsBackend(params IList<GraphicsBackend> backends)
 	{

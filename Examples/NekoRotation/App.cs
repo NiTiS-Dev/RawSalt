@@ -7,6 +7,7 @@ using RawSalt.Graphics.Drawing;
 using RawSalt.Graphics.Pipelines;
 using RawSalt.Graphics.Rendering;
 using RawSalt.Graphics.Vulkan;
+using RawSalt.Input;
 using RawSalt.Logging;
 #if RAWSALT_WIN32
 using RawSalt.Platforms.Win32;
@@ -65,10 +66,17 @@ internal sealed class App : Application
 
     protected override void Update(ulong updateId, float deltaTime)
     {
-	    _pos += deltaTime;
+	    if (Keyboard.IsDown(Key.A))
+	    {
+		    _pos -= deltaTime;
+	    }
+	    else if (Keyboard.IsDown(Key.D))
+	    {
+		    _pos += deltaTime;
+	    }
 
-	    float x = float.Cos(_pos * float.Pi);
-	    float z = float.Sin(_pos * float.Pi);
+	    float x = float.Sin(_pos * float.Pi);
+	    float z = float.Cos(_pos * float.Pi);
 
 	    _camera.Position = new Vector3(2f * x, x, 2f * z);
 	    _camera.LookAt(Vector3.Zero);

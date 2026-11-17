@@ -51,6 +51,8 @@ public class Application
 	protected Application(bool headless = false)
 	{
 		Headless = headless;
+
+		Thread.CurrentThread.Name = "RawSalt/MainThread";
 	}
 
 	/// <summary>
@@ -261,6 +263,14 @@ public class Application
 	public virtual void OnMouseScroll(Vector2 scroll)
 	{
 		Mouse.OnMouseScroll(scroll);
+	}
+
+	public virtual void OnFocusGain()
+	{ }
+
+	public virtual void OnFocusLost()
+	{
+		Keyboard.OnFocusLost();
 	}
 
 	private static GraphicsBackend SelectBestGraphicsBackend(params IList<GraphicsBackend> backends)

@@ -39,6 +39,8 @@ public partial class Win32Platform : Platform
 	private Vector2 _mousePosition = default;
 	private Vector2 _mouseScroll = default;
 
+	private volatile ThreeState _focus = ThreeState.Unknown;
+
 	private readonly ManualResetEventSlim _threadReady = new(false);
 	private readonly Thread _windowThread;
 	private volatile bool _stopping;
@@ -258,6 +260,13 @@ public partial class Win32Platform : Platform
 
 		mouseScroll = default;
 		return false;
+	}
+
+	internal ThreeState GetFocusState()
+	{
+		ThreeState state = _focus;
+		_focus = ThreeState.Unknown;
+		return state;
 	}
 
 	[SupportedOSPlatform("windows5.0")]
@@ -572,8 +581,14 @@ public partial class Win32Platform : Platform
 				}
 			}
 
+			if (msg == PInvoke.WM_SETFOCUS)
+			{
+				_focus = ThreeState.True;
+			}
+
 			if (msg == PInvoke.WM_KILLFOCUS)
 			{
+				_focus = ThreeState.False;
 				PInvoke.ReleaseCapture();
 			}
 

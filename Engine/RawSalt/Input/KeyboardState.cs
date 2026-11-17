@@ -79,6 +79,11 @@ public sealed class KeyboardState
 		_states.Remove(key);
 	}
 
+	internal void OnFocusLost()
+	{
+		_states.Clear();
+	}
+
 	private struct KeyState(ulong updateId)
 	{
 		public readonly ulong PressedUponUpdateId = updateId;

@@ -107,6 +107,17 @@ public class Win32Window : Window, IWin32Window
 		{
 			application.OnMouseScroll(scroll);
 		}
+
+		ThreeState focusSate = Platform.GetFocusState();
+
+		if (focusSate.IsTrue)
+		{
+			application.OnFocusGain();
+		}
+		else if (focusSate.IsFalse)
+		{
+			application.OnFocusLost();
+		}
 	}
 
 	internal void RequestClose()

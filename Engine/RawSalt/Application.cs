@@ -146,16 +146,40 @@ public class Application
 			RenderThread.Stop();
 			RenderThread = null;
 			Platform.ReleaseView(MainView);
-			MainView = null!;
+			MainView = null;
+			Shutdown();
 		}
 		catch (Exception ex)
 		{
 			Log.Error(ex, "Error during application launch.");
 			Platform?.TryCreateErrorMessage(ex.Message + "\n" + ex.StackTrace);
+			Shutdown();
 			return false;
 		}
 
 		return true;
+	}
+
+	/// <summary>
+	/// Releases graphics and platform objects in reverse creation order:
+	/// surface -> graphics backend -> platform.
+	/// </summary>
+	private void Shutdown()
+	{
+		if (MainSurface is IDisposable surface)
+		{
+			surface.Dispose();
+		}
+
+		MainSurface = null;
+
+		GraphicsBackend?.Dispose();
+		GraphicsBackend = null;
+
+		Platform?.Dispose();
+		Platform = null;
+
+		MainView = null;
 	}
 
 	private void MainLoop()
@@ -199,6 +223,8 @@ public class Application
 		ulong updateId = 0;
 		while (view.IsAlive && renderThread.IsValid)
 		{
+			// Platforms with a shared event connection (Xlib, Wayland) pump all events here.
+			Platform?.PumpEvents();
 			view.PumpEvents();
 			if (firstFrame && renderThread.FirstFramePresented)
 			{
@@ -277,6 +303,7 @@ public class Application
 	public virtual void OnFocusLost()
 	{
 		Keyboard.OnFocusLost();
+		Mouse.OnFocusLost();
 	}
 
 	private static GraphicsBackend SelectBestGraphicsBackend(params IList<GraphicsBackend> backends)

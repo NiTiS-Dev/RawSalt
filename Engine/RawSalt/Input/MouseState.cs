@@ -54,6 +54,15 @@ public sealed class MouseState
 		Scroll += scroll;
 	}
 
+	internal void OnFocusLost()
+	{
+		// A window that loses focus does not receive button releases.
+		foreach (ref ButtonState state in _states)
+		{
+			state.Pressed = false;
+		}
+	}
+
 	[InlineArray(5)]
 	private struct States
 	{

@@ -10,11 +10,11 @@ Texture coordinates are normalized float values from 0f to 1f, and are not clamp
 
 ### Operating system support
 
-| Platform |    Requirements    |
-|:--------:|:------------------:|
-|  Win32   |    Windows 10+     |
-|   Xlib   | Not supported yet. |
-| Wayland  | Not supported yet. |
+| Platform | Requirements |
+|:--------:|--------------|
+|  Win32   | Windows 10+ |
+|   Xlib   | Linux with X11 (`libX11`, `libXrandr`); also works on XWayland |
+| Wayland  | Linux with a compositor exposing `xdg_wm_base`; uses server-side decorations when offered |
 | Android  | Not supported yet. |
 
 ### Graphical API support

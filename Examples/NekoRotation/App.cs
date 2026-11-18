@@ -10,6 +10,8 @@ using RawSalt.Graphics.Vulkan;
 using RawSalt.Input;
 using RawSalt.Logging;
 using RawSalt.Platforms.Win32;
+using RawSalt.Platforms.Wayland;
+using RawSalt.Platforms.Xlib;
 using RawSalt.Scenes;
 
 namespace NekoRotation;
@@ -50,6 +52,8 @@ internal sealed class App : Application
 
 		var config = LaunchConfiguration.CreateBuilder()
 			.AddWin32Platform()
+			.AddWaylandPlatform()
+			.AddXlibPlatform()
 			.AddVulkanBackend()
 			.Build();
 

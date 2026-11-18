@@ -2,7 +2,8 @@
 	<Import Project="../../Sdk/RawSalt.Sdk/Sdk/Sdk.props" />
 
     <PropertyGroup>
-        <OutputType>WinExe</OutputType>
+        <OutputType Condition="$([MSBuild]::IsOSPlatform('Windows'))">WinExe</OutputType>
+        <OutputType Condition="!$([MSBuild]::IsOSPlatform('Windows'))">Exe</OutputType>
         <TargetFramework>net11.0</TargetFramework>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
@@ -11,11 +12,13 @@
 
 	<Import Project="../../Sdk/RawSalt.Sdk/Sdk/Sdk.targets" />
 
-    <ItemGroup>
-        <ProjectReference Include="../../Engine/RawSalt.Graphics.Vulkan/RawSalt.Graphics.Vulkan.csproj" />
-        <ProjectReference Include="../../Engine/RawSalt.Platforms.Win32/RawSalt.Platforms.Win32.csproj" />
-        <ProjectReference Include="../../Engine/RawSalt/RawSalt.csproj" />
-    </ItemGroup>
+	<ItemGroup>
+		<ProjectReference Include="../../Engine/RawSalt.Graphics.Vulkan/RawSalt.Graphics.Vulkan.csproj" />
+		<ProjectReference Include="../../Engine/RawSalt.Platforms.Win32/RawSalt.Platforms.Win32.csproj" />
+		<ProjectReference Include="../../Engine/RawSalt.Platforms.Wayland/RawSalt.Platforms.Wayland.csproj" />
+		<ProjectReference Include="../../Engine/RawSalt.Platforms.Xlib/RawSalt.Platforms.Xlib.csproj" />
+		<ProjectReference Include="../../Engine/RawSalt/RawSalt.csproj" />
+	</ItemGroup>
 
     <ItemGroup>
         <None Update="*.slang">

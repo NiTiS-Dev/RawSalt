@@ -2,10 +2,17 @@ using RawSalt.Logging;
 
 namespace RawSalt.Platforms.Win32;
 
+/// <summary>
+/// Win32 Platform extension for launch configuration.
+/// </summary>
 public static class LaunchConfigurationExtensions
 {
 	extension(LaunchConfiguration.Builder builder)
 	{
+		/// <summary>
+		/// Add Win32 Platform candidate, if supported at executable side.
+		/// </summary>
+		/// <returns>Builder instance.</returns>
 		public LaunchConfiguration.Builder AddWin32Platform()
 		{
 			if (OperatingSystem.IsWindowsVersionAtLeast(10, 0))

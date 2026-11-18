@@ -18,11 +18,11 @@ public sealed class VulkanDevice : GraphicsDevice
 	public VkQueue GraphicsQueue { get; }
 	public uint PresentQueueFamily { get; }
 	public VkQueue PresentQueue { get; }
-	public VkDescriptorPool DescriptorPool { get; }
 	public VkFormat DepthFormat { get; }
+	internal VulkanDescriptorHeap DescriptorHeap { get; }
 	internal VulkanUploadHeap UploadHeap { get; }
 
-	internal unsafe VulkanDevice(VulkanAdapter adapter, VkDevice device, VkInstanceApi instanceApi, VkDeviceApi deviceApi,
+	internal VulkanDevice(VulkanAdapter adapter, VkDevice device, VkInstanceApi instanceApi, VkDeviceApi deviceApi,
 		uint graphicsQueueFamily, VkQueue graphicsQueue,
 		uint presentQueueFamily, VkQueue presentQueue)
 	{
@@ -38,26 +38,7 @@ public sealed class VulkanDevice : GraphicsDevice
 		InstanceApi.vkGetPhysicalDeviceMemoryProperties(PhysicalDevice, out VkPhysicalDeviceMemoryProperties properties);
 		MemoryProperties = properties;
 		DepthFormat = PickDepthFormat();
-
-		VkDescriptorPoolSize* poolSizes = stackalloc VkDescriptorPoolSize[2];
-		poolSizes[0] = new()
-		{
-			type = VkDescriptorType.UniformBufferDynamic,
-			descriptorCount = 64
-		};
-		poolSizes[1] = new()
-		{
-			type = VkDescriptorType.CombinedImageSampler,
-			descriptorCount = 64
-		};
-		VkDescriptorPoolCreateInfo poolInfo = new()
-		{
-			maxSets = 64,
-			poolSizeCount = 2,
-			pPoolSizes = poolSizes
-		};
-		DeviceApi.vkCreateDescriptorPool(&poolInfo, out VkDescriptorPool pool).CheckResult();
-		DescriptorPool = pool;
+		DescriptorHeap = new(this);
 		UploadHeap = new(this, 1024);
 	}
 
@@ -180,7 +161,7 @@ public sealed class VulkanDevice : GraphicsDevice
 	{
 		// base waits idle, drains retired resources and disposes the pools; the device must stay alive.
 		base.Dispose(disposing);
-		DeviceApi.vkDestroyDescriptorPool(DescriptorPool);
+		DescriptorHeap.Dispose();
 		UploadHeap.Dispose();
 		DeviceApi.vkDestroyDevice();
 	}

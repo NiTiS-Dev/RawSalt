@@ -58,7 +58,7 @@ internal sealed class VulkanBindGroupLayout : Disposable
 			pBindings = pBindings,
 		};
 		device.DeviceApi.vkCreateDescriptorSetLayout(&info, out VkDescriptorSetLayout handle).CheckResult();
-		DescriptorSet = AllocateAndWrite(device, handle, _resources);
+		DescriptorSet = device.DescriptorHeap.Allocate(handle, _resources);
 		Handle = handle;
 	}
 
@@ -73,7 +73,7 @@ internal sealed class VulkanBindGroupLayout : Disposable
 		return index;
 	}
 
-	public unsafe void SetTexture(uint binding, VulkanTextureResource texture)
+	public void SetTexture(uint binding, VulkanTextureResource texture)
 	{
 		ThrowIfDisposed();
 		if (!ReferenceEquals(texture.Device, Device))
@@ -90,76 +90,13 @@ internal sealed class VulkanBindGroupLayout : Disposable
 		// TODO: The descriptor set may still be referenced by an in-flight frame.
 		Device.WaitIdle();
 
-		VkDescriptorImageInfo imageInfo = new()
-		{
-			sampler = texture.Sampler,
-			imageView = texture.View,
-			imageLayout = VkImageLayout.ShaderReadOnlyOptimal,
-		};
-		VkWriteDescriptorSet write = new()
-		{
-			dstSet = DescriptorSet,
-			dstBinding = binding,
-			dstArrayElement = 0,
-			descriptorCount = 1,
-			descriptorType = VkDescriptorType.CombinedImageSampler,
-			pImageInfo = &imageInfo,
-		};
-		Device.DeviceApi.vkUpdateDescriptorSets(1, &write, 0, null);
+		Device.DescriptorHeap.SetTexture(DescriptorSet, binding, texture);
 		_unsetImages.Remove(binding);
-	}
-
-	private static unsafe VkDescriptorSet AllocateAndWrite(VulkanDevice device, VkDescriptorSetLayout setLayout, ShaderResource[] resources)
-	{
-		VkDeviceApi api = device.DeviceApi;
-
-		VkDescriptorSetAllocateInfo allocInfo = new()
-		{
-			descriptorPool = device.DescriptorPool,
-			descriptorSetCount = 1,
-			pSetLayouts = &setLayout,
-		};
-		api.vkAllocateDescriptorSets(in allocInfo, out VkDescriptorSet set).CheckResult();
-
-		int count = resources.Count(static r => r.Type == BindingType.UniformBuffer);
-		if (count == 0)
-		{
-			return set;
-		}
-
-		VkDescriptorBufferInfo* infos = stackalloc VkDescriptorBufferInfo[count];
-		VkWriteDescriptorSet* writes = stackalloc VkWriteDescriptorSet[count];
-		int index = 0;
-		foreach (ShaderResource resource in resources)
-		{
-			if (resource.Type != BindingType.UniformBuffer)
-			{
-				continue;
-			}
-
-			infos[index] = new()
-			{
-				buffer = device.UploadHeap.Handle,
-				offset = 0,
-				range = resource.Size
-			};
-			writes[index] = new()
-			{
-				dstSet = set,
-				dstBinding = resource.Binding,
-				dstArrayElement = 0,
-				descriptorCount = 1,
-				descriptorType = resource.Type.ToVk(),
-				pBufferInfo = &infos[index],
-			};
-			index++;
-		}
-		api.vkUpdateDescriptorSets((uint)count, writes, 0, null);
-		return set;
 	}
 
 	protected override void Dispose(bool disposing)
 	{
+		Device.DescriptorHeap.Free(DescriptorSet);
 		Device.DeviceApi.vkDestroyDescriptorSetLayout(Handle);
 	}
 }
